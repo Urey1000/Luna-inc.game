@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ludo Modern Offline - VS Computer</title>
+    <style>
+        :root {
+            --red: #e53935;
+            --green: #4caf50;
+            --yellow: #fbc02d;
+            --blue: #1e88e5;
+            --dark-bg: #0f172a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-wrapper {
+            width: 100%;
+            max-width: 460px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Top Panel (Status & Keluar) */
+        .top-panel {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .turn-indicator {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .turn-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .btn-exit {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        .btn-exit:active {
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+
+        /* Container Papan Ludo */
+        #board-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Bottom Panel (Kontrol Dadu) */
+        .bottom-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        /* Animasi Kotak Dadu Realistis 3D Ringan */
+        #dice-box {
+            width: 70px;
+            height: 70px;
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 -4px 0 #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            position: relative;
+        }
+
+        #dice-box.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        #dice-box:not(.disabled):active {
+            transform: scale(0.9);
+        }
+
+        /* Titik Dadu Putih */
+        .dice-dots-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 42px;
+            height: 42px;
+        }
+
+        .dot {
+            background: #111827;
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            margin: auto;
+            visibility: hidden;
+        }
+
+        /* Status Teks Aksi */
+        #status-text {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-align: center;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        /* Pengaturan Penempatan Titik Dadu Berdasarkan Angka */
+        .d-num1 .dot:nth-child(5) { visibility: visible; }
+        .d-num2 .dot:nth-child(1), .d-num2 .dot:nth-child(9) { visibility: visible; }
+        .d-num3 .dot:nth-child(1), .d-num3 .dot:nth-child(5), .d-num3 .dot:nth-child(9) { visibility: visible; }
+        .d-num4 .dot:nth-child(1), .d-num4 .dot:nth-child(3), .d-num4 .dot:nth-child(7), .d-num4 .dot:nth-child(9) { visibility: visible; }
+        .d-num5 .dot:nth-child(1), .d-num5 .dot:nth-child(3), .d-num5 .dot:nth-child(5), .d-num5 .dot:nth-child(7), .d-num5 .dot:nth-child(9) { visibility: visible; }
+        .d-num6 .dot:nth-child(1), .d-num6 .dot:nth-child(3), .d-num6 .dot:nth-child(4), .d-num6 .dot:nth-child(6), .d-num6 .dot:nth-child(7), .d-num6 .dot:nth-child(9) { visibility: visible; }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-2deg); }
+            20% { transform: translate(-3px, 0px) rotate(3deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-2deg); }
+            80% { transform: translate(-1px, -1px) rotate(4deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .rolling {
+            animation: shake 0.15s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        
+        <div class="top-panel">
+            <div class="turn-indicator">
+                <span id="player-dot" class="turn-dot" style="color: var(--red); background-color: var(--red);"></span>
+                <span id="turn-txt">Giliran Anda: MERAH</span>
+            </div>
+            <button class="btn-exit" onclick="keluarGame()">Keluar</button>
+        </div>
+
+        <div id="board-container">
+            <canvas id="ludoCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <div class="bottom-panel">
+            <div id="dice-box" class="d-num1" onclick="kocokDadu()">
+                <div class="dice-dots-container">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+            </div>
+            <div id="status-text">Sentuh dadu putih untuk memulai giliran Anda!</div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('ludoCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const COLS = {
+            red: '#e53935', green: '#4caf50', yellow: '#fbc02d', blue: '#1e88e5',
+            redLight: '#ffcdd2', greenLight: '#c8e6c9', yellowLight: '#fff9c4', blueLight: '#bbdefb',
+            white: '#ffffff', gray: '#e2e8f0', darkGray: '#94a3b8', border: '#334155'
+        };
+
+        const URUTAN_MAIN = ['red', 'green', 'yellow', 'blue'];
+        const NAMA_PLAYER = { red: 'MERAH (Anda)', green: 'HIJAU (Komputer)', yellow: 'KUNING (Komputer)', blue: 'BIRU (Komputer)' };
+        
+        let giliranIdx = 0;
+        let nilaiDadu = 1;
+        let sudahKocok = false;
+        let statusAksi = 'kocok'; // 'kocok' atau 'pilih_pion'
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playAudio(tipe) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if (tipe === 'shake') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(350, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            } else if (tipe === 'move') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (tipe === 'kick') { 
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (tipe === 'win') {
+                osc.type = 'sine';
+                const chord = [523.25, 659.25, 783.99, 1046.50]; 
+                chord.forEach((f, i) => {
+                    osc.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.08));
+                });
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            }
+        }
+
+        function keluarGame() {
+             {
+                window.location.href = 'index.html';
+            }
+        }
+
+        const JALUR_LUAR = [
+            {x:1,y:6}, {x:2,y:6}, {x:3,y:6}, {x:4,y:6}, {x:5,y:6}, 
+            {x:6,y:5}, {x:6,y:4}, {x:6,y:3}, {x:6,y:2}, {x:6,y:1}, {x:6,y:0}, 
+            {x:7,y:0}, {x:8,y:0},
+            {x:8,y:1}, {x:8,y:2}, {x:8,y:3}, {x:8,y:4}, {x:8,y:5},
+            {x:9,y:6}, {x:10,y:6}, {x:11,y:6}, {x:12,y:6}, {x:13,y:6}, {x:14,y:6}, 
+            {x:14,y:7}, {x:14,y:8},
+            {x:13,y:8}, {x:12,y:8}, {x:11,y:8}, {x:10,y:8}, {x:9,y:8},
+            {x:8,y:9}, {x:8,y:10}, {x:8,y:11}, {x:8,y:12}, {x:8,y:13}, {x:8,y:14}, 
+            {x:7,y:14}, {x:6,y:14},
+            {x:6,y:13}, {x:6,y:12}, {x:6,y:11}, {x:6,y:10}, {x:6,y:9},
+            {x:5,y:8}, {x:4,y:8}, {x:3,y:8}, {x:2,y:8}, {x:1,y:8}, {x:0,y:8}, 
+            {x:0,y:7}, {x:0,y:6}
+        ];
+
+        const JALUR_HOME = {
+            red:    [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}],
+            green:  [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}],
+            yellow: [{x:13,y:7},{x:12,y:7},{x:11,y:7},{x:10,y:7},{x:9,y:7}],
+            blue:   [{x:7,y:13},{x:7,y:12},{x:7,y:11},{x:7,y:10},{x:7,y:9}]
+        };
+
+        const INDEKS_START = { red: 0, green: 13, yellow: 26, blue: 39 };
+        const MAKS_LANGKAH_PUBLIK = 50; 
+
+        const POSISI_MARKAS = {
+            red:    [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}],
+            green:  [{x:11,y:2},{x:12,y:2},{x:11,y:3},{x:12,y:3}],
+            yellow: [{x:11,y:11},{x:12,y:11},{x:11,y:12},{x:12,y:12}],
+            blue:   [{x:2,y:11},{x:3,y:11},{x:2,y:12},{x:3,y:12}]
+        };
+
+        let pionPemain = {};
+        URUTAN_MAIN.forEach(warna => {
+            pionPemain[warna] = [];
+            for(let i=0; i<4; i++) {
+                pionPemain[warna].push({
+                    id: i,
+                    status: 'markas', 
+                    langkahKe: -1, 
+                    x: POSISI_MARKAS[warna][i].x,
+                    y: POSISI_MARKAS[warna][i].y
+                });
+            }
+        });
+
+        function kocokDadu() {
+            if (sudahKocok || statusAksi !== 'kocok') return;
+            
+            // Mencegah klik manual saat giliran bot komputer
+            if (URUTAN_MAIN[giliranIdx] !== 'red') return;
+
+            prosesKocokDaduMekanis();
+        }
+
+        function prosesKocokDaduMekanis() {
+            sudahKocok = true;
+            const diceBox = document.getElementById('dice-box');
+            diceBox.classList.add('rolling');
+
+            let putaran = 0;
+            let intervalShake = setInterval(() => {
+                playAudio('shake');
+                let acakMata = Math.floor(Math.random() * 6) + 1;
+                gantiGayaDaduVisual(acakMata);
+                putaran++;
+
+                if (putaran > 6) {
+                    clearInterval(intervalShake);
+                    nilaiDadu = Math.floor(Math.random() * 6) + 1;
+                    gantiGayaDaduVisual(nilaiDadu);
+                    diceBox.classList.remove('rolling');
+                    prosesHasilDadu();
+                }
+            }, 100);
+        }
+
+        function gantiGayaDaduVisual(angka) {
+            const diceBox = document.getElementById('dice-box');
+            diceBox.className = ''; 
+            diceBox.classList.add(`d-num${angka}`);
+            if (URUTAN_MAIN[giliranIdx] !== 'red') {
+                diceBox.classList.add('disabled');
+            }
+        }
+
+        function prosesHasilDadu() {
+            let warnaAktif = URUTAN_MAIN[giliranIdx];
+            let listPion = pionPemain[warnaAktif];
+
+            let opsiPionValid = [];
+            listPion.forEach(p => {
+                if (p.status === 'markas' && nilaiDadu === 6) opsiPionValid.push(p);
+                if (p.status === 'jalan' && (p.langkahKe + nilaiDadu) <= 56) opsiPionValid.push(p);
+            });
+
+            if (opsiPionValid.length === 0) {
+                document.getElementById('status-text').innerText = `${NAMA_PLAYER[warnaAktif]} mendapat angka ${nilaiDadu}! Tidak ada gerakan.`;
+                setTimeout(operGiliran, 1500);
+            } else {
+                statusAksi = 'pilih_pion';
+                if (warnaAktif === 'red') {
+                    document.getElementById('status-text').innerText = `Angka ${nilaiDadu}! Sentuh pion berkedip putih untuk melangkah.`;
+                    gambarPapanLudo();
+                } else {
+                    document.getElementById('status-text').innerText = `Komputer sedang berpikir memilih pion...`;
+                    gambarPapanLudo();
+                    // Eksekusi AI Otomatis untuk Komputer
+                    setTimeout(() => {
+                        eksekusiAIKomputer(opsiPionValid);
+                    }, 1000);
+                }
+            }
+        }
+
+        function eksekusiAIKomputer(opsiPion) {
+            // Prioritas AI: 1. Utamakan menendang musuh, 2. Utamakan pion yang sudah hampir finish, 3. Acak.
+            let pilihanPion = opsiPion[0]; 
+            
+            for (let p of opsiPion) {
+                let targetX = p.x;
+                let targetY = p.y;
+                
+                // Menghitung letak fiktif target jika melangkah
+                if (p.status === 'markas' && nilaiDadu === 6) {
+                    let idxAwal = INDEKS_START[URUTAN_MAIN[giliranIdx]];
+                    targetX = JALUR_LUAR[idxAwal].x; targetY = JALUR_LUAR[idxAwal].y;
+                } else if (p.status === 'jalan') {
+                    let tLangkah = p.langkahKe + nilaiDadu;
+                    if (tLangkah <= MAKS_LANGKAH_PUBLIK) {
+                        let idxLuar = (INDEKS_START[URUTAN_MAIN[giliranIdx]] + tLangkah) % 52;
+                        targetX = JALUR_LUAR[idxLuar].x; targetY = JALUR_LUAR[idxLuar].y;
+                    }
+                }
+
+                // Cek apakah di koordinat tersebut ada pion musuh untuk dimakan
+                let bisaMakan = false;
+                URUTAN_MAIN.forEach(w => {
+                    if (w !== URUTAN_MAIN[giliranIdx]) {
+                        pionPemain[w].forEach(pl => {
+                            if (pl.status === 'jalan' && pl.x === targetX && pl.y === targetY) bisaMakan = true;
+                        });
+                    }
+                });
+
+                if (bisaMakan) {
+                    pilihanPion = p;
+                    break;
+                }
+            }
+
+            // Jika tidak ada target makan, pilih secara acak/pion terdepan
+            if (!pilihanPion) {
+                pilihanPion = opsiPion[Math.floor(Math.random() * opsiPion.length)];
+            }
+
+            gerakPion(pilihanPion);
+        }
+
+        function operGiliran() {
+            sudahKocok = false;
+            statusAksi = 'kocok';
+            giliranIdx = (giliranIdx + 1) % 4;
+
+            let warnaSekarang = URUTAN_MAIN[giliranIdx];
+            const diceBox = document.getElementById('dice-box');
+
+            if (warnaSekarang === 'red') {
+                document.getElementById('turn-txt').innerText = `Giliran Anda: MERAH`;
+                document.getElementById('status-text').innerText = "Sentuh dadu putih untuk mengocok!";
+                diceBox.classList.remove('disabled');
+            } else {
+                document.getElementById('turn-txt').innerText = `Giliran: ${NAMA_PLAYER[warnaSekarang]}`;
+                document.getElementById('status-text').innerText = `Komputer sedang mengocok dadu...`;
+                diceBox.classList.add('disabled');
+            }
+            
+            let dDot = document.getElementById('player-dot');
+            dDot.style.backgroundColor = COLS[warnaSekarang];
+            dDot.style.color = COLS[warnaSekarang];
+            
+            gambarPapanLudo();
+
+            // Jika giliran komputer, jalankan kocok dadu otomatis
+            if (warnaSekarang !== 'red') {
+                setTimeout(prosesKocokDaduMekanis, 1200);
+            }
+        }
+
+        function gerakPion(pion) {
+            let warna = URUTAN_MAIN[giliranIdx];
+            
+            if (pion.status === 'markas' && nilaiDadu === 6) {
+                pion.status = 'jalan';
+                pion.langkahKe = 0;
+                let indeksAwal = INDEKS_START[warna];
+                pion.x = JALUR_LUAR[indeksAwal].x;
+                pion.y = JALUR_LUAR[indeksAwal].y;
+                playAudio('move');
+                cekMakanLawan(pion.x, pion.y, warna);
+                evaluasiBonusAtauOper(6);
+            } else if (pion.status === 'jalan') {
+                let targetLangkah = pion.langkahKe + nilaiDadu;
+                if (targetLangkah <= 56) {
+                    pion.langkahKe = targetLangkah;
+                    
+                    if (targetLangkah === 56) {
+                        pion.status = 'finish';
+                        pion.x = 7; pion.y = 7;
+                        playAudio('win');
+                        cekKondisiMenangWarna(warna);
+                    } else {
+                        updateKoordinatFisikPion(pion, warna);
+                        playAudio('move');
+                        cekMakanLawan(pion.x, pion.y, warna);
+                    }
+                    evaluasiBonusAtauOper(nilaiDadu);
+                }
+            }
+        }
+
+        function updateKoordinatFisikPion(pion, warna) {
+            if (pion.langkahKe <= MAKS_LANGKAH_PUBLIK) {
+                let idxLuar = (INDEKS_START[warna] + pion.langkahKe) % 52;
+                pion.x = JALUR_LUAR[idxLuar].x;
+                pion.y = JALUR_LUAR[idxLuar].y;
+            } else {
+                let idxHome = pion.langkahKe - 51; 
+                pion.x = JALUR_HOME[warna][idxHome].x;
+                pion.y = JALUR_HOME[warna][idxHome].y;
+            }
+        }
+
+        function cekMakanLawan(x, y, warnaKini) {
+            let areaAman = false;
+            URUTAN_MAIN.forEach(w => {
+                let st = JALUR_LUAR[INDEKS_START[w]];
+                if(st.x === x && st.y === y) areaAman = true;
+            });
+            if (areaAman) return;
+
+            URUTAN_MAIN.forEach(warnaLawan => {
+                if (warnaLawan !== warnaKini) {
+                    pionPemain[warnaLawan].forEach(pLawn => {
+                        if (pLawn.status === 'jalan' && pLawn.x === x && pLawn.y === y) {
+                            pLawn.status = 'markas';
+                            pLawn.langkahKe = -1;
+                            pLawn.x = POSISI_MARKAS[warnaLawan][pLawn.id].x;
+                            pLawn.y = POSISI_MARKAS[warnaLawan][pLawn.id].y;
+                            playAudio('kick'); 
+                            document.getElementById('status-text').innerText = `Pion ${NAMA_PLAYER[warnaLawan]} ditendang oleh ${NAMA_PLAYER[warnaKini]}!`;
+                        }
+                    });
+                }
+            });
+        }
+
+        function evaluasiBonusAtauOper(dadu) {
+            if (dadu === 6) {
+                sudahKocok = false;
+                statusAksi = 'kocok';
+                document.getElementById('status-text').innerText = `${NAMA_PLAYER[URUTAN_MAIN[giliranIdx]]} dapat bonus kocok lagi karena angka 6!`;
+                gambarPapanLudo();
+                
+                // Jika bot komputer dapat bonus, panggil mekanis lempar lagi secara otomatis
+                if (URUTAN_MAIN[giliranIdx] !== 'red') {
+                    setTimeout(prosesKocokDaduMekanis, 1500);
+                }
+            } else {
+                setTimeout(operGiliran, 1000);
+            }
+        }
+
+        function cekKondisiMenangWarna(warna) {
+            let semuaFinish = pionPemain[warna].every(p => p.status === 'finish');
+            if(semuaFinish) {
+                alert(`Permainan Berakhir! Pemenang Utama adalah: ${NAMA_PLAYER[warna]}`);
+            }
+        }
+
+        const BOX_S = 40; 
+
+        function gambarPapanLudo() {
+            ctx.clearRect(0,0,600,600);
+            
+            isiKotakPenuh(0, 0, 6, 6, COLS.red);
+            isiKotakPenuh(9, 0, 6, 6, COLS.green);
+            isiKotakPenuh(9, 9, 6, 6, COLS.yellow);
+            isiKotakPenuh(0, 9, 6, 6, COLS.blue);
+
+            isiKotakPenuh(1, 1, 4, 4, COLS.white);
+            isiKotakPenuh(10, 1, 4, 4, COLS.white);
+            isiKotakPenuh(10, 10, 4, 4, COLS.white);
+            isiKotakPenuh(1, 10, 4, 4, COLS.white);
+
+            for(let gX=0; gX<15; gX++) {
+                for(let gY=0; gY<15; gY++) {
+                    if((gX<6 && gY<6) || (gX>8 && gY<6) || (gX>8 && gY>8) || (gX<6 && gY>8)) continue;
+                    if(gX>=6 && gX<=8 && gY>=6 && gY<=8) continue;
+
+                    ctx.fillStyle = COLS.gray;
+                    ctx.fillRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
+                    ctx.strokeStyle = COLS.border;
+                    ctx.strokeRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
+                }
+            }
+
+            for(let i=0; i<5; i++) {
+                isiGarisKotakTunggal(JALUR_HOME.red[i].x, JALUR_HOME.red[i].y, COLS.red);
+                isiGarisKotakTunggal(JALUR_HOME.green[i].x, JALUR_HOME.green[i].y, COLS.green);
+                isiGarisKotakTunggal(JALUR_HOME.yellow[i].x, JALUR_HOME.yellow[i].y, COLS.yellow);
+                isiGarisKotakTunggal(JALUR_HOME.blue[i].x, JALUR_HOME.blue[i].y, COLS.blue);
+            }
+
+            isiGarisKotakTunggal(JALUR_LUAR[INDEKS_START.red].x, JALUR_LUAR[INDEKS_START.red].y, COLS.red);
+            isiGarisKotakTunggal(JALUR_LUAR[INDEKS_START.green].x, JALUR_LUAR[INDEKS_START.green].y, COLS.green);
+            isiGarisKotakTunggal(JALUR_LUAR[INDEKS_START.yellow].x, JALUR_LUAR[INDEKS_START.yellow].y, COLS.yellow);
+            isiGarisKotakTunggal(JALUR_LUAR[INDEKS_START.blue].x, JALUR_LUAR[INDEKS_START.blue].y, COLS.blue);
+
+            ctx.lineWidth = 1;
+            ctx.fillStyle = COLS.red; ctx.beginPath(); ctx.moveTo(6*BOX_S, 6*BOX_S); ctx.lineTo(7.5*BOX_S, 7.5*BOX_S); ctx.lineTo(6*BOX_S, 9*BOX_S); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = COLS.green; ctx.beginPath(); ctx.moveTo(6*BOX_S, 6*BOX_S); ctx.lineTo(7.5*BOX_S, 7.5*BOX_S); ctx.lineTo(9*BOX_S, 6*BOX_S); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = COLS.yellow; ctx.beginPath(); ctx.moveTo(9*BOX_S, 6*BOX_S); ctx.lineTo(7.5*BOX_S, 7.5*BOX_S); ctx.lineTo(9*BOX_S, 9*BOX_S); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = COLS.blue; ctx.beginPath(); ctx.moveTo(6*BOX_S, 9*BOX_S); ctx.lineTo(7.5*BOX_S, 7.5*BOX_S); ctx.lineTo(9*BOX_S, 9*BOX_S); ctx.fill(); ctx.stroke();
+
+            URUTAN_MAIN.forEach(warna => {
+                pionPemain[warna].forEach(pion => {
+                    if (pion.status !== 'finish') {
+                        gambarTokenPion(pion.x * BOX_S + BOX_S/2, pion.y * BOX_S + BOX_S/2, COLS[warna]);
+                    }
+                });
+            });
+
+            // Tampilkan indikator lingkaran putih berkedip jika giliran USER (Merah)
+            if (statusAksi === 'pilih_pion' && URUTAN_MAIN[giliranIdx] === 'red') {
+                pionPemain['red'].forEach(p => {
+                    let valid = false;
+                    if (p.status === 'markas' && nilaiDadu === 6) valid = true;
+                    if (p.status === 'jalan' && (p.langkahKe + nilaiDadu) <= 56) valid = true;
+
+                    if (valid) {
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(p.x * BOX_S + BOX_S/2, p.y * BOX_S + BOX_S/2, BOX_S/2 - 4, 0, Math.PI*2);
+                        ctx.stroke();
+                    }
+                });
+            }
+        }
+
+        function isiKotakPenuh(x, y, w, h, warna) {
+            ctx.fillStyle = warna;
+            ctx.fillRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
+            ctx.strokeStyle = COLS.border;
+            ctx.strokeRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
+        }
+
+        function isiGarisKotakTunggal(x, y, warna) {
+            ctx.fillStyle = warna;
+            ctx.fillRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
+            ctx.strokeStyle = COLS.border;
+            ctx.strokeRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
+        }
+
+        function gambarTokenPion(cX, cY, warna) {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.arc(cX, cY + 4, 13, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = warna;
+            ctx.beginPath(); ctx.arc(cX, cY, 13, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(cX, cY, 5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        canvas.addEventListener('click', function(e) {
+            // Hanya izinkan interaksi klik jika giliran player MERAH
+            if (statusAksi !== 'pilih_pion' || URUTAN_MAIN[giliranIdx] !== 'red') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const skalaX = canvas.width / rect.width;
+            const skalaY = canvas.height / rect.height;
+
+            const klikX = (e.clientX - rect.left) * skalaX;
+            const klikY = (e.clientY - rect.top) * skalaY;
+
+            const gridX = Math.floor(klikX / BOX_S);
+            const gridY = Math.floor(klikY / BOX_S);
+
+            let targetPionDipilih = null;
+
+            pionPemain['red'].forEach(p => {
+                if (p.x === gridX && p.y === gridY) {
+                    if (p.status === 'markas' && nilaiDadu === 6) targetPionDipilih = p;
+                    if (p.status === 'jalan' && (p.langkahKe + nilaiDadu) <= 56) targetPionDipilih = p;
+                }
+            });
+
+            if (targetPionDipilih) {
+                gerakPion(targetPionDipilih);
+            }
+        });
+
+        gambarPapanLudo();
+    </script>
+</body>
+</html>

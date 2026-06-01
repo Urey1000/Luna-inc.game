@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter - Glassmorphism</title>
+    <style>
+        /* === CSS & GLASSMORPHISM UI === */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background: #050510;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 { margin-bottom: 20px; font-weight: 700; font-size: 2.5rem; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
+        h2 { margin-bottom: 15px; font-weight: 500; }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,255,0.3); }
+        .btn-danger:hover { box-shadow: 0 5px 15px rgba(255,0,0,0.4); }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .hud-glass {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        #score-history {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <audio id="sfx-shoot" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=laser-gun-81720.mp3"></audio>
+    <audio id="sfx-explode" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_82c474fa77.mp3?filename=8-bit-explosion-95000.mp3"></audio>
+    <audio id="bgm" src="https://cdn.pixabay.com/download/audio/2021/11/24/audio_34b3dc05e0.mp3?filename=electronic-ambient-ambient-104988.mp3" loop></audio>
+
+    <div id="main-menu" class="glass-panel">
+        <h1>SPACE SHOOTER</h1>
+        <p>Pilih tingkat kesulitan:</p>
+        <div>
+            <button class="btn" onclick="startGame('easy')">Easy</button>
+            <button class="btn" onclick="startGame('normal')">Normal</button>
+            <button class="btn" onclick="startGame('hard')">Hard</button>
+        </div>
+        
+        <div id="score-history">
+            <h3>Histori Skor:</h3>
+            <ul id="history-list" style="list-style: none; margin-top: 10px;">
+            </ul>
+        </div>
+    </div>
+
+    <div id="overlay-screen" class="glass-panel hidden">
+        <h1 id="overlay-title">PAUSED</h1>
+        <h2 id="final-score" class="hidden">Score: 0</h2>
+        <button id="btn-resume" class="btn" onclick="togglePause()">Resume</button>
+        <button class="btn btn-danger" onclick="quitGame()">Menu Utama</button>
+    </div>
+
+    <div id="hud">
+        <div class="hud-glass">Score: <span id="scoreDisplay">0</span></div>
+        <div>
+            <button class="btn" onclick="togglePause()">Pause</button>
+            <button class="btn btn-danger" onclick="quitGame()">Exit Game</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        /* === JSON CONFIGURATION === */
+        const levelConfigJSON = `{
+            "easy":   { "enemySpeed": 1.5, "spawnRate": 120, "enemyHealth": 1 },
+            "normal": { "enemySpeed": 3.0, "spawnRate": 80,  "enemyHealth": 2 },
+            "hard":   { "enemySpeed": 5.0, "spawnRate": 40,  "enemyHealth": 3 }
+        }`;
+        const levelConfig = JSON.parse(levelConfigJSON);
+
+        /* === GAME VARIABLES === */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let animationId;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentLevel = 'normal';
+        let score = 0;
+        let frameCount = 0;
+
+        let player;
+        let bullets = [];
+        let enemies = [];
+        let particles = [];
+        let stars = [];
+
+        const sfxShoot = document.getElementById('sfx-shoot');
+        const sfxExplode = document.getElementById('sfx-explode');
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.4;
+        sfxShoot.volume = 0.3;
+        sfxExplode.volume = 0.5;
+
+        /* === CLASSES === */
+        class Player {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height - 100;
+                this.radius = 20;
+                this.color = '#00ffff';
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.radius);
+                ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 4;
+                this.speed = 10;
+                this.color = '#ffff00';
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.y -= this.speed;
+                this.draw();
+            }
+        }
+
+        class Enemy {
+            constructor(x, y, speed, health) {
+                this.x = x;
+                this.y = y;
+                this.radius = Math.random() * 15 + 15;
+                this.speed = speed;
+                this.health = health;
+                this.color = `hsl(${Math.random() * 360}, 50%, 50%)`;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.y += this.speed;
+                this.draw();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = Math.random() * 3;
+                this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
+                this.alpha = 1;
+                this.color = color;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.02;
+                this.draw();
+            }
+        }
+
+        /* === CORE FUNCTIONS === */
+        function loadScoreHistory() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            let historyJSON = localStorage.getItem('spaceShooterHistory');
+            let history = historyJSON ? JSON.parse(historyJSON) : [];
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<li>Belum ada histori permainan.</li>';
+                return;
+            }
+
+            history.sort((a, b) => b.score - a.score);
+            history.slice(0, 5).forEach((record, index) => {
+                historyList.innerHTML += `<li>${index + 1}. Score: <b>${record.score}</b> (Level: ${record.level}) - ${record.date}</li>`;
+            });
+        }
+
+        function saveScore() {
+            let historyJSON = localStorage.getItem('spaceShooterHistory');
+            let history = historyJSON ? JSON.parse(historyJSON) : [];
+            history.push({
+                score: score,
+                level: currentLevel,
+                date: new Date().toLocaleDateString('id-ID')
+            });
+            localStorage.setItem('spaceShooterHistory', JSON.stringify(history));
+            loadScoreHistory();
+        }
+
+        function initStars() {
+            stars = [];
+            for(let i=0; i<100; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 });
+            }
+        }
+
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+                star.y += 0.5;
+                if (star.y > canvas.height) star.y = 0;
+            });
+        }
+
+        function startGame(level) {
+            currentLevel = level;
+            player = new Player();
+            bullets = [];
+            enemies = [];
+            particles = [];
+            score = 0;
+            frameCount = 0;
+            isPlaying = true;
+            isPaused = false;
+            
+            document.getElementById('scoreDisplay').innerText = score;
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('overlay-screen').classList.add('hidden');
+            
+            initStars();
+            bgm.currentTime = 0;
+            bgm.play().catch(e => console.log("BGM butuh interaksi user pertama kali."));
+            
+            animate();
+        }
+
+        function togglePause() {
+            if (!isPlaying) return;
+            isPaused = !isPaused;
+            const overlay = document.getElementById('overlay-screen');
+            const title = document.getElementById('overlay-title');
+            
+            if (isPaused) {
+                cancelAnimationFrame(animationId);
+                overlay.classList.remove('hidden');
+                document.getElementById('btn-resume').classList.remove('hidden');
+                document.getElementById('final-score').classList.add('hidden');
+                title.innerText = "PAUSED";
+                bgm.pause();
+            } else {
+                overlay.classList.add('hidden');
+                bgm.play();
+                animate();
+            }
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            bgm.pause();
+            saveScore();
+            
+            const overlay = document.getElementById('overlay-screen');
+            overlay.classList.remove('hidden');
+            document.getElementById('overlay-title').innerText = "GAME OVER";
+            document.getElementById('final-score').innerText = `Score Akhir: ${score}`;
+            document.getElementById('final-score').classList.remove('hidden');
+            document.getElementById('btn-resume').classList.add('hidden');
+            document.getElementById('hud').style.display = 'none';
+        }
+
+        function quitGame() {
+            isPlaying = false;
+            isPaused = false;
+            cancelAnimationFrame(animationId);
+            bgm.pause();
+
+            // Simpan skor sebelum pindah halaman
+            if(score > 0) saveScore();
+
+            // Keluar dan pindah ke index.html
+            window.location.href = "index.html";
+        }
+
+        /* === GAME LOOP === */
+        function animate() {
+            if (isPaused) return;
+            animationId = requestAnimationFrame(animate);
+            
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawStars();
+
+            player.draw();
+            
+            const cfg = levelConfig[currentLevel];
+            
+            if (frameCount % cfg.spawnRate === 0) {
+                const x = Math.random() * canvas.width;
+                enemies.push(new Enemy(x, -30, cfg.enemySpeed, cfg.enemyHealth));
+            }
+
+            particles.forEach((particle, index) => {
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                } else {
+                    particle.update();
+                }
+            });
+
+            bullets.forEach((bullet, index) => {
+                bullet.update();
+                if (bullet.y < 0) bullets.splice(index, 1);
+            });
+
+            enemies.forEach((enemy, eIndex) => {
+                enemy.update();
+
+                const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (distPlayer - enemy.radius - player.radius < 1) {
+                    gameOver();
+                }
+
+                if (enemy.y - enemy.radius > canvas.height) {
+                    enemies.splice(eIndex, 1);
+                }
+
+                bullets.forEach((bullet, bIndex) => {
+                    const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+                    if (dist - enemy.radius - bullet.radius < 1) {
+                        
+                        enemy.health -= 1;
+                        bullets.splice(bIndex, 1);
+
+                        if (enemy.health <= 0) {
+                            sfxExplode.currentTime = 0;
+                            sfxExplode.play().catch(()=>{});
+
+                            for(let i = 0; i < enemy.radius; i++) {
+                                particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                            }
+                            
+                            score += 10;
+                            document.getElementById('scoreDisplay').innerText = score;
+                            enemies.splice(eIndex, 1);
+                        }
+                    }
+                });
+            });
+
+            frameCount++;
+        }
+
+        /* === INPUT CONTROLS === */
+        window.addEventListener('mousemove', (e) => {
+            if (isPlaying && !isPaused) {
+                player.x = e.clientX;
+                if(player.x < player.radius) player.x = player.radius;
+                if(player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
+            }
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' || !isPlaying || isPaused) return;
+            
+            bullets.push(new Bullet(player.x, player.y - player.radius));
+            
+            sfxShoot.currentTime = 0;
+            sfxShoot.play().catch(()=>{});
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape' && isPlaying) {
+                togglePause();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if(player) {
+                player.y = canvas.height - 100;
+            }
+        });
+
+        window.onload = loadScoreHistory;
+
+    </script>
+</body>
+</html>

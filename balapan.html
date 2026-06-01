@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Race - Mobile Edition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 420px; /* Ukuran pas untuk layar HP */
+            height: 100vh;
+            max-height: 720px;
+            background: #222;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* === HUD TOP BAR === */
+        #hud-bar {
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+            z-index: 10;
+            gap: 5px;
+        }
+
+        .hud-stats {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        /* Tombol Keluar di HUD */
+        .btn-exit {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+            transition: all 0.2s ease;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .btn-exit:active {
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+
+        #canvas-wrapper {
+            position: relative;
+            flex: 1; /* Mengisi penuh sisa ruang tengah */
+            background: #2e7d32; /* Lapisan dasar rumput ganjil (Pantai/Hijau) */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* === PANEL TOMBOL KONTROL HP === */
+        #mobile-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #151515;
+            padding: 15px 20px;
+            border-top: 2px solid #333;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .control-btn {
+            background: linear-gradient(145deg, #333, #222);
+            border: 2px solid #555;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 15px 0;
+            border-radius: 12px;
+            outline: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+        }
+
+        .control-btn:active {
+            background: linear-gradient(145deg, #111, #222);
+            border-color: #00b0ff;
+            color: #00b0ff;
+            transform: scale(0.98);
+        }
+
+        /* === MENU SCREEN === */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #menu-screen {
+            background: linear-gradient(135deg, #111e38 0%, #0a1128 100%);
+            z-index: 20;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin: 0 0 5px 0;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #ffeb3b;
+            margin-bottom: 40px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 70%;
+        }
+
+        .menu-btn {
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            color: white;
+        }
+        .btn-easy { background: #4caf50; }
+        .btn-normal { background: #ff9800; }
+        .btn-hard { background: #f44336; }
+
+        /* === POPUP MATCH SCREEN === */
+        #popup-screen {
+            background: rgba(0,0,0,0.9);
+            z-index: 30;
+            display: none;
+        }
+
+        #popup-title { font-size: 2.2rem; margin-bottom: 15px; }
+        .stats-box {
+            background: rgba(255,255,255,0.08);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.6;
+            width: 80%;
+        }
+        .btn-next { background: #2196f3; color: white; width: 60%; padding: 12px; border-radius: 25px; font-weight: bold; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <div id="hud-bar">
+            <div class="hud-stats">
+                <div>🏆 Lv:<span id="hud-level">1</span></div>
+                <div>🏁 Lap:<span id="hud-lap">0</span>/10</div>
+                <div>✨ Pts:<span id="hud-poin">0</span></div>
+                <div>🥇🥇:<span id="hud-piala">0</span></div>
+            </div>
+            <button class="btn-exit" onclick="keluarGame()">❌ Keluar</button>
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="mobile-controls">
+            <button id="btn-left" class="control-btn">◀</button>
+            <button id="btn-right" class="control-btn">▶</button>
+        </div>
+
+        <div id="menu-screen" class="screen">
+            <h1>LUNA RACE</h1>
+            <div class="subtitle">Championship Arena</div>
+            <div class="btn-group">
+                <button class="menu-btn btn-easy" onclick="startGame('easy')">EASY</button>
+                <button class="menu-btn btn-normal" onclick="startGame('normal')">NORMAL</button>
+                <button class="menu-btn btn-hard" onclick="startGame('hard')">HARD</button>
+            </div>
+        </div>
+
+        <div id="popup-screen" class="screen">
+            <h2 id="popup-title">FINISH</h2>
+            <div class="stats-box">
+                <div>Hasil Match: <span id="pop-poin-get">+0 Poin</span></div>
+                <div>Total Poin Anda: <span id="pop-poin-total">0</span></div>
+                <div>Total Koleksi Piala: <span id="pop-piala-total">0</span></div>
+            </div>
+            <button id="pop-btn" class="btn-next" onclick="closePopup()">Lanjutkan</button>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        function resizeCanvas() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+        }
+        resizeCanvas();
+
+        let level = 1, poin = 0, piala = 0;
+        let kesulitan = 'normal', gameAktif = false;
+        let keKiri = false, keKanan = false;
+
+        let pemain, musuhArray, sirkuitScroll = 0;
+        const TARGET_LAP = 10;
+
+        // ====================================================================
+        // AUDIO SYSTEM TERBARU 
+        // ====================================================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let engineOsc = null;
+        let engineGain = null;
+        let engineFilter = null; 
+
+        function startEngineSound() {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                if (engineOsc) stopEngineSound();
+
+                engineOsc = audioCtx.createOscillator();
+                engineGain = audioCtx.createGain();
+                engineFilter = audioCtx.createBiquadFilter(); 
+                
+                engineOsc.type = 'triangle'; 
+                engineOsc.frequency.setValueAtTime(40, audioCtx.currentTime); 
+                
+                engineFilter.type = 'lowpass';
+                engineFilter.frequency.setValueAtTime(110, audioCtx.currentTime); 
+                
+                engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                
+                engineOsc.connect(engineFilter);
+                engineFilter.connect(engineGain);
+                engineGain.connect(audioCtx.destination);
+                
+                engineOsc.start(0);
+            } catch(e) { 
+                console.log("Gagal menyalakan audio: ", e); 
+            }
+        }
+
+        function updateEngineSound(speed) {
+            if (engineOsc && engineFilter) {
+                let pitch = 40 + (speed * 14); 
+                engineOsc.frequency.setTargetAtTime(pitch, audioCtx.currentTime, 0.05);
+                
+                let filterFreq = 110 + (speed * 20);
+                engineFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.05);
+            }
+        }
+
+        function stopEngineSound() {
+            if (engineOsc) { 
+                try { 
+                    engineOsc.stop(); 
+                    engineOsc.disconnect();
+                } catch(e){} 
+                engineOsc = null; 
+            }
+        }
+
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const nadaMenang = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; 
+            
+            nadaMenang.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.08));
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (i * 0.08));
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.08) + 0.35);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(audioCtx.currentTime + (i * 0.08));
+                osc.stop(audioCtx.currentTime + (i * 0.08) + 0.35);
+            });
+        }
+
+        // ====================================================================
+        // FUNGSI NAVIGASI KELUAR KE INDEX.HTML
+        // ====================================================================
+        function keluarGame() {
+          {
+                gameAktif = false;
+                stopEngineSound();
+                window.location.href = 'index.html';
+            }
+        }
+
+        // ====== KONTROL TOMBOL LAYAR HP (TOUCH / CLICK) ======
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
+
+        function setLeft(state) { keKiri = state; }
+        function setRight(state) { keKanan = state; }
+
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); setLeft(true); });
+        btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); setLeft(false); });
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); setRight(true); });
+        btnRight.addEventListener('touchend', (e) => { e.preventDefault(); setRight(false); });
+
+        btnLeft.addEventListener('mousedown', () => setLeft(true));
+        btnLeft.addEventListener('mouseup', () => setLeft(false));
+        btnLeft.addEventListener('mouseleave', () => setLeft(false));
+        btnRight.addEventListener('mousedown', () => setRight(true));
+        btnRight.addEventListener('mouseup', () => setRight(false));
+        btnRight.addEventListener('mouseleave', () => setRight(false));
+
+        window.addEventListener('keydown', e => {
+            if(e.key === 'ArrowLeft' || e.key === 'a') setLeft(true);
+            if(e.key === 'ArrowRight' || e.key === 'd') setRight(true);
+        });
+        window.addEventListener('keyup', e => {
+            if(e.key === 'ArrowLeft' || e.key === 'a') setLeft(false);
+            if(e.key === 'ArrowRight' || e.key === 'd') setRight(false);
+        });
+
+        class Mobil {
+            constructor(x, y, warna, speed) {
+                this.x = x; this.y = y;
+                this.w = 34;  this.h = 60; 
+                this.warna = warna; this.speed = speed;
+                this.lapProgress = 0; this.currentLap = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.warna;
+                ctx.fillRect(this.x, this.y, this.w, this.h);
+                ctx.fillStyle = '#111';
+                ctx.fillRect(this.x - 3, this.y + this.h - 5, this.w + 6, 5);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(this.x - 4, this.y + 8, 4, 12);
+                ctx.fillRect(this.x + this.w, this.y + 8, 4, 12);
+                ctx.fillRect(this.x - 4, this.y + this.h - 18, 4, 12);
+                ctx.fillRect(this.x + this.w, this.y + this.h - 18, 4, 12);
+                ctx.fillStyle = '#e0f7fa';
+                ctx.fillRect(this.x + 5, this.y + 16, this.w - 10, 10);
+            }
+        }
+
+        function startGame(opsiKesulitan) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            kesulitan = opsiKesulitan;
+            document.getElementById('menu-screen').style.display = 'none';
+            window.addEventListener('resize', resizeCanvas); 
+            initLevel();
+        }
+
+        function initLevel() {
+            resizeCanvas();
+            gameAktif = true; sirkuitScroll = 0;
+
+            document.getElementById('hud-level').innerText = level;
+            document.getElementById('hud-lap').innerText = "0";
+            document.getElementById('hud-poin').innerText = poin;
+            document.getElementById('hud-piala').innerText = piala;
+
+            let aspalX = canvas.width * 0.15;
+            let aspalW = canvas.width * 0.70;
+            pemain = new Mobil(aspalX + (aspalW / 2) - 17, canvas.height - 130, '#00b0ff', 0);
+
+            let baseBotSpeed = 3.6;
+            if(kesulitan === 'easy') baseBotSpeed = 2.9;
+            if(kesulitan === 'hard') baseBotSpeed = 4.4;
+            let botSpeedFinal = baseBotSpeed + (level * 0.06);
+
+            musuhArray = [
+                new Mobil(aspalX + 20, -100, '#ff1744', botSpeedFinal - 0.2),
+                new Mobil(aspalX + (aspalW/2) - 17, -350, '#ff9100', botSpeedFinal),
+                new Mobil(aspalX + aspalW - 55, -600, '#00e676', botSpeedFinal - 0.4)
+            ];
+
+            stopEngineSound();
+            startEngineSound();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            if (!gameAktif) return;
+            updateLogika();
+            renderGrafis();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateLogika() {
+            if (pemain.speed < 6.5) pemain.speed += 0.08;
+            updateEngineSound(pemain.speed);
+
+            let aspalX = canvas.width * 0.15;
+            let aspalW = canvas.width * 0.70;
+
+            if (keKiri && pemain.x > aspalX + 5) pemain.x -= 4.2;
+            if (keKanan && pemain.x < (aspalX + aspalW) - pemain.w - 5) pemain.x += 4.2;
+
+            sirkuitScroll += pemain.speed;
+
+            let totalJarakSirkuitPerLap = 4500;
+            pemain.lapProgress += pemain.speed;
+            let hitungLapPemain = Math.floor(pemain.lapProgress / totalJarakSirkuitPerLap);
+            if(hitungLapPemain > pemain.currentLap) {
+                pemain.currentLap = hitungLapPemain;
+                if(pemain.currentLap <= TARGET_LAP) {
+                    document.getElementById('hud-lap').innerText = pemain.currentLap;
+                }
+            }
+
+            if (pemain.currentLap >= TARGET_LAP) { mencapaiFinish(true); return; }
+
+            musuhArray.forEach(bot => {
+                bot.y += (pemain.speed - bot.speed);
+
+                if (bot.y > canvas.height + 100) {
+                    bot.y = -120 - (Math.random() * 200);
+                    bot.x = aspalX + 10 + Math.random() * (aspalW - bot.w - 20);
+                } else if (bot.y < -700) {
+                    bot.y = canvas.height + 50;
+                    bot.x = aspalX + 10 + Math.random() * (aspalW - bot.w - 20);
+                }
+
+                bot.lapProgress += bot.speed;
+                bot.currentLap = Math.floor(bot.lapProgress / totalJarakSirkuitPerLap);
+
+                if (bot.currentLap >= TARGET_LAP) { mencapaiFinish(false); return; }
+
+                if (pemain.x < bot.x + bot.w && pemain.x + pemain.w > bot.x &&
+                    pemain.y < bot.y + bot.h && pemain.y + pemain.h > bot.y) {
+                    pemain.speed = 1.2; bot.y -= 25;
+                }
+            });
+        }
+
+        function renderGrafis() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let isLevelGanjil = (level % 2 !== 0);
+            
+            wrapper.style.backgroundColor = isLevelGanjil ? '#2e7d32' : '#283618';
+            ctx.fillStyle = isLevelGanjil ? '#388e3c' : '#334155';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let aspalX = canvas.width * 0.15;
+            let aspalW = canvas.width * 0.70;
+            ctx.fillStyle = '#444444'; 
+            ctx.fillRect(aspalX, 0, aspalW, canvas.height);
+
+            ctx.save();
+            let stripH = 40;
+            let lintasanOffsetY = Math.floor(sirkuitScroll) % (stripH * 2);
+            
+            for (let y = -(stripH * 2); y < canvas.height + (stripH * 2); y += stripH) {
+                let currY = y + lintasanOffsetY;
+                
+                ctx.fillStyle = (Math.floor((y + Math.floor(sirkuitScroll)) / stripH) % 2 === 0) ? '#ff1744' : '#ffffff';
+                ctx.fillRect(aspalX - 8, currY, 8, stripH);
+                ctx.fillRect(aspalX + aspalW, currY, 8, stripH);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(aspalX + (aspalW / 2) - 3, currY, 6, stripH * 0.5);
+            }
+            ctx.restore();
+
+            pemain.draw();
+            musuhArray.forEach(bot => bot.draw());
+        }
+
+        function mencapaiFinish(isPemainMenang) {
+            gameAktif = false; stopEngineSound();
+            const popup = document.getElementById('popup-screen');
+            const pTitle = document.getElementById('popup-title');
+            const pGet = document.getElementById('pop-poin-get');
+            const pTotal = document.getElementById('pop-poin-total');
+            const pPiala = document.getElementById('pop-piala-total');
+            const pBtn = document.getElementById('pop-btn');
+
+            if (isPemainMenang) {
+                playWinSound();
+                let bonusPoin = (kesulitan === 'easy') ? 100 : (kesulitan === 'normal') ? 200 : 350;
+                poin += bonusPoin; piala += 1;
+
+                pTitle.innerText = "MENANG RACE!"; pTitle.style.color = "#4caf50";
+                pGet.innerText = `+${bonusPoin} Poin & 1 Piala`;
+
+                if (level >= 30) {
+                    pTitle.innerText = "GRAND CHAMPION!"; pTitle.style.color = "#ffeb3b";
+                    pBtn.innerText = "Main Lagi dari Awal";
+                } else {
+                    pBtn.innerText = `Lanjut Level ${level + 1}`;
+                }
+            } else {
+                pTitle.innerText = "KAMU KALAH!"; pTitle.style.color = "#f44336";
+                pGet.innerText = "+0 Poin (Gagal Juara)";
+                pBtn.innerText = "Ulangi Race";
+            }
+
+            pTotal.innerText = poin; pPiala.innerText = piala;
+            popup.style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popup-screen').style.display = 'none';
+            const txtTitle = document.getElementById('popup-title').innerText;
+
+            if (txtTitle === "GRAND CHAMPION!") {
+                level = 1; poin = 0; piala = 0;
+                document.getElementById('menu-screen').style.display = 'flex';
+            } else if (txtTitle === "MENANG RACE!") {
+                level++; initLevel();
+            } else {
+                initLevel();
+            }
+        }
+    </script>
+</body>
+</html>
