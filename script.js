@@ -12,7 +12,7 @@ const dataJSON = `[
         "kategori": "Aksi & Petualangan",
         "rating": "🌟🌟🌟🌟",
         "gambar": "Luna4.png",
-        "tautan": "petualangan.html" 
+        "tautan": "poker.html" 
     },
     {
         "nama": "Balapan Liar 3D",
