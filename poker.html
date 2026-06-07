@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Buah Luna-Inc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1333, #0a0314);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            justify-content: space-between;
+        }
+
+        header {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        header h1 {
+            color: #ffdf00;
+            text-shadow: 0 0 10px #ff5722;
+            font-size: 2.5rem;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ffdf00;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* Layar Bergetar saat menang */
+        .win-shake {
+            animation: winshake .4s;
+        }
+
+        @keyframes winshake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Progress Bar Level */
+        .level-bar {
+            height: 12px;
+            background: #222;
+            border-radius: 20px;
+            overflow: hidden;
+            grid-column: span 2;
+            margin-top: 5px;
+        }
+
+        #level-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, gold, orange);
+            transition: width 0.3s ease;
+        }
+
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+            background: #111;
+            padding: 12px;
+            border-radius: 10px;
+            border: 4px solid #444;
+            margin-bottom: 20px;
+        }
+
+        .slot-cell {
+            background: linear-gradient(145deg, #333, #222);
+            border: 1px solid #555;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border-radius: 5px;
+            transition: transform 0.1s ease;
+        }
+
+        .slot-cell.spin-anim {
+            animation: bounce 0.2s infinite;
+        }
+
+        /* Buah Menyala saat menang */
+        .win-symbol {
+            animation: glow 1s infinite;
+            border-color: gold !important;
+            transform: scale(1.1);
+            z-index: 2;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px gold; }
+            50% { box-shadow: 0 0 30px gold; }
+            100% { box-shadow: 0 0 5px gold; }
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.8); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bet-selection {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .bet-btn {
+            background: #333;
+            color: white;
+            border: 2px solid #777;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .bet-btn.active {
+            background: #ff5722;
+            border-color: #ffdf00;
+        }
+
+        .action-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 5px #1b5e20;
+            text-transform: uppercase;
+        }
+
+        .spin-btn:active {
+            box-shadow: 0 2px #1b5e20;
+            transform: translateY(3px);
+        }
+
+        .auto-btn {
+            background: linear-gradient(135deg, #2196f3, #1565c0);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 5px #0d47a1;
+            text-transform: uppercase;
+        }
+
+        .auto-btn.active {
+            background: linear-gradient(135deg, #ff9800, #ef6c00);
+            box-shadow: 0 5px #e65100;
+        }
+
+        .auto-btn:active {
+            box-shadow: 0 2px #0d47a1;
+            transform: translateY(3px);
+        }
+
+        .secondary-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .sound-btn {
+            background: linear-gradient(135deg, #9c27b0, #6a1b9a);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .exit-btn {
+            background: linear-gradient(135deg, #f44336, #c62828);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .spin-btn:disabled, .auto-btn:disabled {
+            background: #555 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .msg-box {
+            margin-top: 10px;
+            min-height: 24px;
+            color: #ffdf00;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .hint-audio {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9rem;
+            color: #aaa;
+            border-top: 1px solid #333;
+        }
+
+        footer a {
+            color: #00e676;
+            text-decoration: none;
+        }
+
+        /* --- Animasi Koin --- */
+        #win-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 9998;
+        }
+
+        .coin {
+            position: absolute;
+            font-size: 40px;
+            animation: fall 2s linear forwards;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* --- Teks Notifikasi Kemenangan Besar --- */
+        #win-title {
+            position: fixed;
+            top: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: gold;
+            z-index: 99999;
+            display: none;
+            text-shadow: 0 0 30px gold;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* --- Popup Jackpot --- */
+        #jackpot-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #ffdf00;
+            color: #000;
+            padding: 30px;
+            font-size: 40px;
+            font-weight: bold;
+            border-radius: 20px;
+            z-index: 100000;
+            transition: 0.4s;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            box-shadow: 0 0 30px rgba(255, 223, 0, 0.8);
+            text-align: center;
+        }
+
+        #jackpot-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="win-animation"></div>
+    <div id="win-title"></div>
+    <div id="jackpot-popup">🎉 JACKPOT 🎉</div>
+
+    <header>
+        <h1>Slot Buah Luna-Inc</h1>
+    </header>
+
+    <div class="game-container" id="game-container">
+        <div class="status-bar">
+            <div>Level: <span id="level-val">1</span>/150</div>
+            <div>Kemenangan: <span id="win-val">0</span>/300000</div>
+            <div class="level-bar">
+                <div id="level-fill"></div>
+            </div>
+            <div style="grid-column: span 2; color: #00e676; font-weight: bold; margin-top: 10px;">
+                Saldo: Rp <span id="balance-val">10000</span>
+            </div>
+            <div style="grid-column: span 2; font-size: 0.8rem; color: #aaa;">
+                Total Spin: <span id="spin-count">0</span>
+            </div>
+        </div>
+
+        <div class="slot-grid" id="slot-grid"></div>
+
+        <div class="controls">
+            <div class="bet-selection">
+                <button class="bet-btn active" id="bet-400" onclick="changeBet(400)">400</button>
+                <button class="bet-btn" id="bet-600" onclick="changeBet(600)">600</button>
+                <button class="bet-btn" id="bet-800" onclick="changeBet(800)">800</button>
+                <button class="bet-btn" id="bet-1000" onclick="changeBet(1000)">1000</button>
+            </div>
+            
+            <div class="action-btns">
+                <button class="spin-btn" id="spin-btn" onclick="spin()">SPIN</button>
+                <button class="auto-btn" id="auto-btn" onclick="toggleAuto()">AUTO</button>
+            </div>
+
+            <div class="secondary-btns">
+                <button class="sound-btn" id="sound-btn" onclick="toggleSound()">🔊 SOUND</button>
+                <button class="exit-btn" id="exit-btn" onclick="exitGame()">EXIT GAME</button>
+            </div>
+        </div>
+
+        <div class="msg-box" id="msg-box">Pilih taruhan dan tekan Spin!</div>
+        <div class="hint-audio">Klik di mana saja untuk mengaktifkan musik latar.</div>
+    </div>
+
+    <footer>
+        Created by, <a href="https://www.luna-inc.my.id" target="_blank">https://www.luna-inc.my.id</a> | Esc.2025 IDN/Bdg
+    </footer>
+
+    <audio id="snd-bgm" src="Play.mp3" looppreload="auto"></audio>
+    <audio id="snd-spin" src="Play.mp3" preload="auto"></audio>
+    <audio id="snd-win" src="win.mp3" preload="auto"></audio>
+    <audio id="snd-freespin" src="freespin.mp3" preload="auto"></audio>
+    <audio id="snd-levelup" src="levelup.mp3" preload="auto"></audio>
+    <audio id="snd-click" src="Play.mp3" preload="auto"></audio>
+    <audio id="snd-jackpot" src="jackpot.mp3" preload="auto"></audio>
+    <audio id="snd-bigwin" src="bonus.mp3" preload="auto"></audio>
+
+    <script>
+        const xmlConfigString = `
+        <gameConfig>
+            <symbols>
+                <symbol id="1">🍉</symbol>
+                <symbol id="2">🍇</symbol>
+                <symbol id="3">🍊</symbol>
+                <symbol id="4">🍋</symbol>
+                <symbol id="5">🍌</symbol>
+                <symbol id="6">🍓</symbol>
+                <symbol id="7">🍒</symbol>
+            </symbols>
+        </gameConfig>`;
+
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlConfigString, "text/xml");
+        const symbolNodes = xmlDoc.getElementsByTagName("symbol");
+        const fruits = Array.from(symbolNodes).map(node => node.textContent);
+
+        // Load Game State dari Local Storage
+        let balance = parseInt(localStorage.getItem("lunaBalance")) || 10000;
+        let currentBet = 400;
+        let targetWinNextLevel = 300000;
+        let totalWinAccumulated = 0;
+        let currentLevel = 1;
+        let freeSpinsLeft = 0;
+        let isAutoSpin = false;
+        let isSpinning = false;
+        let totalSpins = 0; 
+        let isBgmPlaying = false; 
+        let soundEnabled = true;
+
+        // DOM Elements
+        const gridElement = document.getElementById('slot-grid');
+        const balanceEl = document.getElementById('balance-val');
+        const winEl = document.getElementById('win-val');
+        const levelEl = document.getElementById('level-val');
+        const spinCountEl = document.getElementById('spin-count');
+        const msgEl = document.getElementById('msg-box');
+        const spinBtn = document.getElementById('spin-btn');
+        const autoBtn = document.getElementById('auto-btn');
+        const gameContainer = document.getElementById('game-container');
+
+        // Audio Elements
+        const sndBgm = document.getElementById('snd-bgm');
+        const sndSpin = document.getElementById('snd-spin');
+        const sndWin = document.getElementById('snd-win');
+        const sndFreespin = document.getElementById('snd-freespin');
+        const sndLevelup = document.getElementById('snd-levelup');
+        const sndClick = document.getElementById('snd-click');
+        const sndJackpot = document.getElementById('snd-jackpot');
+        const sndBigwin = document.getElementById('snd-bigwin');
+
+        document.body.addEventListener('click', playBGM, { once: false });
+
+        function initGrid() {
+            gridElement.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'slot-cell';
+                cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+                gridElement.appendChild(cell);
+            }
+            updateUI(); // Segarkan tampilan awal termasuk Saldo dari Cache
+        }
+
+        // --- Sistem Manajemen Suara ---
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const allAudio = [
+                sndBgm, sndSpin, sndWin, sndFreespin, sndLevelup, sndClick, sndJackpot, sndBigwin
+            ];
+            allAudio.forEach(audio => { audio.muted = !soundEnabled; });
+            document.getElementById("sound-btn").innerHTML = soundEnabled ? "🔊 SOUND" : "🔇 MUTE";
+        }
+
+        function playBGM() {
+            if (!isBgmPlaying && soundEnabled) {
+                sndBgm.volume = 0.4; 
+                sndBgm.play().then(() => {
+                    isBgmPlaying = true;
+                    document.querySelector('.hint-audio').style.display = 'none';
+                }).catch(e => console.log("BGM diblokir browser, menunggu interaksi."));
+            }
+        }
+
+        function playSound(audioEl) {
+            if (!soundEnabled) return;
+            audioEl.currentTime = 0;
+            audioEl.play().catch(e => console.log("Menunggu interaksi pengguna..."));
+        }
+
+        // Efek Suara pada semua Tombol
+        setTimeout(() => {
+            document.querySelectorAll("button").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    playSound(sndClick);
+                });
+            });
+        }, 100);
+
+        // --- Kumpulan Animasi Menang ---
+        function shakeGame() {
+            gameContainer.classList.add("win-shake");
+            setTimeout(() => { gameContainer.classList.remove("win-shake"); }, 400);
+            if(navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+
+        function showWinTitle(text) {
+            let el = document.getElementById("win-title");
+            el.innerHTML = text;
+            el.style.display = "block";
+            setTimeout(() => { el.style.display = "none"; }, 2500);
+        }
+
+        function showWinAnimation() {
+            const container = document.getElementById("win-animation");
+            for (let i = 0; i < 25; i++) {
+                let coin = document.createElement("div");
+                coin.className = "coin";
+                coin.innerHTML = "💰";
+                coin.style.left = Math.random() * 100 + "vw";
+                coin.style.animationDuration = (1 + Math.random() * 2) + "s";
+                container.appendChild(coin);
+                setTimeout(() => { coin.remove(); }, 3000);
+            }
+        }
+
+        function createStars() {
+            for(let i=0; i<50; i++) {
+                let star = document.createElement("div");
+                star.innerHTML = "✨";
+                star.style.position = "fixed";
+                star.style.left = Math.random() * 100 + "vw";
+                star.style.top = Math.random() * 100 + "vh";
+                star.style.fontSize = "20px";
+                star.style.zIndex = "99999";
+                document.body.appendChild(star);
+                setTimeout(() => { star.remove(); }, 2000);
+            }
+        }
+
+        function showJackpot() {
+            let popup = document.getElementById("jackpot-popup");
+            popup.classList.add("show");
+            setTimeout(() => { popup.classList.remove("show"); }, 3000);
+        }
+
+        function animateBalance(start, end) {
+            let current = start;
+            let timer = setInterval(() => {
+                current += Math.ceil((end - current) / 10);
+                balanceEl.textContent = current;
+                if(current >= end) {
+                    current = end;
+                    balanceEl.textContent = end;
+                    clearInterval(timer);
+                }
+            }, 30);
+        }
+
+        // --- Logika Slot ---
+        function changeBet(amount) {
+            if(freeSpinsLeft > 0 || isAutoSpin || isSpinning) return; 
+            currentBet = amount;
+            document.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(parseInt(btn.textContent) === amount) { btn.classList.add('active'); }
+            });
+        }
+
+        function toggleAuto() {
+            playBGM();
+            if (isSpinning && !isAutoSpin) return; 
+            isAutoSpin = !isAutoSpin;
+            
+            if (isAutoSpin) {
+                autoBtn.classList.add('active');
+                autoBtn.textContent = "STOP AUTO";
+                if (!isSpinning) spin();
+            } else {
+                autoBtn.classList.remove('active');
+                autoBtn.textContent = "AUTO";
+            }
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            playBGM(); 
+
+            if (freeSpinsLeft === 0 && balance < currentBet) {
+                msgEl.textContent = "Saldo tidak cukup!";
+                if (isAutoSpin) toggleAuto();
+                return;
+            }
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            disableBetButtons(true);
+            totalSpins++; 
+            spinCountEl.textContent = totalSpins;
+
+            const cells = document.querySelectorAll('.slot-cell');
+            cells.forEach(cell => cell.classList.remove('win-symbol')); // Bersihkan efek menyala
+
+            let wasFreeSpin = false;
+            if (freeSpinsLeft > 0) {
+                freeSpinsLeft--;
+                wasFreeSpin = true;
+            } else {
+                balance -= currentBet;
+            }
+            updateUI(false); // Update angka secara instan tanpa animasi win
+            
+            msgEl.textContent = wasFreeSpin ? `Free Spin Berjalan! (Sisa: ${freeSpinsLeft})` : "Memutar...";
+            playSound(sndSpin);
+
+            let matrix = Array.from({ length: 5 }, () => []);
+            let shuffleCount = 0;
+
+            const interval = setInterval(() => {
+                cells.forEach(cell => {
+                    cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+                    cell.classList.add('spin-anim');
+                });
+                shuffleCount++;
+                
+                if (shuffleCount > 10) {
+                    clearInterval(interval);
+                    
+                    let forceWin = (totalSpins === 11 || totalSpins === 33 || totalSpins === 55);
+                    let luckyFruit = fruits[Math.floor(Math.random() * fruits.length)];
+
+                    for (let r = 0; r < 5; r++) {
+                        for (let c = 0; c < 5; c++) {
+                            const index = r * 5 + c;
+                            let finalFruit = fruits[Math.floor(Math.random() * fruits.length)];
+                            if (forceWin && r === 2) { finalFruit = luckyFruit; }
+                            cells[index].textContent = finalFruit;
+                            cells[index].classList.remove('spin-anim');
+                            matrix[r][c] = finalFruit;
+                        }
+                    }
+                    
+                    checkLogic(matrix, wasFreeSpin);
+                }
+            }, 80);
+        }
+
+        function checkLogic(matrix, wasFreeSpin) {
+            let gotFiveInARow = false;
+
+            // 1. Cek Pemicu Free Spin
+            for (let r = 0; r < 5; r++) {
+                if (new Set(matrix[r]).size === 1) gotFiveInARow = true;
+            }
+            for (let c = 0; c < 5; c++) {
+                let colValues = [matrix[0][c], matrix[1][c], matrix[2][c], matrix[3][c], matrix[4][c]];
+                if (new Set(colValues).size === 1) gotFiveInARow = true;
+            }
+
+            // 2. ATURAN HITUNGAN (Scatter)
+            let flatMatrix = matrix.flat();
+            let counts = {};
+            flatMatrix.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
+
+            let baseMultiplier = 0;
+            let matchedFruitsInfo = [];
+            let winningFruits = [];
+
+            for (let fruit in counts) {
+                if (counts[fruit] === 5) {
+                    baseMultiplier += 1;
+                    matchedFruitsInfo.push(`5 ${fruit}`);
+                    winningFruits.push(fruit);
+                } else if (counts[fruit] >= 6) {
+                    baseMultiplier += 2;
+                    matchedFruitsInfo.push(`${counts[fruit]} ${fruit}`);
+                    winningFruits.push(fruit);
+                }
+            }
+
+            let winAmount = 0;
+            if (baseMultiplier > 0) {
+                winAmount = baseMultiplier * currentBet;
+                if (wasFreeSpin) { winAmount *= 5; }
+                
+                // Animasi Simbol Menyala
+                const cells = document.querySelectorAll('.slot-cell');
+                cells.forEach(cell => {
+                    if(winningFruits.includes(cell.textContent)) {
+                        cell.classList.add('win-symbol');
+                    }
+                });
+
+                // Eksekusi Peningkatan Saldo & Kemenangan
+                let oldBalance = balance;
+                balance += winAmount;
+                totalWinAccumulated += winAmount;
+
+                msgEl.textContent = wasFreeSpin 
+                    ? `Hebat! Menang Rp ${winAmount} (x5 BONUS) dari ${matchedFruitsInfo.join(' & ')}!` 
+                    : `Menang Rp ${winAmount} dari ${matchedFruitsInfo.join(' & ')}!`;
+                
+                // Efek Kemenangan
+                shakeGame();
+                playSound(sndWin);
+                showWinAnimation();
+                animateBalance(oldBalance, balance); // Animasi penambahan angka saldo
+
+                // Klasifikasi Papan Pemenang Besar
+                if (winAmount >= currentBet * 30) {
+                    showWinTitle("SUPER WIN");
+                    playSound(sndJackpot);
+                    createStars();
+                } else if (winAmount >= currentBet * 15) {
+                    showWinTitle("MEGA WIN");
+                    playSound(sndBigwin);
+                } else if (winAmount >= currentBet * 5) {
+                    showWinTitle("BIG WIN");
+                    playSound(sndBigwin);
+                }
+
+                if (winAmount >= currentBet * 10) {
+                    showJackpot();
+                }
+
+            } else {
+                msgEl.textContent = wasFreeSpin ? "Free spin berlanjut..." : "Coba lagi!";
+            }
+
+            if (gotFiveInARow) {
+                freeSpinsLeft += 5;
+                setTimeout(() => {
+                    msgEl.textContent = `Luar Biasa! +5 FREE SPIN didapatkan!`;
+                    playSound(sndFreespin);
+                    updateUI(false);
+                }, 1500); 
+            }
+
+            if (totalWinAccumulated >= targetWinNextLevel) {
+                if (currentLevel < 150) {
+                    currentLevel++;
+                    totalWinAccumulated -= targetWinNextLevel;
+                    msgEl.textContent = `SELAMAT! Naik ke Level ${currentLevel}!`;
+                    playSound(sndLevelup);
+                } else {
+                    msgEl.textContent = "Hebat! Anda menamatkan Game ini (Level 150)!";
+                    if (isAutoSpin) toggleAuto();
+                }
+            }
+
+            updateUI(true);
+            isSpinning = false;
+            spinBtn.disabled = false;
+            disableBetButtons(false);
+
+            if (isAutoSpin) {
+                setTimeout(() => { if (isAutoSpin) spin(); }, 1500); 
+            }
+        }
+
+        function disableBetButtons(status) {
+            document.querySelectorAll('.bet-btn').forEach(btn => { btn.disabled = status; });
+        }
+
+        function updateUI(isWinEvent = false) {
+            // Jika bukan event menang (seperti potong saldo awal spin), set teks manual
+            // Jika event menang, biarkan fungsi animateBalance yang mengelola angka saldo.
+            if (!isWinEvent) { balanceEl.textContent = balance; }
+            
+            winEl.textContent = totalWinAccumulated;
+            levelEl.textContent = currentLevel;
+            
+            // Progress Bar Level (Persentase)
+            let progress = (totalWinAccumulated / targetWinNextLevel) * 100;
+            document.getElementById("level-fill").style.width = progress + "%";
+
+            // Simpan saldo terbaru ke Local Storage
+            localStorage.setItem("lunaBalance", balance);
+            
+            if(freeSpinsLeft > 0) {
+                spinBtn.textContent = `FREE (${freeSpinsLeft})`;
+                spinBtn.style.background = "linear-gradient(135deg, #ec407a, #d81b60)";
+            } else {
+                spinBtn.textContent = "SPIN";
+                spinBtn.style.background = "linear-gradient(135deg, #4caf50, #2e7d32)";
+            }
+        }
+
+        function exitGame() {
+            if (isAutoSpin) toggleAuto();
+            if (isBgmPlaying) { sndBgm.pause(); }
+            if (confirm("Apakah anda yakin ingin keluar dari permainan Slot Buah Luna-Inc?")) {
+                gameContainer.innerHTML = "<h2 style='color:#ff5722; padding:50px 0;'>Terima kasih telah bermain di Luna-Inc! <br><br><span style='font-size:1.2rem; color:#fff;'>Silakan tutup halaman ini.</span></h2>";
+            } else {
+                if (!isBgmPlaying && balance > 0 && soundEnabled) playBGM();
+            }
+        }
+
+        // Mulai Permainan
+        initGrid();
+    </script>
+</body>
+</html>
