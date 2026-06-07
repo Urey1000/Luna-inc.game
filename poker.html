@@ -47,7 +47,6 @@
             position: relative;
         }
 
-        /* Layar Bergetar saat menang */
         .win-shake {
             animation: winshake .4s;
         }
@@ -71,7 +70,6 @@
             border-radius: 8px;
         }
 
-        /* Progress Bar Level */
         .level-bar {
             height: 12px;
             background: #222;
@@ -116,7 +114,6 @@
             animation: bounce 0.2s infinite;
         }
 
-        /* Buah Menyala saat menang */
         .win-symbol {
             animation: glow 1s infinite;
             border-color: gold !important;
@@ -277,7 +274,6 @@
             text-decoration: none;
         }
 
-        /* --- Animasi Koin --- */
         #win-animation {
             position: fixed;
             top: 0;
@@ -300,7 +296,6 @@
             100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
         }
 
-        /* --- Teks Notifikasi Kemenangan Besar --- */
         #win-title {
             position: fixed;
             top: 35%;
@@ -316,7 +311,6 @@
             width: 100%;
         }
 
-        /* --- Popup Jackpot --- */
         #jackpot-popup {
             position: fixed;
             top: 50%;
@@ -394,14 +388,14 @@
         Created by, <a href="https://www.luna-inc.my.id" target="_blank">https://www.luna-inc.my.id</a> | Esc.2025 IDN/Bdg
     </footer>
 
-    <audio id="snd-bgm" src="Play.mp3" looppreload="auto"></audio>
-    <audio id="snd-spin" src="Play.mp3" preload="auto"></audio>
+    <audio id="snd-bgm" src="bgm.mp3" loop preload="auto"></audio>
+    <audio id="snd-spin" src="spin.mp3" preload="auto"></audio>
     <audio id="snd-win" src="win.mp3" preload="auto"></audio>
     <audio id="snd-freespin" src="freespin.mp3" preload="auto"></audio>
     <audio id="snd-levelup" src="levelup.mp3" preload="auto"></audio>
-    <audio id="snd-click" src="Play.mp3" preload="auto"></audio>
+    <audio id="snd-click" src="click.mp3" preload="auto"></audio>
     <audio id="snd-jackpot" src="jackpot.mp3" preload="auto"></audio>
-    <audio id="snd-bigwin" src="bonus.mp3" preload="auto"></audio>
+    <audio id="snd-bigwin" src="bigwin.mp3" preload="auto"></audio>
 
     <script>
         const xmlConfigString = `
@@ -422,7 +416,6 @@
         const symbolNodes = xmlDoc.getElementsByTagName("symbol");
         const fruits = Array.from(symbolNodes).map(node => node.textContent);
 
-        // Load Game State dari Local Storage
         let balance = parseInt(localStorage.getItem("lunaBalance")) || 10000;
         let currentBet = 400;
         let targetWinNextLevel = 300000;
@@ -435,7 +428,6 @@
         let isBgmPlaying = false; 
         let soundEnabled = true;
 
-        // DOM Elements
         const gridElement = document.getElementById('slot-grid');
         const balanceEl = document.getElementById('balance-val');
         const winEl = document.getElementById('win-val');
@@ -446,7 +438,6 @@
         const autoBtn = document.getElementById('auto-btn');
         const gameContainer = document.getElementById('game-container');
 
-        // Audio Elements
         const sndBgm = document.getElementById('snd-bgm');
         const sndSpin = document.getElementById('snd-spin');
         const sndWin = document.getElementById('snd-win');
@@ -466,10 +457,9 @@
                 cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
                 gridElement.appendChild(cell);
             }
-            updateUI(); // Segarkan tampilan awal termasuk Saldo dari Cache
+            updateUI(); 
         }
 
-        // --- Sistem Manajemen Suara ---
         function toggleSound() {
             soundEnabled = !soundEnabled;
             const allAudio = [
@@ -495,7 +485,6 @@
             audioEl.play().catch(e => console.log("Menunggu interaksi pengguna..."));
         }
 
-        // Efek Suara pada semua Tombol
         setTimeout(() => {
             document.querySelectorAll("button").forEach(btn => {
                 btn.addEventListener("click", () => {
@@ -504,7 +493,6 @@
             });
         }, 100);
 
-        // --- Kumpulan Animasi Menang ---
         function shakeGame() {
             gameContainer.classList.add("win-shake");
             setTimeout(() => { gameContainer.classList.remove("win-shake"); }, 400);
@@ -566,7 +554,6 @@
             }, 30);
         }
 
-        // --- Logika Slot ---
         function changeBet(amount) {
             if(freeSpinsLeft > 0 || isAutoSpin || isSpinning) return; 
             currentBet = amount;
@@ -608,7 +595,7 @@
             spinCountEl.textContent = totalSpins;
 
             const cells = document.querySelectorAll('.slot-cell');
-            cells.forEach(cell => cell.classList.remove('win-symbol')); // Bersihkan efek menyala
+            cells.forEach(cell => cell.classList.remove('win-symbol')); 
 
             let wasFreeSpin = false;
             if (freeSpinsLeft > 0) {
@@ -617,7 +604,7 @@
             } else {
                 balance -= currentBet;
             }
-            updateUI(false); // Update angka secara instan tanpa animasi win
+            updateUI(false); 
             
             msgEl.textContent = wasFreeSpin ? `Free Spin Berjalan! (Sisa: ${freeSpinsLeft})` : "Memutar...";
             playSound(sndSpin);
@@ -657,7 +644,6 @@
         function checkLogic(matrix, wasFreeSpin) {
             let gotFiveInARow = false;
 
-            // 1. Cek Pemicu Free Spin
             for (let r = 0; r < 5; r++) {
                 if (new Set(matrix[r]).size === 1) gotFiveInARow = true;
             }
@@ -666,7 +652,6 @@
                 if (new Set(colValues).size === 1) gotFiveInARow = true;
             }
 
-            // 2. ATURAN HITUNGAN (Scatter)
             let flatMatrix = matrix.flat();
             let counts = {};
             flatMatrix.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
@@ -692,7 +677,6 @@
                 winAmount = baseMultiplier * currentBet;
                 if (wasFreeSpin) { winAmount *= 5; }
                 
-                // Animasi Simbol Menyala
                 const cells = document.querySelectorAll('.slot-cell');
                 cells.forEach(cell => {
                     if(winningFruits.includes(cell.textContent)) {
@@ -700,7 +684,6 @@
                     }
                 });
 
-                // Eksekusi Peningkatan Saldo & Kemenangan
                 let oldBalance = balance;
                 balance += winAmount;
                 totalWinAccumulated += winAmount;
@@ -709,13 +692,11 @@
                     ? `Hebat! Menang Rp ${winAmount} (x5 BONUS) dari ${matchedFruitsInfo.join(' & ')}!` 
                     : `Menang Rp ${winAmount} dari ${matchedFruitsInfo.join(' & ')}!`;
                 
-                // Efek Kemenangan
                 shakeGame();
                 playSound(sndWin);
                 showWinAnimation();
-                animateBalance(oldBalance, balance); // Animasi penambahan angka saldo
+                animateBalance(oldBalance, balance); 
 
-                // Klasifikasi Papan Pemenang Besar
                 if (winAmount >= currentBet * 30) {
                     showWinTitle("SUPER WIN");
                     playSound(sndJackpot);
@@ -772,18 +753,14 @@
         }
 
         function updateUI(isWinEvent = false) {
-            // Jika bukan event menang (seperti potong saldo awal spin), set teks manual
-            // Jika event menang, biarkan fungsi animateBalance yang mengelola angka saldo.
             if (!isWinEvent) { balanceEl.textContent = balance; }
             
             winEl.textContent = totalWinAccumulated;
             levelEl.textContent = currentLevel;
             
-            // Progress Bar Level (Persentase)
             let progress = (totalWinAccumulated / targetWinNextLevel) * 100;
             document.getElementById("level-fill").style.width = progress + "%";
 
-            // Simpan saldo terbaru ke Local Storage
             localStorage.setItem("lunaBalance", balance);
             
             if(freeSpinsLeft > 0) {
@@ -795,18 +772,20 @@
             }
         }
 
+        // --- Fungsi Exit yang diperbarui ke index.html ---
         function exitGame() {
             if (isAutoSpin) toggleAuto();
             if (isBgmPlaying) { sndBgm.pause(); }
+            
             if (confirm("Apakah anda yakin ingin keluar dari permainan Slot Buah Luna-Inc?")) {
-                gameContainer.innerHTML = "<h2 style='color:#ff5722; padding:50px 0;'>Terima kasih telah bermain di Luna-Inc! <br><br><span style='font-size:1.2rem; color:#fff;'>Silakan tutup halaman ini.</span></h2>";
+                window.location.href = "index.html";
             } else {
                 if (!isBgmPlaying && balance > 0 && soundEnabled) playBGM();
             }
         }
 
-        // Mulai Permainan
         initGrid();
     </script>
 </body>
 </html>
+
