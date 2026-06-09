@@ -34,15 +34,7 @@ const dataJSON = `[
         "rating": "🌟🌟🌟🌟🌟",
         "gambar": "war1.jpg",
         "tautan": "war.html" 
-    },
-    {
-    "nama" : "Game Bonanza"
-    "kategori":"Aksi & Petualangan"
-    "rating":"🌟🌟🌟🌟🌟"
-    "gambar":"#"
-    "tautan":"bonanza.html"
     }
-   }
 ]`;
 
 // Catatan: Tautan "#" artinya kosong/belum ada gamenya.
