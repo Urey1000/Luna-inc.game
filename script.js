@@ -37,7 +37,7 @@ const dataJSON = `[
     },
     {
     "nama" : "Game Bonanza"
-    "kategori":"Slot Game"
+    "kategori":"Aksi & Petualangan"
     "rating":"🌟🌟🌟🌟🌟"
     "gambar":"  .jpg"
     "tautan":"bonanza.html"
