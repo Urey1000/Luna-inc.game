@@ -34,8 +34,14 @@ const dataJSON = `[
         "rating": "🌟🌟🌟🌟🌟",
         "gambar": "war1.jpg",
         "tautan": "war.html" 
+    },
+    {
+    "nama" : "Game Bonanza"
+    "kategori":"Slot Game"
+    "rating":"🌟🌟🌟🌟🌟"
+    "gambar":"  .jpg"
+    "tautan":"bonanza.html"
     }
-
    
 ]`;
 
