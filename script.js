@@ -5,7 +5,7 @@ const dataJSON = `[
         "kategori": "Asah Otak",
         "rating": "🌟🌟🌟🌟🌟",
         "gambar": "Luna1.png",
-        "tautan": "game.html" 
+        "tautan": "bonanza.html" 
     },
     {
         "nama": "Poker game Luna",
@@ -39,10 +39,10 @@ const dataJSON = `[
     "nama" : "Game Bonanza"
     "kategori":"Aksi & Petualangan"
     "rating":"🌟🌟🌟🌟🌟"
-    "gambar":"  .jpg"
+    "gambar":"#"
     "tautan":"bonanza.html"
     }
-   
+   }
 ]`;
 
 // Catatan: Tautan "#" artinya kosong/belum ada gamenya.
