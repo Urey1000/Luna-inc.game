@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Bonanza</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #050505;
+            color: #ffffff;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            grid-template-rows: repeat(5, 60px);
+            gap: 8px;
+            background-color: #111;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 15px #00ffff, inset 0 0 15px #00ffff;
+            overflow: hidden; 
+            position: relative;
+        }
+
+        .cell {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            transition: all 0.3s ease-in-out;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); 
+        }
+
+        .cell.win {
+            background-color: #330033;
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 20px #ff00ff, inset 0 0 15px #ff00ff;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        @keyframes jatuhKebawah {
+            0% { transform: translateY(-100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(0); }
+        }
+        
+        .animasi-jatuh {
+            animation: jatuhKebawah 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+
+        .bet-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            min-height: 60px; /* Menjaga tata letak saat tombol membesar */
+        }
+
+        .auto-area {
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+
+        button {
+            font-family: inherit;
+            background-color: transparent;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffff, inset 0 0 10px #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+            transition: all 0.2s;
+        }
+
+        #spin-btn {
+            padding: 10px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 150px;
+        }
+        
+        #bet-display-text {
+            font-size: 14px;
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+        }
+
+        .btn-plus-minus {
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-plus-minus:active {
+            transform: scale(0.8);
+            box-shadow: 0 0 30px #00ffff, inset 0 0 20px #00ffff;
+            background-color: #00ffff;
+            color: #000;
+        }
+
+        #auto-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 160px;
+        }
+
+        button:hover:not(:disabled) { 
+            background-color: #00ffff; 
+            color: #000;
+            box-shadow: 0 0 20px #00ffff, inset 0 0 20px #00ffff;
+        }
+
+        button:disabled { 
+            border-color: #555;
+            color: #555;
+            box-shadow: none;
+            text-shadow: none;
+            cursor: not-allowed; 
+        }
+
+        @keyframes nyalaAuto {
+            0% { box-shadow: 0 0 10px #ff00ff; border-color: #ff00ff; color: #ff00ff; }
+            50% { box-shadow: 0 0 30px #ff00ff, inset 0 0 20px #ff00ff; background-color: #ff00ff; color: #000; }
+            100% { box-shadow: 0 0 10px #ff00ff; border-color: #ff00ff; color: #ff00ff; }
+        }
+
+        .auto-aktif { animation: nyalaAuto 1s infinite; }
+
+        .status-bar {
+            display: flex;
+            gap: 30px;
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        /* --- STYLING MODAL (Digunakan untuk FS dan Auto Spin) --- */
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            background: #1a001a;
+            border: 4px solid #ff00ff;
+            box-shadow: 0 0 50px #ff00ff, inset 0 0 30px #ff00ff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalZoom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalZoom {
+            0% { transform: scale(0.1); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Khusus Animasi Free Spin */
+        .fs-lollipops {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .fs-lollipops span {
+            animation: loliSpin 1s infinite alternate ease-in-out;
+        }
+
+        .fs-lollipops span:nth-child(even) {
+            animation-direction: alternate-reverse;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes loliSpin {
+            0% { transform: translateY(0) scale(1) rotate(-15deg); }
+            100% { transform: translateY(-20px) scale(1.2) rotate(15deg); text-shadow: 0 0 30px #ff00ff; }
+        }
+
+        .modal-text {
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            line-height: 1.5;
+        }
+
+        /* Khusus Tombol Pilihan Auto Spin */
+        .auto-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .auto-options button {
+            padding: 15px 20px;
+            font-size: 20px;
+            border-color: #ff00ff;
+            color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #ff00ff;
+            text-shadow: 0 0 5px #ff00ff;
+        }
+
+        .auto-options button:hover {
+            background-color: #ff00ff;
+            color: #000;
+            box-shadow: 0 0 20px #ff00ff, inset 0 0 20px #ff00ff;
+        }
+
+        .btn-batal {
+            margin-top: 30px;
+            background-color: #333;
+            border-color: #fff;
+            color: #fff;
+            box-shadow: none;
+            text-shadow: none;
+        }
+
+        .btn-batal:hover {
+            background-color: #555;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        /* --- TOMBOL EXIT --- */
+        #exit-btn {
+            margin-top: 10px;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff0055;
+            border: 2px solid #ff0055;
+            box-shadow: 0 0 15px #ff0055, inset 0 0 10px #ff0055;
+            text-shadow: 0 0 5px #ff0055;
+            background-color: #1a000a;
+            border-radius: 10px;
+        }
+
+        #exit-btn:hover {
+            background-color: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 25px #ff0055, inset 0 0 20px #ff0055;
+        }
+
+        /* --- GAYA KHUSUS MODE FREE SPIN --- */
+        .sembunyi {
+            display: none !important;
+        }
+
+        .btn-mode-fs {
+            background-color: #330033 !important;
+            color: #ff00ff !important;
+            border-color: #ff00ff !important;
+            box-shadow: 0 0 20px #ff00ff, inset 0 0 10px #ff00ff !important;
+            text-shadow: 0 0 10px #ff00ff !important;
+            width: 100%;
+            font-size: 24px !important;
+            padding: 15px 30px !important;
+            animation: nyalaFS 1s infinite alternate;
+        }
+
+        @keyframes nyalaFS {
+            0% { box-shadow: 0 0 10px #ff00ff, inset 0 0 5px #ff00ff; transform: scale(1); }
+            100% { box-shadow: 0 0 40px #ff00ff, inset 0 0 20px #ff00ff; transform: scale(1.05); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Game Bonanza</h1>
+    
+    <div class="status-bar">
+        <div>SALDO: <span id="balance">10000</span></div>
+        <div>FREE SPINS: <span id="free-spins">0</span></div>
+    </div>
+
+    <div id="game-board"></div>
+    
+    <div class="bet-controls">
+        <button class="btn-plus-minus" id="btn-min" onclick="ubahTaruhan(-1)">-</button>
+        
+        <button id="spin-btn" onclick="mulaiSpin()">
+            SPIN<br>
+            <span id="bet-display-text">Taruhan: <span id="bet-amount">400</span></span>
+        </button>
+        
+        <button class="btn-plus-minus" id="btn-plus" onclick="ubahTaruhan(1)">+</button>
+    </div>
+
+    <div class="auto-area">
+        <button id="auto-btn" onclick="toggleAutoBtn()">AUTO SPIN</button>
+    </div>
+
+    <button id="exit-btn" onclick="window.location.href='index.html'">EXIT KE BERANDA</button>
+
+    <div id="fs-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="fs-lollipops">
+                <span>🍭</span><span>🍭</span><span>🍭</span><span>🍭</span>
+            </div>
+            <div class="modal-text">SELAMAT!<br>Anda mendapatkan Free Spin<br>dalam 5x Putaran!</div>
+        </div>
+    </div>
+
+    <div id="auto-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-text">PILIH JUMLAH AUTO SPIN</div>
+            <div class="auto-options">
+                <button onclick="pilihAutoSpin(10)">10x</button>
+                <button onclick="pilihAutoSpin(20)">20x</button>
+                <button onclick="pilihAutoSpin(30)">30x</button>
+                <button onclick="pilihAutoSpin(50)">50x</button>
+                <button onclick="pilihAutoSpin(100)">100x</button>
+            </div>
+            <button class="btn-batal" onclick="tutupAutoModal()">BATAL</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ---
+        const audioKlik = new Audio('Play.mp3');
+        const audioJatuh = new Audio('Play.mp3');
+        const audioMenang = new Audio('win.mp3');
+        const audioScatter = new Audio('Play.mp3');
+        const audioBom = new Audio('bonus.mp3');
+        const audioGagal = new Audio('gagal.mp3');
+
+        function mainkanSuara(audio) {
+            audio.currentTime = 0; 
+            audio.play().catch(err => console.log("Audio menunggu interaksi user."));
+        }
+        // -------------
+
+        const baris = 5;
+        const kolom = 6;
+        const simbolBiasa = ['🍌', '🍇', '🍉', '🍑', '🍎', '🔵', '🟩', '🟪', '🔴'];
+        const scatter = '🍭'; 
+        const bom = '💣';     
+
+        const nilaiSimbol = {
+            '🍌': 2, '🍇': 3, '🍉': 4, '🍑': 5, '🍎': 6,
+            '🔵': 10, '🟩': 15, '🟪': 25, '🔴': 50
+        };
+
+        const daftarTaruhan = [400, 600, 800, 1000, 1200, 1400, 1600, 2000];
+        let indexTaruhan = 0; 
+
+        let grid = [];
+        let saldo = 10000; 
+        document.getElementById('balance').innerText = saldo;
+
+        let sisaFreeSpin = 0;
+        let isSpinning = false;
+        let sisaAutoSpin = 0; 
+
+        const boardEl = document.getElementById('game-board');
+        const btnSpin = document.getElementById('spin-btn');
+        const btnAuto = document.getElementById('auto-btn');
+        const btnMin = document.getElementById('btn-min');
+        const btnPlus = document.getElementById('btn-plus');
+        const betAmountEl = document.getElementById('bet-amount');
+
+        const jeda = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function ubahTaruhan(arah) {
+            if (isSpinning || sisaAutoSpin > 0) return; 
+            mainkanSuara(audioKlik); 
+            indexTaruhan += arah;
+            if (indexTaruhan < 0) indexTaruhan = 0;
+            if (indexTaruhan >= daftarTaruhan.length) indexTaruhan = daftarTaruhan.length - 1;
+            betAmountEl.innerText = daftarTaruhan[indexTaruhan];
+        }
+
+        function buatPapan() {
+            boardEl.innerHTML = '';
+            for (let r = 0; r < baris; r++) {
+                let rowArray = [];
+                for (let c = 0; c < kolom; c++) {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.id = `cell-${r}-${c}`;
+                    boardEl.appendChild(div);
+                    rowArray.push('');
+                }
+                grid.push(rowArray);
+            }
+        }
+
+        function getRandomSimbol() {
+            if (Math.random() < 0.06) return bom;
+            if (Math.random() < 0.05) return scatter; 
+            return simbolBiasa[Math.floor(Math.random() * simbolBiasa.length)];
+        }
+
+        function terapkanAnimasiJatuh(r, c) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            cell.classList.remove('animasi-jatuh');
+            void cell.offsetWidth; 
+            cell.classList.add('animasi-jatuh');
+        }
+
+        function renderKolomAnimasi(c) {
+            for (let r = 0; r < baris; r++) {
+                const cell = document.getElementById(`cell-${r}-${c}`);
+                cell.innerText = grid[r][c];
+                if (grid[r][c] === bom && !cell.getAttribute('data-multiplier')) {
+                    const m = [2, 5, 10, 25, 50, 100][Math.floor(Math.random() * 6)];
+                    cell.innerText = `💣${m}x`;
+                    cell.setAttribute('data-multiplier', m);
+                }
+                terapkanAnimasiJatuh(r, c);
+            }
+        }
+
+        function toggleAutoBtn() {
+            mainkanSuara(audioKlik);
+            if (sisaAutoSpin > 0) {
+                sisaAutoSpin = 0;
+            } else {
+                document.getElementById('auto-modal').style.display = 'flex';
+            }
+        }
+
+        function tutupAutoModal() {
+            mainkanSuara(audioKlik);
+            document.getElementById('auto-modal').style.display = 'none';
+        }
+
+        async function pilihAutoSpin(jumlah) {
+            tutupAutoModal();
+            sisaAutoSpin = jumlah;
+            
+            btnAuto.classList.add('auto-aktif');
+            btnMin.disabled = true;
+            btnPlus.disabled = true;
+
+            if (!isSpinning) {
+                jalankanAutoSpin();
+            }
+        }
+
+        async function jalankanAutoSpin() {
+            let taruhanSaatIni = daftarTaruhan[indexTaruhan];
+            
+            while (sisaAutoSpin > 0 && (saldo >= taruhanSaatIni || sisaFreeSpin > 0)) {
+                btnAuto.innerText = `STOP AUTO (${sisaAutoSpin})`;
+                await mulaiSpin();
+                
+                sisaAutoSpin--; 
+                if(sisaAutoSpin > 0) {
+                    await jeda(1000); 
+                }
+                taruhanSaatIni = daftarTaruhan[indexTaruhan];
+            }
+
+            if (sisaAutoSpin > 0 && saldo < taruhanSaatIni && sisaFreeSpin === 0) {
+                mainkanSuara(audioGagal); 
+                alert("Saldo tidak cukup untuk melanjutkan Auto Spin!");
+            }
+
+            sisaAutoSpin = 0;
+            btnAuto.innerText = "AUTO SPIN";
+            btnAuto.classList.remove('auto-aktif');
+            if(!isSpinning) {
+                btnMin.disabled = false;
+                btnPlus.disabled = false;
+                btnSpin.disabled = false;
+            }
+        }
+
+        // --- FUNGSI UPDATE TAMPILAN TOMBOL ---
+        function updateTampilanTombol() {
+            const areaAuto = document.querySelector('.auto-area');
+            
+            if (sisaFreeSpin > 0) {
+                // Sembunyikan kontrol lain
+                areaAuto.classList.add('sembunyi');
+                btnMin.classList.add('sembunyi');
+                btnPlus.classList.add('sembunyi');
+                
+                // Ubah gaya tombol spin menjadi Mode Free Spin
+                btnSpin.classList.add('btn-mode-fs');
+                btnSpin.innerHTML = `🌟 MAIN FREE SPIN 🌟<br><span style="font-size:16px; color:#fff; text-shadow:none;">Sisa Putaran: ${sisaFreeSpin}</span>`;
+            } else {
+                // Kembalikan ke normal jika Free Spin habis
+                areaAuto.classList.remove('sembunyi');
+                btnMin.classList.remove('sembunyi');
+                btnPlus.classList.remove('sembunyi');
+                
+                btnSpin.classList.remove('btn-mode-fs');
+                btnSpin.innerHTML = `SPIN<br><span id="bet-display-text">Taruhan: <span id="bet-amount">${daftarTaruhan[indexTaruhan]}</span></span>`;
+            }
+        }
+
+        async function mulaiSpin() {
+            if (isSpinning) return;
+
+            let taruhanSaatIni = daftarTaruhan[indexTaruhan];
+
+            if (sisaFreeSpin > 0) {
+                sisaFreeSpin--;
+                document.getElementById('free-spins').innerText = sisaFreeSpin;
+                // Perbarui angka pada teks tombol Free Spin secara real-time
+                updateTampilanTombol(); 
+            } else {
+                if (saldo < taruhanSaatIni) {
+                    mainkanSuara(audioGagal); 
+                    if(sisaAutoSpin === 0) alert("Saldo tidak cukup!");
+                    return;
+                }
+                saldo -= taruhanSaatIni;
+                document.getElementById('balance').innerText = saldo;
+                if(sisaAutoSpin === 0) mainkanSuara(audioKlik);
+            }
+
+            isSpinning = true;
+            btnSpin.disabled = true;
+            if(sisaAutoSpin === 0) {
+                btnMin.disabled = true;
+                btnPlus.disabled = true;
+            }
+
+            for (let c = 0; c < kolom; c++) {
+                for (let r = 0; r < baris; r++) {
+                    grid[r][c] = getRandomSimbol();
+                }
+            }
+
+            for (let c = 0; c < kolom; c++) {
+                mainkanSuara(audioJatuh); 
+                for (let r = 0; r < baris; r++) {
+                    document.getElementById(`cell-${r}-${c}`).className = 'cell';
+                    document.getElementById(`cell-${r}-${c}`).removeAttribute('data-multiplier');
+                }
+                renderKolomAnimasi(c); 
+                await jeda(100);       
+            }
+            
+            await jeda(500); 
+
+            await prosesTumble();
+
+            isSpinning = false;
+            
+            // Re-aktifkan tombol jika Auto Spin tidak sedang aktif
+            btnSpin.disabled = sisaAutoSpin > 0; 
+            if(sisaAutoSpin === 0) {
+                btnMin.disabled = false;
+                btnPlus.disabled = false;
+            }
+
+            // Cek di akhir putaran, jika Free Spin habis, tombol akan kembali normal
+            updateTampilanTombol();
+        }
+
+        async function prosesTumble() {
+            let adaKemenangan = true;
+            let totalKemenanganSpinIni = 0; 
+            let taruhanSaatIni = daftarTaruhan[indexTaruhan];
+            let pengaliTaruhan = taruhanSaatIni / 400; 
+
+            while (adaKemenangan) {
+                let hitungSimbol = {};
+                let selMenang = []; 
+                let adaKemenanganTumbleIni = false;
+                let adaScatterBaru = false;
+
+                for (let r = 0; r < baris; r++) {
+                    for (let c = 0; c < kolom; c++) {
+                        let sim = grid[r][c];
+                        hitungSimbol[sim] = (hitungSimbol[sim] || 0) + 1;
+                    }
+                }
+
+                let isModeFreeSpin = sisaFreeSpin > 0;
+
+                // 1. CEK SCATTER (Butuh minimal 3 Lolipop)
+                if (hitungSimbol[scatter] >= 3) {
+                    adaKemenanganTumbleIni = true;
+                    adaScatterBaru = true;
+                    sisaFreeSpin += 5; // Berikan 5 Free Spins
+                    document.getElementById('free-spins').innerText = sisaFreeSpin;
+                    
+                    mainkanSuara(audioScatter); 
+
+                    // --- LOGIKA BARU ---
+                    // Hentikan auto spin jika sedang berjalan agar pemain bisa memulai FS manual
+                    sisaAutoSpin = 0;
+                    btnAuto.innerText = "AUTO SPIN";
+                    btnAuto.classList.remove('auto-aktif');
+                    updateTampilanTombol(); 
+                    // -------------------
+                    
+                    // Tampilkan modal 4 Lolipop menari
+                    document.getElementById('fs-modal').style.display = 'flex';
+                    await jeda(3000); 
+                    document.getElementById('fs-modal').style.display = 'none';
+                    
+                    for(let r = 0; r < baris; r++) {
+                        for(let c = 0; c < kolom; c++) {
+                            if(grid[r][c] === scatter) selMenang.push({r, c});
+                        }
+                    }
+                }
+
+                // 2. CEK SIMBOL BIASA BERDASARKAN MODE
+                for (let sim of simbolBiasa) {
+                    if (!isModeFreeSpin) {
+                        // --- NORMAL SPIN: Minimal 4 gambar di mana saja ---
+                        if (hitungSimbol[sim] >= 4) {
+                            adaKemenanganTumbleIni = true;
+                            let uangMenang = Math.floor(hitungSimbol[sim] * nilaiSimbol[sim] * pengaliTaruhan);
+                            totalKemenanganSpinIni += uangMenang; 
+                            saldo += uangMenang; 
+                            document.getElementById('balance').innerText = saldo;
+                            
+                            for(let r = 0; r < baris; r++) {
+                                for(let c = 0; c < kolom; c++) {
+                                    if(grid[r][c] === sim) selMenang.push({r, c});
+                                }
+                            }
+                        }
+                    } else {
+                        // --- FREE SPIN: Harus minimal 4 berurutan dari kiri ---
+                        let panjangDeretan = 0;
+                        for (let c = 0; c < kolom; c++) {
+                            let adaDiKolomIni = false;
+                            for (let r = 0; r < baris; r++) {
+                                if (grid[r][c] === sim) adaDiKolomIni = true;
+                            }
+                            if (adaDiKolomIni) {
+                                panjangDeretan++;
+                            } else {
+                                break; 
+                            }
+                        }
+
+                        if (panjangDeretan >= 4) {
+                            adaKemenanganTumbleIni = true;
+                            let totalCara = 1; 
+                            
+                            for (let c = 0; c < panjangDeretan; c++) {
+                                let jumlahDiKolom = 0;
+                                for (let r = 0; r < baris; r++) {
+                                    if (grid[r][c] === sim) {
+                                        jumlahDiKolom++;
+                                        selMenang.push({r, c}); 
+                                    }
+                                }
+                                totalCara *= jumlahDiKolom;
+                            }
+                            
+                            let uangMenang = Math.floor(panjangDeretan * totalCara * nilaiSimbol[sim] * pengaliTaruhan);
+                            totalKemenanganSpinIni += uangMenang; 
+                            saldo += uangMenang; 
+                            document.getElementById('balance').innerText = saldo;
+                        }
+                    }
+                }
+
+                if (!adaKemenanganTumbleIni) {
+                    adaKemenangan = false;
+                    break; 
+                }
+
+                if (!adaScatterBaru) {
+                    mainkanSuara(audioMenang); 
+                }
+
+                selMenang.forEach(pos => {
+                    document.getElementById(`cell-${pos.r}-${pos.c}`).classList.add('win');
+                });
+
+                await jeda(800);
+
+                selMenang.forEach(pos => {
+                    grid[pos.r][pos.c] = '';
+                    document.getElementById(`cell-${pos.r}-${pos.c}`).classList.remove('win');
+                });
+
+                let bunyiJatuhTumble = false;
+                for (let c = 0; c < kolom; c++) {
+                    let adaTurun = false;
+                    let kolomBaru = [];
+                    for (let r = baris - 1; r >= 0; r--) {
+                        if (grid[r][c] !== '') {
+                            kolomBaru.push(grid[r][c]);
+                        }
+                    }
+                    while (kolomBaru.length < baris) {
+                        kolomBaru.push(getRandomSimbol());
+                        adaTurun = true;
+                    }
+                    for (let r = baris - 1; r >= 0; r--) {
+                        grid[r][c] = kolomBaru[(baris - 1) - r];
+                        document.getElementById(`cell-${r}-${c}`).removeAttribute('data-multiplier');
+                        
+                        document.getElementById(`cell-${r}-${c}`).innerText = grid[r][c];
+                        if (grid[r][c] === bom) {
+                             const m = [2, 5, 10, 25, 50, 100][Math.floor(Math.random() * 6)];
+                             document.getElementById(`cell-${r}-${c}`).innerText = `💣${m}x`;
+                             document.getElementById(`cell-${r}-${c}`).setAttribute('data-multiplier', m);
+                        }
+                        
+                        if(adaTurun) {
+                            terapkanAnimasiJatuh(r, c); 
+                            bunyiJatuhTumble = true;
+                        }
+                    }
+                }
+
+                if (bunyiJatuhTumble) mainkanSuara(audioJatuh); 
+                await jeda(600);
+            } 
+
+            // --- KALKULASI BOM (Mengalikan di akhir putaran jika ada kemenangan) ---
+            if (totalKemenanganSpinIni > 0) {
+                let totalMultiplierBomb = 0;
+                for (let r = 0; r < baris; r++) {
+                    for (let c = 0; c < kolom; c++) {
+                        if (grid[r][c] === bom) {
+                            let m = parseInt(document.getElementById(`cell-${r}-${c}`).getAttribute('data-multiplier'));
+                            totalMultiplierBomb += m;
+                        }
+                    }
+                }
+
+                if (totalMultiplierBomb > 0) {
+                    mainkanSuara(audioBom); 
+                    let bonusBom = (totalKemenanganSpinIni * totalMultiplierBomb) - totalKemenanganSpinIni;
+                    saldo += bonusBom;
+                    document.getElementById('balance').innerText = saldo;
+                    await jeda(800); 
+                }
+            }
+        }
+
+        buatPapan();
+    </script>
+</body>
+</html>
