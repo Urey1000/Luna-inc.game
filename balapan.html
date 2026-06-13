@@ -265,10 +265,13 @@
         // ====================================================================
         // AUDIO SYSTEM TERBARU 
         // ====================================================================
+        
+        // Inisialisasi Audio Context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let engineOsc = null;
         let engineGain = null;
         let engineFilter = null; 
+        let lastSpeed = 0; // Tambahan variable untuk fungsi audio
 
         function startEngineSound() {
             try {
@@ -282,7 +285,7 @@
                 engineGain = audioCtx.createGain();
                 engineFilter = audioCtx.createBiquadFilter(); 
                 
-                engineOsc.type = 'triangle'; 
+                engineOsc.type = 'sawtooth'; // Diubah ke sawtooth agar lebih garang
                 engineOsc.frequency.setValueAtTime(40, audioCtx.currentTime); 
                 
                 engineFilter.type = 'lowpass';
@@ -300,16 +303,6 @@
             }
         }
 
-        function updateEngineSound(speed) {
-            if (engineOsc && engineFilter) {
-                let pitch = 40 + (speed * 14); 
-                engineOsc.frequency.setTargetAtTime(pitch, audioCtx.currentTime, 0.05);
-                
-                let filterFreq = 110 + (speed * 20);
-                engineFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.05);
-            }
-        }
-
         function stopEngineSound() {
             if (engineOsc) { 
                 try { 
@@ -320,25 +313,44 @@
             }
         }
 
+        function updateEngineSound(speed) {
+            if (engineOsc && engineFilter) {
+                // Menggunakan formula logaritmik agar kenaikan RPM terasa lebih natural
+                let pitch = 40 + (Math.pow(speed, 1.2) * 10); 
+                let filterFreq = 150 + (speed * 40);
+                
+                // Mempercepat response time untuk balap liar yang agresif
+                engineOsc.frequency.setTargetAtTime(pitch, audioCtx.currentTime, 0.02);
+                engineFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.02);
+                
+                // Sedikit variasi gain berdasarkan speed
+                engineGain.gain.setTargetAtTime(0.2 + (speed / 200), audioCtx.currentTime, 0.1);
+            }
+        }
+
         function playWinSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const nadaMenang = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; 
             
-            nadaMenang.forEach((freq, i) => {
+            // Gunakan chord agar suara kemenangan terdengar lebih megah
+            const chord = [261.63, 329.63, 392.00]; // C Major chord
+            const time = audioCtx.currentTime;
+
+            chord.forEach((freq) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.08));
+                osc.type = 'triangle'; // Suara lebih tebal/organik daripada 'sine'
+                osc.frequency.setValueAtTime(freq, time);
                 
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (i * 0.08));
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.08) + 0.35);
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(0.15, time + 0.05); // Attack cepat
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 1.5); // Decay panjang
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 
-                osc.start(audioCtx.currentTime + (i * 0.08));
-                osc.stop(audioCtx.currentTime + (i * 0.08) + 0.35);
+                osc.start(time);
+                osc.stop(time + 1.5);
             });
         }
 
@@ -346,11 +358,9 @@
         // FUNGSI NAVIGASI KELUAR KE INDEX.HTML
         // ====================================================================
         function keluarGame() {
-          {
-                gameAktif = false;
-                stopEngineSound();
-                window.location.href = 'index.html';
-            }
+            gameAktif = false;
+            stopEngineSound();
+            window.location.href = 'index.html';
         }
 
         // ====== KONTROL TOMBOL LAYAR HP (TOUCH / CLICK) ======
