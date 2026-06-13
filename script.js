@@ -1,76 +1,61 @@
-// 1. DATA JSON (Ditambah baris "tautan" dan memasukkan Game Tebak Angka)
-const dataJSON = `[
-    {
-        "nama": "Game Buah-buahan",
-        "kategori": "Asah Otak",
-        "rating": "🌟🌟🌟🌟🌟",
-        "gambar": "Luna1.png",
-        "tautan": "bonanza.html" 
-    },
-    {
-        "nama": "Poker game Luna",
-        "kategori": "Aksi & Petualangan",
-        "rating": "🌟🌟🌟🌟",
-        "gambar": "Luna4.png",
-        "tautan": "poker.html" 
-    },
-    {
-        "nama": "Balapan Liar 3D",
-        "kategori": "Olahraga",
-        "rating": "🌟🌟🌟🌟🌟",
-        "gambar": "Luna3.png",
-        "tautan": "balapan.html" 
-    },
- {
-        "nama": "Ludo Game",
-        "kategori": "Olahraga",
-        "rating": "🌟🌟🌟🌟🌟",
-        "gambar": "luna6.png",
-        "tautan": "ludo.html" 
-    },
-     {
-        "nama": "Pesawat Antariksa",
-        "kategori": "Petualangan",
-        "rating": "🌟🌟🌟🌟🌟",
-        "gambar": "war1.jpg",
-        "tautan": "war.html" 
-    }
-]`;
+const grid = document.getElementById("gameGrid");
+const search = document.getElementById("search");
+const userText = document.getElementById("userText");
 
-// Catatan: Tautan "#" artinya kosong/belum ada gamenya.
+// LOGIN CHECK
+const user = localStorage.getItem("namaPemain");
 
-const daftarPermainan = JSON.parse(dataJSON);
-
-const wadah = document.getElementById("wadah-game");
-const kolomCari = document.getElementById("kolom-cari");
-
-function tampilkanGame(data) {
-    wadah.innerHTML = ""; 
-
-    data.forEach(function(game) {
-        const kotakElemen = document.createElement("div");
-        kotakElemen.className = "kartu-game";
-        
-        // BARU: Menambahkan <a class="btn-main"> di baris paling bawah kotak
-        kotakElemen.innerHTML = `
-            <img src="${game.gambar}" alt="Gambar dari ${game.nama}">
-            <h3>${game.nama}</h3>
-            <p><strong>Kategori:</strong> ${game.kategori}</p>
-            <p><strong>Penilaian:</strong> ${game.rating}</p>
-            <a href="${game.tautan}" class="btn-main">▶ Mainkan</a>
-        `;
-        wadah.appendChild(kotakElemen);
-    });
+if (user) {
+  userText.innerText = user;
+} else {
+  window.location.href = "login.html";
 }
 
-// Tampilkan semua game saat pertama kali dibuka
-tampilkanGame(daftarPermainan);
+// GAME DATA
+const games = [
+  { name:"Game Buah", category:"puzzle", img:"Luna1.png", link:"bonanza.html" },
+  { name:"Slot Buah", category:"action", img:"Luna4.png", link:"Slotbuah.html" },
+  { name:"Racing Car", category:"racing", img:"L8.png", link:"balapan.html" },
+  { name:"Ludo Game", category:"puzzle", img:"luna6.png", link:"ludo.html" },
+  { name:"Sky War", category:"action", img:"war1.jpg", link:"war.html" }
+];
 
-// Logika Pencarian
-kolomCari.addEventListener("keyup", function(event) {
-    const kataKunci = event.target.value.toLowerCase();
-    const hasilFilter = daftarPermainan.filter(function(game) {
-        return game.nama.toLowerCase().includes(kataKunci);
-    });
-    tampilkanGame(hasilFilter);
+// RENDER
+function render(data){
+  grid.innerHTML = "";
+
+  data.forEach(g => {
+    grid.innerHTML += `
+      <div class="card">
+        <img src="${g.img}">
+        <div class="info">
+          <h3>${g.name}</h3>
+          <p>${g.category}</p>
+          <a href="${g.link}">
+            <button>Mainkan</button>
+          </a>
+        </div>
+      </div>
+    `;
+  });
+}
+
+render(games);
+
+// SEARCH
+search.addEventListener("input", (e) => {
+  const val = e.target.value.toLowerCase();
+  render(games.filter(g => g.name.toLowerCase().includes(val)));
 });
+
+// CATEGORY FILTER
+function filterGame(cat){
+  if(cat === "all") return render(games);
+  render(games.filter(g => g.category === cat));
+}
+
+// LOGOUT
+function logout(){
+  localStorage.removeItem("namaPemain");
+  window.location.href = "login.html";
+              }
