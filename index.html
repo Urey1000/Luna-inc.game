@@ -1,134 +1,85 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☆☆ Luna-Inc Game ☆☆</title>
-    
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Style Tambahan untuk Efek Neon Glasses Subtitle */
-        .neon-glass-text {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #ffffff;
-            text-shadow: 
-                0 0 5px rgba(0, 243, 255, 0.6),
-                0 0 10px rgba(0, 243, 255, 0.4),
-                0 0 20px rgba(0, 243, 255, 0.2);
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            padding: 10px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(0, 243, 255, 0.15);
-            display: inline-block;
-            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.05);
-            margin-bottom: 25px;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luna-Inc Games</title>
 
-        #typewriter-subtitle::after {
-            content: '|';
-            color: #00f3ff;
-            margin-left: 2px;
-            animation: kedipKursor 0.7s infinite;
-        }
-
-        @keyframes kedipKursor {
-            50% { opacity: 0; }
-        }
-        
-        /* CSS tambahan untuk merapikan tombol keluar jika diperlukan */
-        #tombol-keluar {
-            display: none;
-        }
-    </style>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-    <header class="glass-header">
-        <h1>Luna-Inc Game</h1>
-        
-        <div class="user-profile-neon">
-    <p id="sapaan" class="sapaan-teks"></p>
-    <button id="tombol-keluar" class="btn-keluar-neon" onclick="keluarAkun()">
-        <span class="btn-icon">⚡</span> Logout
-    </button>
+<!-- TOP NAV -->
+<header class="topbar">
+  <div class="logo">🎮 Luna-Inc</div>
+
+  <input id="search" class="search" placeholder="Cari game..." />
+
+  <div class="userbox">
+    <span id="userText">Guest</span>
+    <button onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Hallo Selamat Datang </h1>
+  <p>Mainkan game kesukaan kamu arcade, racing, puzzle & action</p>
+</section>
+
+<!-- CATEGORY -->
+<div class="categories">
+  <button onclick="filterGame('all')">All</button>
+  <button onclick="filterGame('action')">Action</button>
+  <button onclick="filterGame('racing')">Racing</button>
+  <button onclick="filterGame('puzzle')">Puzzle</button>
 </div>
 
-    </header>
+<!-- GAME GRID -->
+<main id="gameGrid" class="grid"></main>
 
-    <div class="main-content">
-        <p class="subtitle neon-glass-text">
-            <span id="typewriter-subtitle"></span>
-        </p>
-        
-        <input type="text" id="kolom-cari" placeholder="🔍 Cari nama permainan..." class="search-bar">
-        
-        <div id="wadah-game" class="grid-container">
-            </div>
+<!-- FOOTER -->
+<footer class="footer-pro">
+  <div class="footer-container">
+
+    <div class="footer-brand">
+      <h2>🎮 Luna-Inc</h2>
+      <p>Portal game gratis. Silahkan logout untuk keluar game.</p>
     </div>
 
-    <script src="script.js"></script>
+    <div class="footer-links">
+      <h4>Game</h4>
+      <a href="#">Action</a>
+      <a href="#">Racing</a>
+      <a href="#">Puzzle</a>
+      <a href="#">Adventure</a>
+    </div>
 
-    <script>
-        // --- 1. Logika Cek Sesi Login ---
-        const namaTersimpan = localStorage.getItem("namaPemain");
-        const tombolKeluar = document.getElementById("tombol-keluar");
-        
-        if (namaTersimpan) {
-            document.getElementById("sapaan").innerHTML = "👋 Selamat datang, " + namaTersimpan + "!";
-            tombolKeluar.style.display = "block";
-        } else {
-            // Jika user iseng masuk tanpa login, tendang kembali ke pintu utama
-            window.location.href = "login.html";
-        }
+    <div class="footer-links">
+      <h4>Menu</h4>
+      <a href="#">Home</a>
+      <a href="#">Trending</a>
+      <a href="#">New Games</a>
+    </div>
 
-        function keluarAkun() {
-            localStorage.removeItem("namaPemain");
-            // Mengarahkan ke halaman login dengan parameter khusus logout agar animasinya terpicu
-            window.location.href = "login.html?action=logout";
-        }
+    <div class="footer-links">
+      <h4>Info</h4>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy</a>
+    </div>
 
-        // --- 2. Logika Efek Mengetik Subtitle (Perbaikan Rumus Baris 71) ---
-        const teksSubtitle = "♡ hallo, saya Luna Aprilia ♡";
-        let indeksKarakter = 0;
-        let teksSekarang = "";
-        let sedangMenghapus = false;
-        const elemenSubtitle = document.getElementById("typewriter-subtitle");
+  </div>
 
-        function animasiKetikSubtitle() {
-            if (sedangMenghapus) {
-                teksSekarang = teksSubtitle.substring(0, teksSekarang.length - 1);
-            } else {
-                teksSekarang = teksSubtitle.substring(0, teksSekarang.length + 1);
-            }
+  <div class="footer-bottom">
+    <p>© 2026 [Luna Game] by [Luna-Inc].
+      Privacy Policy | Terms of Service (luna-inc.web.id) 🚀</p>
+  </div>
+</footer>
 
-            elemenSubtitle.innerText = teksSekarang;
+<script src="script.js"></script>
 
-            // Memastikan penulisan operator pembagian menggunakan '/' yang valid
-            let kecepatan = 100; 
-            if (sedangMenghapus) {
-                kecepatan = kecepatan / 2; 
-            }
-
-            if (!sedangMenghapus && teksSekarang === teksSubtitle) {
-                kecepatan = 3000; // Diam 3 detik saat kalimat utuh
-                sedangMenghapus = true;
-            } else if (sedangMenghapus && teksSekarang === "") {
-                sedangMenghapus = false;
-                kecepatan = 500; // Jeda sebelum mengetik ulang
-            }
-
-            setTimeout(animasiKetikSubtitle, kecepatan);
-        }
-
-        // Menjalankan fungsi animasi ketik saat dokumen siap
-        document.addEventListener("DOMContentLoaded", animasiKetikSubtitle);
-    </script>
 </body>
-</html>
+    </html>
