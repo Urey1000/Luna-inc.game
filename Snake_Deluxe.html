@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modern Snake Game</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111; user-select: none;
+        }
+
+        #bg-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('1001160004.jpg');
+            background-size: cover; background-position: center;
+            opacity: 0.2; z-index: -1;
+        }
+
+        #top-nav {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(0, 0, 0, 0.7); color: #fff;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 10px 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .nav-item { font-size: 14px; font-weight: bold; }
+        .btn-exit {
+            background-color: #ff4757; color: white; border: none;
+            padding: 5px 15px; border-radius: 5px; cursor: pointer;
+            text-decoration: none; font-weight: bold;
+        }
+        
+        #gameCanvas { display: block; }
+
+        /* Desain Popup Level Up Modern */
+        #level-popup {
+            display: none; /* Sembunyi secara default */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); z-index: 20;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center;
+        }
+
+        .popup-box {
+            background: linear-gradient(135deg, #2ed573, #1e90ff);
+            padding: 30px 50px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup-box h1 { margin: 0 0 10px 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .popup-box p { font-size: 18px; margin-bottom: 20px; }
+        .popup-btn {
+            background: white; color: #111; border: none;
+            padding: 10px 30px; font-size: 18px; font-weight: bold;
+            border-radius: 30px; cursor: pointer; transition: 0.2s;
+        }
+        .popup-btn:active { transform: scale(0.9); }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-container"></div>
+
+    <nav id="top-nav">
+        <div class="nav-item">👤 Player1</div>
+        <div class="nav-item">Level: <span id="ui-level">1</span></div>
+        <div class="nav-item">Score: <span id="ui-score">0</span></div>
+        <div class="nav-item">Kills: <span id="ui-kills">0</span></div>
+        <div class="nav-item">❤️: <span id="ui-lives">3</span></div>
+        <a href="index.html" class="btn-exit">Exit</a>
+    </nav>
+
+    <div id="level-popup">
+        <div class="popup-box">
+            <h1>Selamat! 🎉</h1>
+            <p>Kamu mencapai <strong style="color: #ffeaa7;">Level <span id="popup-level-text">2</span></strong></p>
+            <button class="popup-btn" onclick="resumeGame()">Mulai Lanjut</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // --- SISTEM AUDIO SEDERHANA ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'eat') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'pow') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'levelUp') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // --- VARIABEL GAME ---
+        let score = 0;
+        let level = 1;
+        let kills = 0;
+        let lives = 3;
+        const pointsPerLevel = 500; 
+        let isPaused = false;
+        
+        // --- SISTEM VISUAL (POWW TEXT) ---
+        let floatingTexts = [];
+
+        function spawnText(x, y, text, color) {
+            floatingTexts.push({ x: x, y: y, text: text, color: color, alpha: 1.0 });
+        }
+
+        // --- FUNGSI MENCARI POSISI AMAN MUNCUL ---
+        let playerBody = []; // Referensi sementara
+        let enemies = [];
+        const maxEnemies = 7;
+
+        function getSafeSpawnPos(isPlayer) {
+            let x, y, isSafe;
+            let attempts = 0;
+            do {
+                x = 50 + Math.random() * (canvas.width - 100);
+                y = 50 + Math.random() * (canvas.height - 100);
+                isSafe = true;
+
+                if (!isPlayer && playerBody.length > 0) {
+                    if (Math.hypot(x - player.x, y - player.y) < 200) isSafe = false;
+                }
+                enemies.forEach(e => {
+                    if (Math.hypot(x - e.x, y - e.y) < 200) isSafe = false;
+                });
+                attempts++;
+            } while (!isSafe && attempts < 50); // Coba maks 50x agar tidak hang
+            return {x, y};
+        }
+
+        // --- OBJEK ULAR PEMAIN ---
+        let startPos = getSafeSpawnPos(true);
+        let player = {
+            x: startPos.x, y: startPos.y,
+            radius: 14, speed: 3.5, angle: 0,
+            body: [], length: 20
+        };
+        playerBody = player.body;
+
+        // --- SISTEM MAKANAN ---
+        const foods = [];
+        function spawnFood() {
+            // 10% peluang muncul makanan besar
+            let isBig = Math.random() < 0.1; 
+            foods.push({
+                x: 20 + Math.random() * (canvas.width - 40),
+                y: 20 + Math.random() * (canvas.height - 40),
+                radius: isBig ? 12 : 5, // Lebih besar
+                color: isBig ? '#f1c40f' : `hsl(${Math.random() * 360}, 100%, 60%)`, // Emas jika besar
+                points: isBig ? 100 : 20,
+                growth: isBig ? 5 : 2,
+                isBig: isBig
+            });
+        }
+        for(let i = 0; i < 60; i++) spawnFood();
+
+        // --- SISTEM MUSUH ---
+        function spawnEnemy() {
+            let pos = getSafeSpawnPos(false);
+            enemies.push({
+                id: Math.random().toString(),
+                x: pos.x, y: pos.y,
+                radius: 12, speed: 2.8,
+                angle: Math.random() * Math.PI * 2,
+                targetAngle: Math.random() * Math.PI * 2,
+                body: [],
+                length: Math.floor(Math.random() * 20) + 15,
+                hue: Math.random() * 360,
+                isDead: false
+            });
+        }
+        for(let i = 0; i < maxEnemies; i++) spawnEnemy();
+
+        // --- KONTROL GAME ---
+        let targetX = null; let targetY = null;
+
+        function updateTarget(e) {
+            if (audioCtx.state === 'suspended') audioCtx.resume(); // Izinkan audio saat sentuh
+            const touch = e.touches[0];
+            targetX = touch.clientX; targetY = touch.clientY;
+        }
+
+        window.addEventListener('touchstart', updateTarget);
+        window.addEventListener('touchmove', updateTarget);
+
+        // --- LOGIKA LEVEL UP & PAUSE ---
+        function updateUI() {
+            document.getElementById('ui-score').innerText = score;
+            document.getElementById('ui-kills').innerText = kills;
+            document.getElementById('ui-lives').innerText = lives;
+            
+            let newLevel = Math.floor(score / pointsPerLevel) + 1;
+            if (newLevel > 100) newLevel = 100;
+
+            if (newLevel > level) {
+                level = newLevel;
+                document.getElementById('ui-level').innerText = level;
+                document.getElementById('popup-level-text').innerText = level;
+                
+                // Memicu Pause & Popup
+                isPaused = true;
+                playSound('levelUp');
+                document.getElementById('level-popup').style.display = 'flex';
+            }
+        }
+
+        // Dipanggil saat tombol "Mulai Lanjut" di klik
+        function resumeGame() {
+            isPaused = false;
+            document.getElementById('level-popup').style.display = 'none';
+            targetX = null; targetY = null; // Mencegah ular loncat arah
+        }
+
+        function resetPlayer() {
+            if (lives > 0) {
+                let safePos = getSafeSpawnPos(true);
+                player.x = safePos.x; player.y = safePos.y;
+                player.length = 20; player.body = [];
+                targetX = null; targetY = null;
+            } else {
+                alert("Game Over! Poin akhirmu: " + score);
+                score = 0; level = 1; kills = 0; lives = 3;
+                document.getElementById('ui-level').innerText = level;
+                updateUI(); resetPlayer();
+            }
+        }
+
+        // --- FUNGSI MENGGAMBAR ULAR (BENTUK DINAMIS) ---
+        function drawSnake(snakeObj, headColor, bodyColor) {
+            let totalLen = Math.max(1, snakeObj.body.length);
+            for (let i = totalLen - 1; i >= 0; i--) {
+                const segment = snakeObj.body[i];
+                
+                // Logika menyempit ke ekor (Ekor 30% ukuran kepala)
+                let scale = 1 - (i / totalLen) * 0.7; 
+                let currentRadius = Math.max(3, snakeObj.radius * scale);
+
+                ctx.beginPath();
+                ctx.arc(segment.x, segment.y, currentRadius, 0, Math.PI * 2);
+                ctx.fillStyle = i === 0 ? headColor : bodyColor; 
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        // --- GAME LOOP UTAMA ---
+        function gameLoop() {
+            // Jika pause, jangan jalankan logika game, tapi tetap panggil loop
+            if (isPaused) {
+                requestAnimationFrame(gameLoop);
+                return; 
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Garis Tembok
+            ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            // 1. LOGIKA MAKANAN (Menggunakan for loop mundur agar aman saat menghapus)
+            for (let i = foods.length - 1; i >= 0; i--) {
+                let food = foods[i];
+                
+                ctx.beginPath();
+                ctx.arc(food.x, food.y, food.radius, 0, Math.PI * 2);
+                if (food.isBig) {
+                    ctx.shadowBlur = 10; ctx.shadowColor = "yellow"; // Glow effect untuk makanan besar
+                }
+                ctx.fillStyle = food.color;
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset efek glow
+                ctx.closePath();
+
+                const dist = Math.hypot(player.x - food.x, player.y - food.y);
+                if (dist < player.radius + food.radius) {
+                    foods.splice(i, 1);
+                    player.length += food.growth; 
+                    score += food.points;        
+                    playSound('eat');
+                    updateUI();
+                    spawnFood();        
+                }
+            }
+
+            // 2. LOGIKA PEMAIN
+            if (targetX !== null && targetY !== null) {
+                const dx = targetX - player.x; const dy = targetY - player.y;
+                if (Math.hypot(dx, dy) > 5) player.angle = Math.atan2(dy, dx);
+            }
+
+            // Auto-steer batas tembok
+            const margin = 40;
+            if (player.x < margin) player.angle += 0.05; 
+            if (player.x > canvas.width - margin) player.angle += 0.05;
+            if (player.y < margin) player.angle += 0.05;
+            if (player.y > canvas.height - margin) player.angle += 0.05;
+
+            player.x += Math.cos(player.angle) * player.speed;
+            player.y += Math.sin(player.angle) * player.speed;
+
+            if (player.x <= 0 || player.x >= canvas.width || player.y <= 0 || player.y >= canvas.height) {
+                lives--; playSound('pow'); updateUI(); resetPlayer();
+            } else {
+                player.body.unshift({x: player.x, y: player.y});
+                if (player.body.length > player.length) player.body.pop();
+                drawSnake(player, '#1dd1a1', '#10ac84');
+            }
+
+            // 3. LOGIKA MUSUH
+            enemies.forEach((enemy) => {
+                let closestEntity = player;
+                let minDistance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+
+                enemies.forEach(otherEnemy => {
+                    if (enemy.id !== otherEnemy.id) {
+                        let dToOther = Math.hypot(otherEnemy.x - enemy.x, otherEnemy.y - enemy.y);
+                        if (dToOther < minDistance) { minDistance = dToOther; closestEntity = otherEnemy; }
+                    }
+                });
+
+                if (minDistance < 200) {
+                    let angleToEntity = Math.atan2(closestEntity.y - enemy.y, closestEntity.x - enemy.x);
+                    enemy.targetAngle = (enemy.length > closestEntity.length) ? angleToEntity : angleToEntity + Math.PI;
+                } else {
+                    if (Math.random() < 0.05) enemy.targetAngle += (Math.random() - 0.5);
+                }
+
+                if (enemy.x < margin) enemy.targetAngle = 0; 
+                else if (enemy.x > canvas.width - margin) enemy.targetAngle = Math.PI; 
+                if (enemy.y < margin) enemy.targetAngle = Math.PI / 2; 
+                else if (enemy.y > canvas.height - margin) enemy.targetAngle = -Math.PI / 2;
+
+                enemy.angle += (enemy.targetAngle - enemy.angle) * 0.1;
+                enemy.x += Math.cos(enemy.angle) * enemy.speed;
+                enemy.y += Math.sin(enemy.angle) * enemy.speed;
+
+                enemy.x = Math.max(enemy.radius, Math.min(canvas.width - enemy.radius, enemy.x));
+                enemy.y = Math.max(enemy.radius, Math.min(canvas.height - enemy.radius, enemy.y));
+
+                enemy.body.unshift({x: enemy.x, y: enemy.y});
+                if (enemy.body.length > enemy.length) enemy.body.pop();
+
+                drawSnake(enemy, `hsl(${enemy.hue}, 100%, 60%)`, `hsl(${enemy.hue}, 100%, 40%)`);
+            });
+
+            // 4. DETEKSI TABRAKAN 
+            enemies.forEach((enemy) => {
+                const distToEnemy = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (distToEnemy < player.radius + enemy.radius && !enemy.isDead) {
+                    if (player.length >= enemy.length) {
+                        kills++; score += 150; 
+                        player.length += Math.floor(enemy.length / 2); 
+                        enemy.isDead = true;
+                        
+                        // Efek Visual & Suara
+                        playSound('pow');
+                        spawnText(enemy.x, enemy.y, "POWW!", "#ff4757");
+                        spawnText(enemy.x, enemy.y + 20, "+150", "#2ed573");
+                        
+                        updateUI();
+                    } else {
+                        lives--; playSound('pow'); updateUI(); resetPlayer();
+                    }
+                }
+            });
+
+            for (let i = 0; i < enemies.length; i++) {
+                for (let j = i + 1; j < enemies.length; j++) {
+                    let e1 = enemies[i]; let e2 = enemies[j];
+                    if (!e1.isDead && !e2.isDead) {
+                        let d = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+                        if (d < Math.max(e1.radius, e2.radius)) {
+                            if (e1.length >= e2.length) {
+                                e1.length += Math.floor(e2.length / 2); e2.isDead = true;
+                            } else {
+                                e2.length += Math.floor(e1.length / 2); e1.isDead = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            enemies = enemies.filter(enemy => !enemy.isDead);
+            while (enemies.length < maxEnemies) spawnEnemy();
+
+            // 5. GAMBAR EFEK TEKS MELAYANG (POWW)
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let pt = floatingTexts[i];
+                ctx.fillStyle = pt.color;
+                ctx.globalAlpha = pt.alpha;
+                ctx.font = "bold 20px 'Segoe UI', Tahoma";
+                ctx.fillText(pt.text, pt.x, pt.y);
+                ctx.globalAlpha = 1.0; // reset
+                
+                pt.y -= 1.5; // Naik perlahan
+                pt.alpha -= 0.02; // Memudar perlahan
+                
+                if (pt.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Mulai Game
+        gameLoop();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
