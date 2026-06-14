@@ -16,38 +16,38 @@ const games = [
 {
 name: "Game Buah",
 category: "puzzle",
-img: "Luna1.png",
+img: "buah1.png",
 link: "bonanza.html"
 },
 {
 name: "Slot Buah",
 category: "action",
-img: "Luna4.png",
+img: "dl1.png",
 link: "Slotbuah.html"
 },
 {
 name: "Racing Car",
 category: "racing",
-img: "L8.png",
+img: "mb2.png",
 link: "balapan.html"
 },
 {
 name: "Ludo Game",
 category: "puzzle",
-img: "luna6.png",
+img: "L9.png",
 link: "ludo.html"
 },
 {
 name: "Sky War",
 category: "action",
-img: "war1.jpg",
+img: "P1.png",
 link: "war.html",
 featured: true
 },
 {
 name: "Snake Deluxe",
 category: "action",
-img: "L100.jpg",
+img: "UR1.png",
 link: "Snake_Deluxe.html"
 }
 ];
