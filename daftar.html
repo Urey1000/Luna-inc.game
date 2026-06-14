@@ -151,11 +151,11 @@
             
             <button type="submit" class="btn-daftar-form">Mulai Bermain 🚀</button>
             
-            <div id="pesan-sukses">🎉 Pendaftaran berhasil! Membuka lobi...</div>
+            <div id="pesan-sukses">🎉 Pendaftaran berhasil! Mengarahkan ke Login...</div>
             <div id="pesan-error">⚠️ Kata sandi tidak cocok! Cek kembali.</div>
         </form>
 
-        <a href="index.html" class="kembali">⬅ Kembali ke Beranda</a>
+        <a href="login.html" class="kembali">⬅ Kembali ke Login</a>
     </div>
 
     <script>
@@ -178,12 +178,12 @@
                 pesanError.style.display = "none";
                 pesanSukses.style.display = "block";
                 
-                // Simpan nama ke memori
-                localStorage.setItem("namaPemain", username);
+                // Opsional: Simpan nama ke memori agar bisa dipakai di form login
+                localStorage.setItem("namaPendaftaranBaru", username);
                 
-                // Pindah halaman otomatis
+                // Pindah halaman otomatis ke halaman login setelah 2 detik
                 setTimeout(function() {
-                    window.location.href = "index.html";
+                    window.location.href = "login.html"; // Ubah bagian ini
                 }, 2000);
             }
         });
