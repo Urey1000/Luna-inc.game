@@ -17,7 +17,8 @@ const games = [
   { name:"Slot Buah", category:"action", img:"Luna4.png", link:"Slotbuah.html" },
   { name:"Racing Car", category:"racing", img:"L8.png", link:"balapan.html" },
   { name:"Ludo Game", category:"puzzle", img:"luna6.png", link:"ludo.html" },
-  { name:"Sky War", category:"action", img:"war1.jpg", link:"war.html" }
+  { name:"Sky War", category:"action", img:"war1.jpg", link:"war.html" }, // Koma ditambahkan di sini
+  { name:"Snake Deluxe", category:"action", img:"L100.jpg", link:"Snake_Deluxe.html" }
 ];
 
 // RENDER
@@ -58,4 +59,4 @@ function filterGame(cat){
 function logout(){
   localStorage.removeItem("namaPemain");
   window.location.href = "login.html";
-              }
+}
