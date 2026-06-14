@@ -238,13 +238,13 @@
 
     <div id="loadingScreen" class="loader-overlay">
         <div class="neon-spinner"></div>
-        <div id="loadingText" class="loader-text">MENGHUBUNGKAN...</div>
+        <div id="loadingText" class="loader-text">Please Wait luna-inc...</div>
     </div>
 
     <div class="auth-container">
         <div class="brand-header">
             <h1 id="typewriter" class="brand-title"></h1>
-            <p class="brand-subtitle">Silahkan Login</p>
+            <p class="brand-subtitle">Hallo Silahkan Login</p>
         </div>
 
         <form id="loginForm" class="auth-form active" onsubmit="prosesLogin(event)">
@@ -253,10 +253,10 @@
                 <input type="text" id="loginUser" class="form-input" placeholder="Masukkan ID Anda..." required>
             </div>
             <div class="form-group">
-                <label for="loginPass">Sandi Kriptografi</label>
+                <label for="loginPass">Konfirmasi Password</label>
                 <input type="password" id="loginPass" class="form-input" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn-submit">OTORISASI MASUK</button>
+            <button type="submit" class="btn-submit">Login Sekarang</button>
             <div class="form-footer">
                 Belum terdaftar? <a href="#" onclick="pindahForm('registerForm')">Buat Akun Baru</a>
             </div>
@@ -352,7 +352,7 @@
             // Simpan nama pemain palsu ke localStorage
             localStorage.setItem("namaPemain", username);
 
-            jalankanAnimasiLoading("MENYINGKRONKAN DATA...", () => {
+            jalankanAnimasiLoading("Please Wait Luna Game...", () => {
                 window.location.href = "index.html";
             });
         }
