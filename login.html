@@ -125,11 +125,7 @@
 
         /* Form Controls */
         .auth-form {
-            display: none;
-        }
-
-        .auth-form.active {
-            display: block;
+            display: block; /* Selalu tampil karena form register sudah dipisah */
             animation: fadeIn 0.5s ease forwards;
         }
 
@@ -247,33 +243,18 @@
             <p class="brand-subtitle">Hallo Silahkan Login</p>
         </div>
 
-        <form id="loginForm" class="auth-form active" onsubmit="prosesLogin(event)">
+        <form id="loginForm" class="auth-form" onsubmit="prosesLogin(event)">
             <div class="form-group">
                 <label for="loginUser">Nama Pemain / ID</label>
                 <input type="text" id="loginUser" class="form-input" placeholder="Masukkan ID Anda..." required>
             </div>
             <div class="form-group">
-                <label for="loginPass">Konfirmasi Password</label>
+                <label for="loginPass">Password</label>
                 <input type="password" id="loginPass" class="form-input" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn-submit">Login Sekarang</button>
             <div class="form-footer">
-                Belum terdaftar? <a href="#" onclick="pindahForm('registerForm')">Buat Akun Baru</a>
-            </div>
-        </form>
-
-        <form id="registerForm" class="auth-form" onsubmit="prosesDaftar(event)">
-            <div class="form-group">
-                <label for="regUser">Nama Pemain Baru</label>
-                <input type="text" id="regUser" class="form-input" placeholder="Buat ID unik..." required>
-            </div>
-            <div class="form-group">
-                <label for="regPass">Sandi</label>
-                <input type="password" id="regPass" class="form-input" placeholder="Buat sandi rumit..." required>
-            </div>
-            <button type="submit" class="btn-submit">DAFTARKAN IDENTITAS</button>
-            <div class="form-footer">
-                Sudah memiliki akses? <a href="#" onclick="pindahForm('loginForm')">Kembali Log In</a>
+                Belum terdaftar? <a href="daftar.html">Buat Akun Baru</a>
             </div>
         </form>
     </div>
@@ -281,8 +262,6 @@
     <script>
         // --- Efek Mengetik Berulang-ulang (Typewriter Loop) ---
         const textKata = "Luna-Inc Game";
-        let count = 0;
-        let indexText = 0;
         let currentText = "";
         let isDeleting = false;
         const targetElement = document.getElementById("typewriter");
@@ -300,34 +279,26 @@
             if (isDeleting) kecepatanKetik /= 2;
 
             if (!isDeleting && currentText === textKata) {
-                kecepatanKetik = 2000; // Diam sebentar setelah selesai mengetik
+                kecepatanKetik = 2000; 
                 isDeleting = true;
             } else if (isDeleting && currentText === "") {
                 isDeleting = false;
-                kecepatanKetik = 500; // Jeda sebelum mengetik ulang
+                kecepatanKetik = 500; 
             }
 
             setTimeout(efekKetik, kecepatanKetik);
         }
 
-        // Jalankan efek ketik saat halaman siap
+        // Jalankan saat halaman siap
         document.addEventListener("DOMContentLoaded", () => {
             efekKetik();
-            // Logika deteksi parameter logout paksa dari index.html
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('action') === 'logout') {
                 jalankanAnimasiLoading("MEMUTUSKAN JARINGAN...", () => {
-                    // Bersihkan sisa parameter di url agar rapi
                     window.history.replaceState({}, document.title, window.location.pathname);
                 });
             }
         });
-
-        // --- Logika Navigasi Pindah Form ---
-        function pindahForm(formId) {
-            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-            document.getElementById(formId).classList.add('active');
-        }
 
         // --- Fungsi Pembantu Animasi Loading ---
         function jalankanAnimasiLoading(teks, callback) {
@@ -337,36 +308,25 @@
             
             overlay.classList.add("active");
 
-            // Tahan animasi selama 1.8 detik agar transisi glamour terlihat nyata
             setTimeout(() => {
                 overlay.classList.remove("active");
                 if(callback) callback();
             }, 1800);
         }
 
-        // --- Proses Form Kirim Data (Fake Logic) ---
+        // --- Proses Login dan Pindah Halaman ---
         function prosesLogin(e) {
-            e.preventDefault();
+            e.preventDefault(); 
+            
             const username = document.getElementById("loginUser").value;
             
-            // Simpan nama pemain palsu ke localStorage
             localStorage.setItem("namaPemain", username);
 
             jalankanAnimasiLoading("Please Wait Luna Game...", () => {
-                window.location.href = "index.html";
-            });
-        }
-
-        function prosesDaftar(e) {
-            e.preventDefault();
-            const username = document.getElementById("regUser").value;
-
-            jalankanAnimasiLoading("MENDAFTARKAN PENGGUNA...", () => {
-                alert("Pendaftaran Berhasil! Silakan masuk menggunakan akun baru Anda.");
-                pindahForm('loginForm');
-                document.getElementById("loginUser").value = username;
+                window.location.href = "index.html"; 
             });
         }
     </script>
 </body>
 </html>
+
