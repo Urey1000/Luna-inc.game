@@ -43,8 +43,47 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
-            margin: 20px 0;
+            margin: 20px 0 10px 0;
             position: relative;
+        }
+
+        .leaderboard-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ffdf00;
+            max-width: 500px;
+            width: 90%;
+            margin: 10px 0 20px 0;
+        }
+
+        .leaderboard-container h2 {
+            color: #ffdf00;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px #ff5722;
+        }
+
+        #leaderboard {
+            list-style-position: inside;
+            padding: 0;
+            margin: 0;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        #leaderboard li {
+            padding: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #leaderboard li:last-child {
+            border-bottom: none;
         }
 
         .win-shake {
@@ -344,6 +383,14 @@
         <h1>Slot Buah Luna-Inc</h1>
     </header>
 
+    <div id="user-profile" style="background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: center; display: none; border: 1px solid #ffdf00; max-width: 500px; width: 90%;">
+        <h3 style="color: #ffdf00; margin-bottom: 10px; font-size: 1.5rem;" id="profile-username">Guest</h3>
+        <div>
+            <span id="profile-level" style="background: #ff5722; padding: 5px 12px; border-radius: 5px; font-weight: bold; margin-right: 10px; color: white;">Level: 1</span>
+            <span id="profile-xp" style="background: #2196f3; padding: 5px 12px; border-radius: 5px; font-weight: bold; color: white;">XP: 0</span>
+        </div>
+    </div>
+
     <div class="game-container" id="game-container">
         <div class="status-bar">
             <div>Level: <span id="level-val">1</span>/150</div>
@@ -382,6 +429,20 @@
 
         <div class="msg-box" id="msg-box">Pilih taruhan dan tekan Spin!</div>
         <div class="hint-audio">Klik di mana saja untuk mengaktifkan musik latar.</div>
+    </div>
+
+    <div class="leaderboard-container">
+        <h2>🏆 Leaderboard Slot</h2>
+        
+        <div id="my-rank-card" style="margin-bottom:15px; padding:15px; border-radius:10px; background:rgba(0,0,0,0.6); display:none; text-align: left;">
+            <h3 style="color: gold; margin-bottom: 8px; font-size: 1.2rem;">⭐ Peringkat Anda</h3>
+            <p id="my-rank" style="font-weight: bold; margin-bottom: 5px; font-size: 1.1rem;">Rank: -</p>
+            <p id="my-score" style="color: #00e676; font-weight: bold; font-size: 1.1rem;">Score: -</p>
+        </div>
+
+        <ol id="leaderboard">
+            <li>Memuat data...</li>
+        </ol>
     </div>
 
     <footer>
@@ -427,6 +488,8 @@
         let totalSpins = 0; 
         let isBgmPlaying = false; 
         let soundEnabled = true;
+        let finalScoreSent = false; 
+        let currentUser = null; 
 
         const gridElement = document.getElementById('slot-grid');
         const balanceEl = document.getElementById('balance-val');
@@ -772,21 +835,140 @@
             }
         }
 
-        // --- Fungsi Exit yang diperbarui ke index.html ---
-        function exitGame() {
+        async function sendScoreToBackend() {
+            if (finalScoreSent) return;
+            finalScoreSent = true;
+            try {
+                const res = await fetch("http://localhost:3000/score", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        game_name: "slot",
+                        score: Math.floor(totalWinAccumulated + balance)
+                    })
+                });
+                const data = await res.json();
+                console.log("Score terkirim:", data);
+            } catch (err) {
+                console.log("Gagal kirim score:", err);
+                finalScoreSent = false; 
+            }
+        }
+
+        async function exitGame() {
             if (isAutoSpin) toggleAuto();
             if (isBgmPlaying) { sndBgm.pause(); }
             
-            if (confirm("Apakah anda yakin ingin keluar dari permainan Slot Buah Luna-Inc?")) {
-                window.location.href = "index.html";
+            if (confirm("Apakah anda yakin ingin keluar dari permainan Slot Buah Luna-Inc? (Skor Anda akan disimpan!)")) {
+                msgEl.textContent = "Menyimpan skor..."; 
+                await sendScoreToBackend(); 
+                window.location.href = "index.html"; 
             } else {
                 if (!isBgmPlaying && balance > 0 && soundEnabled) playBGM();
             }
         }
 
+        // 🔥 FUNGSI UPDATE USER DATA DIPERBARUI
+        async function getCurrentUser() {
+            try {
+                const res = await fetch("http://localhost:3000/me", {
+                    credentials: "include"
+                });
+
+                if (!res.ok) return;
+
+                currentUser = await res.json();
+                console.log("User login:", currentUser);
+
+                // Tampilkan dan isi data ke kotak profil HTML
+                document.getElementById("user-profile").style.display = "block";
+                document.getElementById("profile-username").innerText = currentUser.username;
+                document.getElementById("profile-level").innerText = "Level: " + (currentUser.level || 1);
+                document.getElementById("profile-xp").innerText = "XP: " + (currentUser.xp || 0);
+
+            } catch (err) {
+                console.log("Gagal ambil user", err);
+            }
+        }
+
+        function showMyRank(rank, score) {
+            const card = document.getElementById("my-rank-card");
+
+            if (!rank) {
+                card.style.display = "none";
+                return;
+            }
+
+            document.getElementById("my-rank").innerText = "Rank: #" + rank;
+            document.getElementById("my-score").innerText = "Score: 🏆 " + score.toLocaleString('id-ID');
+
+            card.style.display = "block";
+            card.style.border = "2px solid gold";
+            card.style.boxShadow = "0 0 15px rgba(255, 215, 0, 0.4)";
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch("http://localhost:3000/leaderboard/slot");
+                const data = await res.json();
+
+                const list = document.getElementById("leaderboard");
+                list.innerHTML = ""; 
+
+                let myRank = null;
+                let myScore = null;
+
+                if (data.length === 0) {
+                    list.innerHTML = "<li>Belum ada data peringkat.</li>";
+                    showMyRank(null, null); 
+                    return;
+                }
+
+                data.forEach((player, index) => {
+                    const li = document.createElement("li");
+                    
+                    let isMe = currentUser && player.username === currentUser.username;
+
+                    if (isMe) {
+                        myRank = index + 1;
+                        myScore = player.score;
+                    }
+
+                    let content = `<span>${index + 1}. <strong>${player.username}</strong></span> <span>🏆 ${player.score.toLocaleString('id-ID')}</span>`;
+
+                    if (isMe) {
+                        li.style.background = "gold";
+                        li.style.color = "black";
+                        li.style.padding = "8px 12px"; 
+                        li.style.borderRadius = "5px";
+                        content = `<span>${index + 1}. <strong>${player.username} ⭐ YOU</strong></span> <span>🏆 ${player.score.toLocaleString('id-ID')}</span>`;
+                    }
+
+                    li.innerHTML = content;
+                    list.appendChild(li);
+                });
+
+                showMyRank(myRank, myScore);
+
+            } catch (err) {
+                console.log("Gagal load leaderboard:", err);
+                const list = document.getElementById("leaderboard");
+                if(list.innerHTML.includes("Memuat data")) {
+                    list.innerHTML = "<li>Gagal terhubung ke server.</li>";
+                }
+            }
+        }
+
         initGrid();
+        
+        getCurrentUser().then(() => {
+            loadLeaderboard();
+            setInterval(loadLeaderboard, 10000); 
+        });
+
     </script>
 </body>
 </html>
-
-
