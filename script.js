@@ -32,6 +32,13 @@ img: "mb2.png",
 link: "balapan.html"
 },
 {
+name: "Racing bike",
+category: "racing",
+img: "mo2.png",
+link: "motor.html"
+},
+
+{
 name: "Ludo Game",
 category: "puzzle",
 img: "L9.png",
@@ -202,3 +209,44 @@ window.location.href = "login.html";
 // INIT
 renderFeatured();
 render(games);
+  document.addEventListener("DOMContentLoaded", () => {
+    const counters = document.querySelectorAll('.counter');
+    const animationDuration = 2000; // Durasi transisi angka (2000ms = 2 detik)
+
+    counters.forEach(counter => {
+      const target = parseFloat(counter.getAttribute('data-target'));
+      const suffix = counter.getAttribute('data-suffix') || '';
+      
+      // Deteksi apakah angka target memiliki desimal (seperti 1.2)
+      const isFloat = !Number.isInteger(target) && target.toString().includes('.');
+
+      let startTime = null;
+
+      const updateCount = (currentTime) => {
+        if (!startTime) startTime = currentTime;
+        const progress = currentTime - startTime;
+
+        // Hitung nilai saat ini berdasarkan persentase waktu berjalan
+        const currentVal = Math.min((progress / animationDuration) * target, target);
+
+        if (isFloat) {
+          // Tetapkan 1 angka di belakang koma untuk desimal
+          counter.innerText = currentVal.toFixed(1) + suffix;
+        } else {
+          // Bulatkan ke atas untuk angka bulat
+          counter.innerText = Math.ceil(currentVal) + suffix;
+        }
+
+        if (progress < animationDuration) {
+          requestAnimationFrame(updateCount);
+        } else {
+          // Pastikan hasil akhir akurat saat animasi selesai
+          counter.innerText = target + suffix;
+        }
+      };
+
+      requestAnimationFrame(updateCount);
+    });
+  });
+
+ 
