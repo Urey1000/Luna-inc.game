@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Motor Race V4 AAA Unreal 3D Audio</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #1e293b; font-family: Arial; color: white; }
+  
+  /* --- UI / UX MODERN UNTUK TOPBAR & BUTTONS --- */
+  #topbar { position: absolute; top: 0; width: 100%; height: 50px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+  
+  .top-controls { display: flex; gap: 10px; }
+  .top-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    outline: none;
+  }
+  .top-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+  .top-btn:active { transform: translateY(1px); }
+  .top-btn.exit-btn:hover { background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+  
+  #hud { display: flex; gap: 15px; font-size: 14px; font-weight: bold; }
+  #hud span { color: #22c55e; }
+  #game { position: absolute; top: 50px; bottom: 140px; width: 100%; background: #334155; }
+  canvas { width: 100%; height: 100%; display: block; }
+  
+  #controls { position: absolute; bottom: 0; width: 100%; height: 140px; background: #0b0f19; display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; box-sizing: border-box; border-top: 3px solid #1e293b; }
+  .btn { border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 6px 0 rgba(0,0,0,0.5); user-select: none; touch-action: none; cursor: pointer; }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+  
+  #gas { width: 110px; height: 110px; background: linear-gradient(135deg, #22c55e, #16a34a); font-size: 24px; box-shadow: 0 6px 0 #14532d; }
+  #gas:active { box-shadow: 0 2px 0 #14532d; }
+  #nitroBtn { width: 70px; height: 70px; background: linear-gradient(135deg, #ef4444, #b91c1c); font-size: 14px; border-radius: 50%; box-shadow: 0 6px 0 #7f1d1d; margin-left: 10px; color: yellow; }
+  #nitroBtn:active { box-shadow: 0 2px 0 #7f1d1d; }
+  
+  #leftBtn, #rightBtn { width: 90px; height: 90px; background: linear-gradient(135deg, #475569, #334155); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; user-select: none; box-shadow: 0 6px 0 #1e293b; touch-action: none; }
+  #leftBtn:active, #rightBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1e293b; }
+  
+  #menu { position: absolute; width: 100%; height: 100%; background: linear-gradient(to bottom, #0f172a, #020617); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
+  button.start-btn { padding: 15px 30px; margin: 10px; background: #3b82f6; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 18px; transition: transform 0.2s;}
+  button.start-btn:hover { transform: scale(1.05); background: #2563eb; }
+
+  /* --- OVERLAY PAUSE --- */
+  #pauseOverlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 900;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #pauseOverlay h2 { font-size: 36px; margin-bottom: 20px; color: #fff; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>🏍️ MOTOR RACE V4 AAA</h1>
+  <button class="start-btn" onclick="start()">MULAI BALAPAN</button>
+</div>
+
+<div id="pauseOverlay">
+  <h2>GAME PAUSED</h2>
+  <button class="start-btn" onclick="togglePause()">LANJUTKAN</button>
+  <button class="start-btn" style="background:#ef4444;" onclick="exitGame()">KELUAR</button>
+</div>
+
+<div id="topbar">
+  <div class="top-controls">
+    <button id="pauseBtn" class="top-btn" onclick="togglePause()">⏸ Pause</button>
+    <button id="exitBtn" class="top-btn exit-btn" onclick="exitGame()">✖ Exit</button>
+  </div>
+  <div id="hud">
+    <div>Progress: <span id="cp">0m / 5000m</span></div>
+    <div>Gear: <span id="gearHud" style="color: #3b82f6;">1</span></div>
+    <div>KM/H: <span id="spd">0</span></div>
+  </div>
+</div>
+
+<div id="game"><canvas id="c"></canvas></div>
+
+<div id="controls">
+  <div style="display:flex; align-items:center;">
+    <div id="gas" class="btn">GAS</div>
+    <div id="nitroBtn" class="btn">NITRO</div>
+  </div>
+  <div style="display:flex; gap:15px;">
+    <div id="leftBtn" oncontextmenu="return false;">⬅</div>
+    <div id="rightBtn" oncontextmenu="return false;">➡</div>
+  </div>
+</div>
+
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+
+function resize(){
+  c.width = window.innerWidth;
+  c.height = window.innerHeight - 190;
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* =========================
+   WORLD & ASSETS & STATE
+========================= */
+let running = false;
+let isPaused = false;
+let distance = 0;
+let finishDistance = 5000;
+
+const assets = { player: new Image(), bot: new Image() };
+assets.player.src = "https://cdn-icons-png.flaticon.com/512/3097/3097180.png";
+assets.bot.src = "https://cdn-icons-png.flaticon.com/512/743/743007.png";
+
+/* =========================
+   PLAYER PHYSICS (AAA CORE)
+========================= */
+let player = {
+  x: 0,
+  vx: 0,
+  speed: 0,
+  accel: 0.22,
+  brake: 0.09,
+  maxSpeed: 20
+};
+
+let steer = 0;
+let gas = false;
+let nitro = false;
+let camX = 0;
+let shake = 0;
+
+/* =========================
+   TRAFFIC AI
+========================= */
+let bots = Array.from({length: 6}).map((_,i)=>({
+  x: (Math.random()-0.5)*200,
+  y: -i*300,
+  speed: 3 + Math.random()*6,
+  vx: 0,
+  profile: botEngineProfile(i)
+}));
+
+function botEngineProfile(seed){
+  return {
+    pitch: 0.8 + Math.random() * 0.5,
+    tone: ["sawtooth","square","triangle"][seed % 3]
+  };
+}
+
+/* =========================
+   AAA ENGINE AUDIO SYSTEM
+========================= */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let master;
+let analyser;
+
+// Player Multi-Layer Nodes
+let idle, mid, high;
+let idleGain, midGain, highGain;
+let panner;
+
+// Ambient, Bots & Music
+let botSounds = [];
+let wind, windGain;
+let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_d0a1b2.mp3");
+music.loop = true;
+music.volume = 0.15; 
+
+let isAudioReady = false;
+let lastSkidTime = 0;
+let gear = 1;
+let rpm = 0;
+let wetMode = false;
+
+function makeOsc(type){
+  let o = audioCtx.createOscillator();
+  o.type = type;
+  o.start();
+  return o;
+}
+
+function createBotSound(profile){
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+  let pan = audioCtx.createStereoPanner();
+  let filter = audioCtx.createBiquadFilter();
+
+  osc.type = profile.tone;
+  filter.type = "lowpass";
+  filter.frequency.value = 800;
+  gain.gain.value = 0;
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(pan);
+  pan.connect(master);
+
+  osc.start();
+  return {osc, gain, pan, filter, pitchModifier: profile.pitch};
+}
+
+function initAudio(){
+  audioCtx = new AudioCtx();
+
+  master = audioCtx.createGain();
+  master.gain.value = wetMode ? 0.75 : 0.9;
+
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 512;
+  master.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  panner = audioCtx.createPanner();
+  panner.panningModel = "HRTF";
+  panner.distanceModel = "inverse";
+  panner.refDistance = 1;
+  panner.rolloffFactor = 2;
+  panner.connect(master);
+
+  idle = makeOsc("triangle");
+  mid = makeOsc("sawtooth");
+  high = makeOsc("square");
+
+  idleGain = audioCtx.createGain();
+  midGain = audioCtx.createGain();
+  highGain = audioCtx.createGain();
+
+  idleGain.gain.value = 0.6;
+  midGain.gain.value = 0;
+  highGain.gain.value = 0;
+
+  idle.connect(idleGain).connect(panner);
+  mid.connect(midGain).connect(panner);
+  high.connect(highGain).connect(panner);
+
+  wind = makeOsc("sawtooth");
+  windGain = audioCtx.createGain();
+  windGain.gain.value = 0;
+  wind.connect(windGain).connect(master);
+
+  bots.forEach(b => {
+    botSounds.push(createBotSound(b.profile));
+  });
+
+  isAudioReady = true;
+}
+
+function skidSound(intensity){
+  if (!isAudioReady || isPaused) return;
+  let o = audioCtx.createOscillator();
+  let g = audioCtx.createGain();
+
+  o.type = "sawtooth";
+  o.frequency.value = 200 + Math.random() * 400;
+  g.gain.value = intensity;
+
+  o.connect(g).connect(master);
+  o.start();
+
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  o.stop(audioCtx.currentTime + 0.15);
+}
+
+function nitroSound(){
+  if (!isAudioReady || isPaused) return;
+  let o = audioCtx.createOscillator();
+  let g = audioCtx.createGain();
+
+  o.type = "sawtooth";
+  o.frequency.value = 600;
+  g.gain.value = 0.2;
+
+  o.connect(g).connect(master);
+  o.start();
+
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+  o.stop(audioCtx.currentTime + 0.2);
+}
+
+function crashSound(force){
+  if (!isAudioReady || isPaused) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+
+  o.type = "square";
+  o.frequency.value = 120 + force * 300;
+  g.gain.value = force;
+
+  o.connect(g).connect(master);
+  o.start();
+
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+  o.stop(audioCtx.currentTime + 0.4);
+}
+
+function updateSpatial(x, vel){
+  if (!isAudioReady || isPaused) return;
+  let t = audioCtx.currentTime;
+  let px = x * 0.05;
+  
+  if (panner.positionX) {
+    panner.positionX.setTargetAtTime(px, t, 0.1);
+    panner.positionY.setTargetAtTime(0, t, 0.1);
+    panner.positionZ.setTargetAtTime(-1, t, 0.1);
+  } else {
+    panner.setPosition(px, 0, -1);
+  }
+}
+
+function updateEngineAndSystems(speed){
+  if (!isAudioReady || isPaused) return;
+  let tParams = audioCtx.currentTime;
+  let targetRPM = speed / 16;
+
+  if (targetRPM > 0.85 && gear < 6){
+    gear++;
+    crashSound(0.15);
+  }
+  if (targetRPM < 0.3 && gear > 1){
+    gear--;
+  }
+
+  rpm += (targetRPM - rpm) * 0.08;
+
+  engineIdleFreq = 80 + rpm * 50;
+  engineMidFreq  = 120 + rpm * 300;
+  engineHighFreq = 200 + rpm * 900;
+
+  idle.frequency.setTargetAtTime(engineIdleFreq, tParams, 0.1);
+  mid.frequency.setTargetAtTime(engineMidFreq, tParams, 0.1);
+  high.frequency.setTargetAtTime(engineHighFreq, tParams, 0.1);
+
+  let tIdleGain = 0.8 - rpm;
+  let tMidGain  = rpm * 1.5;
+  let tHighGain = Math.max(0, (rpm - 0.4) * 2.5);
+
+  if (!gas && speed > 8) {
+    tMidGain *= 0.98;
+    tHighGain *= 0.95;
+  }
+
+  idleGain.gain.setTargetAtTime(Math.max(0, Math.min(1, tIdleGain)), tParams, 0.1);
+  midGain.gain.setTargetAtTime(Math.max(0, Math.min(1, tMidGain)), tParams, 0.1);
+  highGain.gain.setTargetAtTime(Math.max(0, Math.min(1, tHighGain)), tParams, 0.1);
+
+  let targetWindGain = Math.max(0, rpm - 0.3) * 0.9;
+  if (wetMode) targetWindGain *= 1.4;
+  windGain.gain.setTargetAtTime(targetWindGain, tParams, 0.1);
+  wind.frequency.setTargetAtTime(200 + rpm * 1200, tParams, 0.1);
+
+  music.playbackRate = 0.8 + speed * 0.015;
+}
+
+function setWeather(wet){
+  wetMode = wet;
+  if (isAudioReady) {
+    master.gain.value = wet ? 0.75 : 0.9;
+  }
+}
+
+/* =========================
+   UI BUTTONS LOGIC
+========================= */
+function togglePause() {
+  if (document.getElementById("menu").style.display !== "none") return; // Cegah pause saat di menu utama
+
+  isPaused = !isPaused;
+  const pauseBtn = document.getElementById("pauseBtn");
+  const overlay = document.getElementById("pauseOverlay");
+
+  if (isPaused) {
+    running = false;
+    pauseBtn.innerHTML = "▶ Resume";
+    overlay.style.display = "flex";
+    if (isAudioReady) audioCtx.suspend(); // Matikan audio saat pause
+    music.pause();
+  } else {
+    running = true;
+    pauseBtn.innerHTML = "⏸ Pause";
+    overlay.style.display = "none";
+    if (isAudioReady) audioCtx.resume(); // Lanjutkan audio
+    music.play();
+    loop(); // Restart animasi game
+  }
+}
+
+function exitGame() {
+  // Confirm pop up untuk mencegah keluar ga sengaja
+  let confirmExit = confirm("Yakin ingin keluar dan kembali ke halaman utama?");
+  if (confirmExit) {
+    window.location.href = "index.html"; 
+  }
+}
+
+/* =========================
+   INPUT CONTROLS
+========================= */
+const btnGas = document.getElementById("gas");
+const btnNitro = document.getElementById("nitroBtn");
+const btnL = document.getElementById("leftBtn");
+const btnR = document.getElementById("rightBtn");
+
+const setGas = (val) => (e) => { e.preventDefault(); gas = val; };
+const setSteer = (val) => (e) => { e.preventDefault(); steer = val; };
+
+const triggerNitro = (e) => { 
+  e.preventDefault(); 
+  if (!nitro) nitroSound(); 
+  nitro = true; 
+};
+const releaseNitro = (e) => { e.preventDefault(); nitro = false; };
+
+btnGas.addEventListener("mousedown", setGas(true));
+btnGas.addEventListener("mouseup", setGas(false));
+btnGas.addEventListener("touchstart", setGas(true));
+btnGas.addEventListener("touchend", setGas(false));
+
+btnNitro.addEventListener("mousedown", triggerNitro);
+btnNitro.addEventListener("mouseup", releaseNitro);
+btnNitro.addEventListener("touchstart", triggerNitro);
+btnNitro.addEventListener("touchend", releaseNitro);
+
+btnL.addEventListener("mousedown", setSteer(-1));
+btnL.addEventListener("mouseup", setSteer(0));
+btnL.addEventListener("touchstart", setSteer(-1));
+btnL.addEventListener("touchend", setSteer(0));
+
+btnR.addEventListener("mousedown", setSteer(1));
+btnR.addEventListener("mouseup", setSteer(0));
+btnR.addEventListener("touchstart", setSteer(1));
+btnR.addEventListener("touchend", setSteer(0));
+
+window.addEventListener("keydown", e => {
+  if (e.code === "Escape" || e.code === "KeyP") togglePause(); // Shortcut Pause
+  if (isPaused) return; // Disable controls if paused
+  if(e.code === "ArrowLeft") steer = -1;
+  if(e.code === "ArrowRight") steer = 1;
+  if(e.code === "Space" || e.code === "ArrowUp") gas = true;
+  if(e.code === "ShiftLeft" || e.code === "ShiftRight") {
+    if (!nitro) nitroSound();
+    nitro = true;
+  }
+});
+window.addEventListener("keyup", e => {
+  if (isPaused) return;
+  if(e.code === "ArrowLeft" || e.code === "ArrowRight") steer = 0;
+  if(e.code === "Space" || e.code === "ArrowUp") gas = false;
+  if(e.code === "ShiftLeft" || e.code === "ShiftRight") nitro = false;
+});
+
+/* =========================
+   AAA PHYSICS & AUDIO LOOP
+========================= */
+function loop(){
+  if(!running || isPaused) return;
+
+  /* ===== PLAYER PHYSICS ===== */
+  let throttle = gas ? 1 : 0;
+  let targetMaxSpeed = nitro ? 26 : player.maxSpeed;
+  
+  if (nitro) {
+    player.speed += 0.35; 
+  } else {
+    player.speed += (throttle * player.accel - player.brake);
+  }
+  
+  player.speed *= 0.992;
+  player.speed = Math.max(0, Math.min(player.speed, targetMaxSpeed));
+
+  /* ===== STEERING & INERTIA ===== */
+  let steerPower = steer * (0.06 + player.speed * 0.002);
+  player.vx += steerPower;
+  player.vx *= player.speed > 12 ? 0.88 : 0.92;
+  player.x += player.vx;
+  player.x = Math.max(-260, Math.min(260, player.x));
+
+  /* ===== CAMERA & SHAKE ===== */
+  camX += (player.x - camX) * 0.08;
+  shake = player.speed > 15 ? (Math.random()-0.5)*5 : 0;
+  distance += player.speed * 0.8;
+
+  /* ===== AUDIO UPDATES ===== */
+  if (isAudioReady) {
+    updateEngineAndSystems(player.speed);
+    updateSpatial(player.x, player.vx);
+    
+    if (Math.abs(player.vx) > 1.8 && player.speed > 10) {
+      let now = Date.now();
+      if (now - lastSkidTime > 150) { 
+        skidSound(0.08);
+        lastSkidTime = now;
+      }
+    }
+  }
+
+  /* ===== UPDATE HUD ===== */
+  document.getElementById("spd").innerText = Math.floor(player.speed * 12);
+  document.getElementById("gearHud").innerText = gear;
+  document.getElementById("cp").innerText = Math.floor(distance) + "m / " + finishDistance + "m";
+
+  /* =========================
+     RENDER BACKGROUND
+  ========================= */
+  ctx.save();
+  ctx.translate(c.width/2 + camX + shake, 0);
+
+  ctx.fillStyle = wetMode ? "#0f172a" : "#1e293b"; 
+  ctx.fillRect(-c.width, 0, c.width*2, c.height);
+  ctx.fillStyle = "#2b2f36";
+  ctx.fillRect(-300, 0, 600, c.height);
+
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 3;
+  ctx.setLineDash([30,30]);
+  let roadOffset = (distance*2) % 60;
+  ctx.lineDashOffset = -roadOffset;
+
+  ctx.beginPath();
+  ctx.moveTo(-100,0); ctx.lineTo(-100,c.height);
+  ctx.moveTo(100,0); ctx.lineTo(100,c.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* =========================
+     BOT PHYSICS + AUDIO 3D
+  ========================= */
+  let playerY = c.height - 120;
+
+  bots.forEach((b, i) => {
+    b.y += (player.speed - b.speed) * 1.2;
+    b.vx += (Math.random()-0.5)*0.2;
+    b.vx *= 0.9;
+    b.x += b.vx;
+
+    if (isAudioReady) {
+      let sound = botSounds[i];
+      let dx = b.x - player.x; 
+      let tBot = audioCtx.currentTime;
+      
+      let pan = Math.max(-1, Math.min(1, dx / 180));
+      sound.pan.pan.setTargetAtTime(pan, tBot, 0.03);
+
+      let dist = Math.abs(dx);
+      let attenuation = 1 / (1 + dist * 0.02);
+
+      let relSpeed = player.speed - b.speed;
+      let doppler = 1 + relSpeed * 0.015;
+      let baseFreq = (70 + b.speed * 40) * sound.pitchModifier;
+
+      sound.osc.frequency.setTargetAtTime(baseFreq * doppler, tBot, 0.05);
+      sound.gain.gain.setTargetAtTime(attenuation * 0.22, tBot, 0.05);
+
+      let depth = Math.abs(b.y - playerY);
+      let lowpass = Math.max(200, 2000 - depth * 2);
+      sound.filter.frequency.setTargetAtTime(lowpass, tBot, 0.1);
+    }
+
+    if(b.y > c.height+200){
+      b.y = -800 - Math.random() * 400;
+      b.x = (Math.random()-0.5)*250;
+      b.speed = 3 + Math.random()*7;
+    } else if (b.y < -1500) {
+      b.y = c.height + 100;
+    }
+
+    /* BENTURAN / TABRAKAN */
+    let dxCol = player.x - b.x;
+    let dyCol = playerY - b.y;
+
+    if(Math.abs(dxCol) < 40 && Math.abs(dyCol) < 70){
+      player.speed *= 0.5;
+      player.vx += dxCol * 0.04;
+      shake = 18;
+      crashSound(0.6); 
+    }
+
+    /* RENDER BOT */
+    let scale = Math.max(0.5, 0.6 + (b.y / c.height) * 0.3);
+    let w = 60 * scale;
+    let h = 100 * scale;
+
+    ctx.fillStyle="rgba(0,0,0,0.4)";
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y + h/2, w*0.5, w*0.15, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    if (assets.bot.complete) {
+      ctx.drawImage(assets.bot, b.x - w/2, b.y - h/2, w, h);
+    } else {
+      ctx.fillStyle="#ff4444";
+      ctx.fillRect(b.x - w/2, b.y - h/2, w, h);
+    }
+  });
+
+  /* =========================
+     PLAYER RENDER
+  ========================= */
+  let px = player.x;
+  let py = playerY;
+  let lean = player.vx * 0.03;
+  let pW = 60;
+  let pH = 100;
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(lean);
+
+  if (nitro) {
+    ctx.fillStyle = "rgba(255, 100, 0, 0.8)";
+    ctx.beginPath();
+    ctx.moveTo(-10, pH/2);
+    ctx.lineTo(10, pH/2);
+    ctx.lineTo(0, pH/2 + 30 + Math.random() * 20);
+    ctx.fill();
+  }
+
+  ctx.fillStyle="rgba(0,0,0,0.5)";
+  ctx.beginPath();
+  ctx.ellipse(0, pH/2, pW*0.5, pW*0.15, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  if (assets.player.complete) {
+    ctx.drawImage(assets.player, -pW/2, -pH/2, pW, pH);
+  } else {
+    ctx.fillStyle="#00ff88";
+    ctx.fillRect(-pW/2, -pH/2, pW, pH);
+  }
+
+  ctx.restore();
+  ctx.restore(); 
+
+  requestAnimationFrame(loop);
+}
+
+/* START */
+function start(){
+  document.getElementById("menu").style.display = "none";
+  running = true;
+  initAudio();
+  audioCtx.resume(); 
+  
+  music.play().catch(err => console.log("Musik tertunda aturan browser:", err));
+  
+  loop();
+}
+</script>
+</body>
+</html>
