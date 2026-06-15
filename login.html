@@ -97,7 +97,7 @@
         /* Header & Gaya Ketik Berulang-ulang */
         .brand-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Sedikit dikurangi agar jarak ke banner pas */
         }
 
         .brand-title {
@@ -123,9 +123,34 @@
             margin-top: 5px;
         }
 
+        /* --- TAMBAHAN BARU: Style untuk Banner Gambar --- */
+        .banner-container {
+            width: 100%;
+            margin-bottom: 25px;
+            border-radius: 16px;
+            overflow: hidden; /* Memastikan gambar mengikuti border-radius */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15); /* Cahaya biru halus */
+            position: relative;
+        }
+
+        .game-banner {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        /* Efek zoom pelan saat disorot mouse agar interaktif */
+        .banner-container:hover .game-banner {
+            transform: scale(1.05);
+        }
+        /* ------------------------------------------------ */
+
         /* Form Controls */
         .auth-form {
-            display: block; /* Selalu tampil karena form register sudah dipisah */
+            display: block; 
             animation: fadeIn 0.5s ease forwards;
         }
 
@@ -243,6 +268,9 @@
             <p class="brand-subtitle">Hallo Silahkan Login</p>
         </div>
 
+        <div class="banner-container">
+            <img src="L07.png" alt="Promo Luna Game" class="game-banner">
+        </div>
         <form id="loginForm" class="auth-form" onsubmit="prosesLogin(event)">
             <div class="form-group">
                 <label for="loginUser">Nama Pemain / ID</label>
@@ -329,4 +357,3 @@
     </script>
 </body>
 </html>
-
