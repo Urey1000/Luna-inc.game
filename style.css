@@ -335,6 +335,16 @@ background:#3b82f6;
   margin:auto;
 }
 
+  .stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,220px));
+  justify-content:center; /* 🔥 ini yang bikin ke tengah */
+  gap:15px;
+  padding:20px;
+  max-width:1100px;
+  margin:auto;
+}
+
 .stat-card{
   background:#151b2c;
   border-radius:16px;
