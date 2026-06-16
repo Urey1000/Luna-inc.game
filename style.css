@@ -335,6 +335,12 @@ background:#3b82f6;
   margin: 0 auto; /* pastikan center */
 }
 
+  section.stats{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .stat-card{
   background:#151b2c;
   border-radius:16px;
@@ -356,6 +362,11 @@ background:#3b82f6;
 .stat-card p{
   margin-top:8px;
   color:#aaa;
+}
+  .stat-card{
+  width: 100%;
+  max-width: 220px;
+  text-align: center;
 }
 
 }
