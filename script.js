@@ -44,6 +44,14 @@ category: "puzzle",
 img: "L9.png",
 link: "ludo.html"
 },
+
+{
+name: "Puzzle Game",
+category: "puzzle",
+img: "pzl.png",
+link: "puzzle.html"
+},
+
 {
 name: "Sky War",
 category: "action",
