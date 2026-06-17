@@ -48,7 +48,7 @@ link: "ludo.html"
 {
 name: "Puzzle Game",
 category: "puzzle",
-img: "pzl.png",
+img: "pzl1.png",
 link: "puzzle.html"
 },
 
