@@ -39,25 +39,27 @@
             box-sizing: border-box;
         }
 
-        /* Top Panel (Status & Keluar) */
+        /* Top Panel */
         .top-panel {
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            gap: 10px;
         }
 
         .turn-indicator {
             background: rgba(255, 255, 255, 0.08);
-            padding: 8px 16px;
+            padding: 8px 12px;
             border-radius: 20px;
-            font-size: 0.95rem;
+            font-size: 0.90rem;
             font-weight: bold;
             border: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-grow: 1;
         }
 
         .turn-dot {
@@ -66,6 +68,18 @@
             border-radius: 50%;
             display: inline-block;
             box-shadow: 0 0 8px currentColor;
+        }
+
+        #coin-box {
+            background: #1e293b;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
         }
 
         .btn-exit {
@@ -79,14 +93,12 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
             transition: all 0.2s ease;
             font-size: 0.85rem;
-            letter-spacing: 0.5px;
         }
         .btn-exit:active {
             transform: scale(0.95);
             box-shadow: none;
         }
 
-        /* Container Papan Ludo */
         #board-container {
             position: relative;
             width: 100%;
@@ -103,7 +115,6 @@
             display: block;
         }
 
-        /* Bottom Panel (Kontrol Dadu) */
         .bottom-panel {
             width: 100%;
             display: flex;
@@ -113,7 +124,6 @@
             gap: 10px;
         }
 
-        /* Animasi Kotak Dadu Realistis 3D Ringan */
         #dice-box {
             width: 70px;
             height: 70px;
@@ -137,7 +147,6 @@
             transform: scale(0.9);
         }
 
-        /* Titik Dadu Putih */
         .dice-dots-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -155,7 +164,6 @@
             visibility: hidden;
         }
 
-        /* Status Teks Aksi */
         #status-text {
             font-size: 0.9rem;
             color: #94a3b8;
@@ -164,7 +172,6 @@
             font-weight: 500;
         }
 
-        /* Pengaturan Penempatan Titik Dadu Berdasarkan Angka */
         .d-num1 .dot:nth-child(5) { visibility: visible; }
         .d-num2 .dot:nth-child(1), .d-num2 .dot:nth-child(9) { visibility: visible; }
         .d-num3 .dot:nth-child(1), .d-num3 .dot:nth-child(5), .d-num3 .dot:nth-child(9) { visibility: visible; }
@@ -172,34 +179,64 @@
         .d-num5 .dot:nth-child(1), .d-num5 .dot:nth-child(3), .d-num5 .dot:nth-child(5), .d-num5 .dot:nth-child(7), .d-num5 .dot:nth-child(9) { visibility: visible; }
         .d-num6 .dot:nth-child(1), .d-num6 .dot:nth-child(3), .d-num6 .dot:nth-child(4), .d-num6 .dot:nth-child(6), .d-num6 .dot:nth-child(7), .d-num6 .dot:nth-child(9) { visibility: visible; }
 
-        @keyframes shake {
-            0% { transform: translate(2px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-2deg); }
-            20% { transform: translate(-3px, 0px) rotate(3deg); }
-            30% { transform: translate(0px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(2px, 1px) rotate(-2deg); }
-            80% { transform: translate(-1px, -1px) rotate(4deg); }
-            90% { transform: translate(2px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        /* FITUR BARU: Animasi Dadu King */
+        @keyframes diceKing {
+            0%   { transform: translateY(0) rotate(0deg) scale(1); }
+            25%  { transform: translateY(-25px) rotate(90deg) scale(1.1); }
+            50%  { transform: translateY(-35px) rotate(180deg) scale(1.2); }
+            75%  { transform: translateY(-20px) rotate(270deg) scale(1.1); }
+            100% { transform: translateY(0) rotate(360deg) scale(1); }
         }
 
         .rolling {
-            animation: shake 0.15s infinite;
+            animation: diceKing .8s ease;
+        }
+
+        /* FITUR BARU: UI Popup Dadu & Banner */
+        #dice-result-popup {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 90px;
+            font-weight: bold;
+            color: white;
+            opacity: 0;
+            z-index: 9999;
+            text-shadow: 0 0 20px white;
+            pointer-events: none; /* Agar tidak memblokir klik */
+        }
+
+        #turn-banner {
+            position: fixed;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px;
+            font-weight: bold;
+            color: white;
+            opacity: 0;
+            z-index: 9999;
+            text-shadow: 0 0 20px white, 0 0 10px rgba(0,0,0,0.5);
+            pointer-events: none; /* Agar tidak memblokir klik */
+            text-align: center;
+            width: 100%;
         }
     </style>
 </head>
 <body>
 
     <div id="game-wrapper">
-        
         <div class="top-panel">
             <div class="turn-indicator">
                 <span id="player-dot" class="turn-dot" style="color: var(--red); background-color: var(--red);"></span>
-                <span id="turn-txt">Giliran Anda: MERAH</span>
+                <span id="turn-txt">Giliran: MERAH</span>
             </div>
+            
+            <div id="coin-box">
+                💰 <span id="coinText">0</span>
+            </div>
+
             <button class="btn-exit" onclick="keluarGame()">Keluar</button>
         </div>
 
@@ -215,10 +252,12 @@
                     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
                 </div>
             </div>
-            <div id="status-text">Sentuh dadu putih untuk memulai giliran Anda!</div>
+            <div id="status-text">Sentuh dadu putih untuk memulai!</div>
         </div>
-
     </div>
+
+    <div id="dice-result-popup"></div>
+    <div id="turn-banner"></div>
 
     <script>
         const canvas = document.getElementById('ludoCanvas');
@@ -236,7 +275,19 @@
         let giliranIdx = 0;
         let nilaiDadu = 1;
         let sudahKocok = false;
-        let statusAksi = 'kocok'; // 'kocok' atau 'pilih_pion'
+        let statusAksi = 'kocok';
+        
+        let coin = parseInt(localStorage.getItem("coin")) || 0;
+        document.getElementById("coinText").innerText = coin;
+
+        let blink = true;
+        let boomEffect = null;
+        let isAnimating = false;
+
+        setInterval(() => {
+            blink = !blink;
+            if (!isAnimating) gambarPapanLudo(); 
+        }, 400);
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -269,19 +320,43 @@
             } else if (tipe === 'win') {
                 osc.type = 'sine';
                 const chord = [523.25, 659.25, 783.99, 1046.50]; 
-                chord.forEach((f, i) => {
-                    osc.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.08));
-                });
+                chord.forEach((f, i) => { osc.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.08)); });
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.4);
             }
         }
 
-        function keluarGame() {
-             {
-                window.location.href = 'index.html';
-            }
+        function keluarGame() { window.location.href = 'index.html'; }
+
+        // FITUR BARU: Fungsi Popup Angka Dadu & Banner Giliran
+        function tampilkanHasilDadu(angka) {
+            const popup = document.getElementById("dice-result-popup");
+            popup.innerHTML = "🎲 " + angka;
+            popup.style.opacity = 1;
+            
+            popup.animate([
+                { transform: 'translate(-50%,-50%) scale(.5)' },
+                { transform: 'translate(-50%,-50%) scale(1.3)' },
+                { transform: 'translate(-50%,-50%) scale(1)' }
+            ], { duration: 700 });
+
+            setTimeout(() => { popup.style.opacity = 0; }, 900);
+        }
+
+        function tampilBannerGiliran(text, color) {
+            const banner = document.getElementById("turn-banner");
+            banner.innerHTML = text;
+            banner.style.color = color;
+            banner.style.opacity = 1;
+            
+            // Tambahan sedikit animasi gerak naik halus
+            banner.animate([
+                { transform: 'translate(-50%, -40%)', opacity: 0 },
+                { transform: 'translate(-50%, -50%)', opacity: 1 }
+            ], { duration: 300 });
+
+            setTimeout(() => { banner.style.opacity = 0; }, 1200);
         }
 
         const JALUR_LUAR = [
@@ -321,21 +396,15 @@
             pionPemain[warna] = [];
             for(let i=0; i<4; i++) {
                 pionPemain[warna].push({
-                    id: i,
-                    status: 'markas', 
-                    langkahKe: -1, 
-                    x: POSISI_MARKAS[warna][i].x,
-                    y: POSISI_MARKAS[warna][i].y
+                    id: i, status: 'markas', langkahKe: -1, 
+                    x: POSISI_MARKAS[warna][i].x, y: POSISI_MARKAS[warna][i].y
                 });
             }
         });
 
         function kocokDadu() {
-            if (sudahKocok || statusAksi !== 'kocok') return;
-            
-            // Mencegah klik manual saat giliran bot komputer
+            if (sudahKocok || statusAksi !== 'kocok' || isAnimating) return;
             if (URUTAN_MAIN[giliranIdx] !== 'red') return;
-
             prosesKocokDaduMekanis();
         }
 
@@ -351,11 +420,14 @@
                 gantiGayaDaduVisual(acakMata);
                 putaran++;
 
-                if (putaran > 6) {
+                // Sinkronisasi durasi animasi CSS .rolling (0.8s) dengan JavaScript (8x100ms)
+                if (putaran > 7) {
                     clearInterval(intervalShake);
                     nilaiDadu = Math.floor(Math.random() * 6) + 1;
                     gantiGayaDaduVisual(nilaiDadu);
                     diceBox.classList.remove('rolling');
+                    
+                    tampilkanHasilDadu(nilaiDadu); // FITUR BARU: Tampilkan Popup
                     prosesHasilDadu();
                 }
             }, 100);
@@ -365,9 +437,7 @@
             const diceBox = document.getElementById('dice-box');
             diceBox.className = ''; 
             diceBox.classList.add(`d-num${angka}`);
-            if (URUTAN_MAIN[giliranIdx] !== 'red') {
-                diceBox.classList.add('disabled');
-            }
+            if (URUTAN_MAIN[giliranIdx] !== 'red') diceBox.classList.add('disabled');
         }
 
         function prosesHasilDadu() {
@@ -391,23 +461,16 @@
                 } else {
                     document.getElementById('status-text').innerText = `Komputer sedang berpikir memilih pion...`;
                     gambarPapanLudo();
-                    // Eksekusi AI Otomatis untuk Komputer
-                    setTimeout(() => {
-                        eksekusiAIKomputer(opsiPionValid);
-                    }, 1000);
+                    setTimeout(() => { eksekusiAIKomputer(opsiPionValid); }, 1500); // Diperlambat sedikit agar popup dadu terlihat
                 }
             }
         }
 
-        function eksekusiAIKomputer(opsiPion) {
-            // Prioritas AI: 1. Utamakan menendang musuh, 2. Utamakan pion yang sudah hampir finish, 3. Acak.
+        async function eksekusiAIKomputer(opsiPion) {
             let pilihanPion = opsiPion[0]; 
             
             for (let p of opsiPion) {
-                let targetX = p.x;
-                let targetY = p.y;
-                
-                // Menghitung letak fiktif target jika melangkah
+                let targetX = p.x; let targetY = p.y;
                 if (p.status === 'markas' && nilaiDadu === 6) {
                     let idxAwal = INDEKS_START[URUTAN_MAIN[giliranIdx]];
                     targetX = JALUR_LUAR[idxAwal].x; targetY = JALUR_LUAR[idxAwal].y;
@@ -419,7 +482,6 @@
                     }
                 }
 
-                // Cek apakah di koordinat tersebut ada pion musuh untuk dimakan
                 let bisaMakan = false;
                 URUTAN_MAIN.forEach(w => {
                     if (w !== URUTAN_MAIN[giliranIdx]) {
@@ -428,19 +490,11 @@
                         });
                     }
                 });
-
-                if (bisaMakan) {
-                    pilihanPion = p;
-                    break;
-                }
+                if (bisaMakan) { pilihanPion = p; break; }
             }
 
-            // Jika tidak ada target makan, pilih secara acak/pion terdepan
-            if (!pilihanPion) {
-                pilihanPion = opsiPion[Math.floor(Math.random() * opsiPion.length)];
-            }
-
-            gerakPion(pilihanPion);
+            if (!pilihanPion) pilihanPion = opsiPion[Math.floor(Math.random() * opsiPion.length)];
+            await gerakPion(pilihanPion); 
         }
 
         function operGiliran() {
@@ -450,6 +504,10 @@
 
             let warnaSekarang = URUTAN_MAIN[giliranIdx];
             const diceBox = document.getElementById('dice-box');
+
+            // FITUR BARU: Memanggil Banner
+            let namaWarna = (warnaSekarang === 'red') ? 'MERAH' : (warnaSekarang === 'green' ? 'HIJAU' : (warnaSekarang === 'yellow' ? 'KUNING' : 'BIRU'));
+            tampilBannerGiliran("GILIRAN " + namaWarna, COLS[warnaSekarang]);
 
             if (warnaSekarang === 'red') {
                 document.getElementById('turn-txt').innerText = `Giliran Anda: MERAH`;
@@ -466,14 +524,32 @@
             dDot.style.color = COLS[warnaSekarang];
             
             gambarPapanLudo();
-
-            // Jika giliran komputer, jalankan kocok dadu otomatis
-            if (warnaSekarang !== 'red') {
-                setTimeout(prosesKocokDaduMekanis, 1200);
-            }
+            if (warnaSekarang !== 'red') setTimeout(prosesKocokDaduMekanis, 1800); // Diperlambat sedikit agar banner terbaca
         }
 
-        function gerakPion(pion) {
+        function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        async function animasiGerakPion(pion, langkah, warna) {
+            isAnimating = true;
+            for (let i = 0; i < langkah; i++) {
+                pion.langkahKe++;
+                if (pion.langkahKe <= MAKS_LANGKAH_PUBLIK) {
+                    let idxLuar = (INDEKS_START[warna] + pion.langkahKe) % 52;
+                    pion.x = JALUR_LUAR[idxLuar].x;
+                    pion.y = JALUR_LUAR[idxLuar].y;
+                } else {
+                    let idxHome = pion.langkahKe - 51;
+                    pion.x = JALUR_HOME[warna][idxHome].x;
+                    pion.y = JALUR_HOME[warna][idxHome].y;
+                }
+                playAudio('move');
+                gambarPapanLudo();
+                await sleep(180); 
+            }
+            isAnimating = false;
+        }
+
+        async function gerakPion(pion) {
             let warna = URUTAN_MAIN[giliranIdx];
             
             if (pion.status === 'markas' && nilaiDadu === 6) {
@@ -488,7 +564,8 @@
             } else if (pion.status === 'jalan') {
                 let targetLangkah = pion.langkahKe + nilaiDadu;
                 if (targetLangkah <= 56) {
-                    pion.langkahKe = targetLangkah;
+                    
+                    await animasiGerakPion(pion, nilaiDadu, warna);
                     
                     if (targetLangkah === 56) {
                         pion.status = 'finish';
@@ -496,24 +573,10 @@
                         playAudio('win');
                         cekKondisiMenangWarna(warna);
                     } else {
-                        updateKoordinatFisikPion(pion, warna);
-                        playAudio('move');
                         cekMakanLawan(pion.x, pion.y, warna);
                     }
                     evaluasiBonusAtauOper(nilaiDadu);
                 }
-            }
-        }
-
-        function updateKoordinatFisikPion(pion, warna) {
-            if (pion.langkahKe <= MAKS_LANGKAH_PUBLIK) {
-                let idxLuar = (INDEKS_START[warna] + pion.langkahKe) % 52;
-                pion.x = JALUR_LUAR[idxLuar].x;
-                pion.y = JALUR_LUAR[idxLuar].y;
-            } else {
-                let idxHome = pion.langkahKe - 51; 
-                pion.x = JALUR_HOME[warna][idxHome].x;
-                pion.y = JALUR_HOME[warna][idxHome].y;
             }
         }
 
@@ -534,6 +597,14 @@
                             pLawn.x = POSISI_MARKAS[warnaLawan][pLawn.id].x;
                             pLawn.y = POSISI_MARKAS[warnaLawan][pLawn.id].y;
                             playAudio('kick'); 
+                            
+                            boomEffect = { x: x, y: y };
+                            gambarPapanLudo();
+                            setTimeout(() => {
+                                boomEffect = null;
+                                gambarPapanLudo();
+                            }, 800); 
+
                             document.getElementById('status-text').innerText = `Pion ${NAMA_PLAYER[warnaLawan]} ditendang oleh ${NAMA_PLAYER[warnaKini]}!`;
                         }
                     });
@@ -545,13 +616,9 @@
             if (dadu === 6) {
                 sudahKocok = false;
                 statusAksi = 'kocok';
-                document.getElementById('status-text').innerText = `${NAMA_PLAYER[URUTAN_MAIN[giliranIdx]]} dapat bonus kocok lagi karena angka 6!`;
+                document.getElementById('status-text').innerText = `${NAMA_PLAYER[URUTAN_MAIN[giliranIdx]]} dapat bonus kocok!`;
                 gambarPapanLudo();
-                
-                // Jika bot komputer dapat bonus, panggil mekanis lempar lagi secara otomatis
-                if (URUTAN_MAIN[giliranIdx] !== 'red') {
-                    setTimeout(prosesKocokDaduMekanis, 1500);
-                }
+                if (URUTAN_MAIN[giliranIdx] !== 'red') setTimeout(prosesKocokDaduMekanis, 1500);
             } else {
                 setTimeout(operGiliran, 1000);
             }
@@ -560,7 +627,14 @@
         function cekKondisiMenangWarna(warna) {
             let semuaFinish = pionPemain[warna].every(p => p.status === 'finish');
             if(semuaFinish) {
-                alert(`Permainan Berakhir! Pemenang Utama adalah: ${NAMA_PLAYER[warna]}`);
+                if (warna === 'red') {
+                    coin += 100;
+                    localStorage.setItem("coin", coin);
+                    document.getElementById("coinText").innerText = coin;
+                    alert(`🏆 ${NAMA_PLAYER[warna]} Menang!\n\n💰 Coin +100\nTotal Coin: ${coin}`);
+                } else {
+                    alert(`Permainan Berakhir! Pemenang Utama: ${NAMA_PLAYER[warna]}`);
+                }
             }
         }
 
@@ -583,11 +657,8 @@
                 for(let gY=0; gY<15; gY++) {
                     if((gX<6 && gY<6) || (gX>8 && gY<6) || (gX>8 && gY>8) || (gX<6 && gY>8)) continue;
                     if(gX>=6 && gX<=8 && gY>=6 && gY<=8) continue;
-
-                    ctx.fillStyle = COLS.gray;
-                    ctx.fillRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
-                    ctx.strokeStyle = COLS.border;
-                    ctx.strokeRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
+                    ctx.fillStyle = COLS.gray; ctx.fillRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
+                    ctx.strokeStyle = COLS.border; ctx.strokeRect(gX*BOX_S, gY*BOX_S, BOX_S, BOX_S);
                 }
             }
 
@@ -611,14 +682,11 @@
 
             URUTAN_MAIN.forEach(warna => {
                 pionPemain[warna].forEach(pion => {
-                    if (pion.status !== 'finish') {
-                        gambarTokenPion(pion.x * BOX_S + BOX_S/2, pion.y * BOX_S + BOX_S/2, COLS[warna]);
-                    }
+                    if (pion.status !== 'finish') gambarTokenPion(pion.x * BOX_S + BOX_S/2, pion.y * BOX_S + BOX_S/2, COLS[warna]);
                 });
             });
 
-            // Tampilkan indikator lingkaran putih berkedip jika giliran USER (Merah)
-            if (statusAksi === 'pilih_pion' && URUTAN_MAIN[giliranIdx] === 'red') {
+            if (statusAksi === 'pilih_pion' && URUTAN_MAIN[giliranIdx] === 'red' && blink && !isAnimating) {
                 pionPemain['red'].forEach(p => {
                     let valid = false;
                     if (p.status === 'markas' && nilaiDadu === 6) valid = true;
@@ -626,27 +694,28 @@
 
                     if (valid) {
                         ctx.strokeStyle = '#ffffff';
-                        ctx.lineWidth = 3;
+                        ctx.lineWidth = 4;
                         ctx.beginPath();
-                        ctx.arc(p.x * BOX_S + BOX_S/2, p.y * BOX_S + BOX_S/2, BOX_S/2 - 4, 0, Math.PI*2);
+                        ctx.arc(p.x * BOX_S + BOX_S/2, p.y * BOX_S + BOX_S/2, BOX_S/2 - 2, 0, Math.PI*2);
                         ctx.stroke();
                     }
                 });
             }
+
+            if (boomEffect) {
+                ctx.font = "bold 28px Arial";
+                ctx.fillText("💥", boomEffect.x * BOX_S + 5, boomEffect.y * BOX_S + 30);
+            }
         }
 
         function isiKotakPenuh(x, y, w, h, warna) {
-            ctx.fillStyle = warna;
-            ctx.fillRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
-            ctx.strokeStyle = COLS.border;
-            ctx.strokeRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
+            ctx.fillStyle = warna; ctx.fillRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
+            ctx.strokeStyle = COLS.border; ctx.strokeRect(x*BOX_S, y*BOX_S, w*BOX_S, h*BOX_S);
         }
 
         function isiGarisKotakTunggal(x, y, warna) {
-            ctx.fillStyle = warna;
-            ctx.fillRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
-            ctx.strokeStyle = COLS.border;
-            ctx.strokeRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
+            ctx.fillStyle = warna; ctx.fillRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
+            ctx.strokeStyle = COLS.border; ctx.strokeRect(x*BOX_S, y*BOX_S, BOX_S, BOX_S);
         }
 
         function gambarTokenPion(cX, cY, warna) {
@@ -655,17 +724,14 @@
 
             ctx.fillStyle = warna;
             ctx.beginPath(); ctx.arc(cX, cY, 13, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
 
             ctx.fillStyle = '#ffffff';
             ctx.beginPath(); ctx.arc(cX, cY, 5, 0, Math.PI * 2); ctx.fill();
         }
 
         canvas.addEventListener('click', function(e) {
-            // Hanya izinkan interaksi klik jika giliran player MERAH
-            if (statusAksi !== 'pilih_pion' || URUTAN_MAIN[giliranIdx] !== 'red') return;
+            if (statusAksi !== 'pilih_pion' || URUTAN_MAIN[giliranIdx] !== 'red' || isAnimating) return;
 
             const rect = canvas.getBoundingClientRect();
             const skalaX = canvas.width / rect.width;
@@ -686,12 +752,13 @@
                 }
             });
 
-            if (targetPionDipilih) {
-                gerakPion(targetPionDipilih);
-            }
+            if (targetPionDipilih) gerakPion(targetPionDipilih);
         });
 
+        // Inisialisasi Game Pertama Kali
         gambarPapanLudo();
+        tampilBannerGiliran("GILIRAN MERAH", COLS.red);
+
     </script>
 </body>
 </html>
