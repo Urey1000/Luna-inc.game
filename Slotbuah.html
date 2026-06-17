@@ -3,972 +3,622 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slot Buah Luna-Inc</title>
+    <title>Fruit Roulette Game - Premium UI</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
+        :root {
+            --primary: #1e003b;
+            --secondary: #3b0066;
+            --gold: #ffd700;
+            --gold-glow: rgba(255, 215, 0, 0.6);
+            --text-light: #ffffff;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #4a0080 0%, #11001c 80%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            background: linear-gradient(135deg, #1e1333, #0a0314);
-            color: #fff;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-light);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            background: rgba(10, 0, 20, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .nav-title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        .exit-btn {
+            background: linear-gradient(145deg, #ff3333, #cc0000);
+            color: white;
+            text-decoration: none;
+            padding: 8px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 0 #880000, 0 5px 10px rgba(255,0,0,0.3);
+            transition: all 0.1s ease;
+            letter-spacing: 1px;
+        }
+
+        .exit-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #880000, 0 2px 5px rgba(255,0,0,0.3);
+        }
+
+        /* Game Container */
+        .game-container {
+            margin-top: 90px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            justify-content: space-between;
-        }
-
-        header {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        header h1 {
-            color: #ffdf00;
-            text-shadow: 0 0 10px #ff5722;
-            font-size: 2.5rem;
-        }
-
-        .game-container {
-            background: rgba(255, 255, 255, 0.1);
             padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            border: 2px solid #ffdf00;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            margin: 20px 0 10px 0;
-            position: relative;
+            gap: 25px;
         }
 
-        .leaderboard-container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            border: 2px solid #ffdf00;
-            max-width: 500px;
-            width: 90%;
-            margin: 10px 0 20px 0;
-        }
-
-        .leaderboard-container h2 {
-            color: #ffdf00;
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            text-shadow: 0 0 5px #ff5722;
-        }
-
-        #leaderboard {
-            list-style-position: inside;
-            padding: 0;
-            margin: 0;
-            font-size: 1.1rem;
-            color: #fff;
-        }
-
-        #leaderboard li {
-            padding: 8px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        #leaderboard li:last-child {
-            border-bottom: none;
-        }
-
-        .win-shake {
-            animation: winshake .4s;
-        }
-
-        @keyframes winshake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(0); }
-        }
-
-        .status-bar {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            background: rgba(0,0,0,0.4);
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .level-bar {
-            height: 12px;
-            background: #222;
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* UI Panel (Saldo & Pesan) */
+        .info-panel {
+            padding: 20px 40px;
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
             overflow: hidden;
-            grid-column: span 2;
-            margin-top: 5px;
         }
 
-        #level-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, gold, orange);
-            transition: width 0.3s ease;
+        /* Dekorasi Glow di dalam panel */
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: 50%;
+            width: 100px; height: 100px;
+            background: var(--gold);
+            filter: blur(60px);
+            transform: translateX(-50%);
+            opacity: 0.3;
+            z-index: -1;
         }
 
-        .slot-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            gap: 8px;
-            background: #111;
-            padding: 12px;
+        .saldo-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        #saldo-display {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 2.5rem;
+            color: var(--gold);
+            text-shadow: 0 0 15px var(--gold-glow);
+            transition: color 0.3s, transform 0.2s;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #00ff88;
+            min-height: 28px;
+            font-weight: 600;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
             border-radius: 10px;
-            border: 4px solid #444;
-            margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
 
-        .slot-cell {
-            background: linear-gradient(145deg, #333, #222);
-            border: 1px solid #555;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            border-radius: 5px;
-            transition: transform 0.1s ease;
+        /* Roulette Wheel */
+        .roulette-wrapper {
+            position: relative;
+            margin: 10px 0 20px;
+            padding: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 0 20px rgba(100,0,200,0.3);
         }
 
-        .slot-cell.spin-anim {
-            animation: bounce 0.2s infinite;
+        .pointer {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px; 
+            height: 50px; 
+            background: linear-gradient(135deg, #ff0055, #aa0033);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.6));
         }
 
-        .win-symbol {
-            animation: glow 1s infinite;
-            border-color: gold !important;
-            transform: scale(1.1);
+        /* Outer ring styling for Casino look */
+        .wheel-border {
+            border-radius: 50%;
+            padding: 10px;
+            background: linear-gradient(45deg, #111, #333);
+            box-shadow: 0 0 15px var(--gold-glow), inset 0 0 10px black;
+        }
+
+        .wheel {
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            border: 6px solid var(--gold);
+            background: repeating-conic-gradient(
+                from 0deg,
+                #990033 0deg 45deg,
+                #cc5200 45deg 90deg,
+                #cca300 90deg 135deg,
+                #009933 135deg 180deg,
+                #0066cc 180deg 225deg,
+                #6600cc 225deg 270deg,
+                #cc0099 270deg 315deg,
+                #1a1a1a 315deg 360deg
+            );
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+            position: relative;
+            transition: transform 3s cubic-bezier(0.25, 0.1, 0.15, 1); /* Smoother spin curve */
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle at 30% 30%, #fffbdd, var(--gold), #b38f00);
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 -3px 5px rgba(0,0,0,0.3);
+            border: 3px solid #ffe680;
+        }
+
+        .segment-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 55px;
+            height: 55px;
+            margin-top: -27.5px;
+            margin-left: -27.5px;
+            transform-origin: 50% 50%;
             z-index: 2;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.8));
         }
 
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px gold; }
-            50% { box-shadow: 0 0 30px gold; }
-            100% { box-shadow: 0 0 5px gold; }
-        }
-
-        @keyframes bounce {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.8); }
-            100% { transform: scale(1); }
-        }
-
+        /* Controls Panel */
         .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 25px 30px;
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+
+        .bet-section {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        .bet-selection {
+        .bet-section label {
+            text-align: center; 
+            color: #aaa; 
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .bet-buttons {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             gap: 10px;
         }
 
         .bet-btn {
-            background: #333;
-            color: white;
-            border: 2px solid #777;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
             flex: 1;
+            background: linear-gradient(145deg, #3a0088, #220055);
+            color: #ccc;
+            border: 1px solid #5522aa;
+            padding: 12px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 4px 0 #110022, 0 5px 10px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .bet-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #110022, 0 2px 5px rgba(0,0,0,0.3);
         }
 
         .bet-btn.active {
-            background: #ff5722;
-            border-color: #ffdf00;
+            background: linear-gradient(145deg, #ffe600, #ccb800);
+            color: #1a0033;
+            border: 1px solid #fff;
+            box-shadow: 0 4px 0 #998a00, 0 5px 15px var(--gold-glow);
         }
 
-        .action-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        .spin-actions {
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+            height: 65px;
         }
 
-        .spin-btn {
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
-            color: white;
+        .btn-spin {
+            flex: 2;
+            background: linear-gradient(145deg, #00e676, #00b359);
             border: none;
-            padding: 15px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 8px;
+            color: #003311;
+            font-size: 1.5rem;
+            font-weight: 800;
+            border-radius: 15px;
             cursor: pointer;
-            box-shadow: 0 5px #1b5e20;
+            box-shadow: 0 6px 0 #008040, 0 10px 20px rgba(0, 255, 118, 0.4);
+            transition: all 0.1s ease;
+            font-family: 'Poppins', sans-serif;
             text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .btn-spin:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #008040, 0 2px 10px rgba(0, 255, 118, 0.4);
         }
 
-        .spin-btn:active {
-            box-shadow: 0 2px #1b5e20;
-            transform: translateY(3px);
-        }
-
-        .auto-btn {
-            background: linear-gradient(135deg, #2196f3, #1565c0);
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 5px #0d47a1;
-            text-transform: uppercase;
-        }
-
-        .auto-btn.active {
-            background: linear-gradient(135deg, #ff9800, #ef6c00);
-            box-shadow: 0 5px #e65100;
-        }
-
-        .auto-btn:active {
-            box-shadow: 0 2px #0d47a1;
-            transform: translateY(3px);
-        }
-
-        .secondary-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .sound-btn {
-            background: linear-gradient(135deg, #9c27b0, #6a1b9a);
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .exit-btn {
-            background: linear-gradient(135deg, #f44336, #c62828);
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .spin-btn:disabled, .auto-btn:disabled {
-            background: #555 !important;
-            box-shadow: none !important;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .msg-box {
-            margin-top: 10px;
-            min-height: 24px;
-            color: #ffdf00;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
-
-        .hint-audio {
-            font-size: 0.8rem;
+        .btn-spin:disabled {
+            background: linear-gradient(145deg, #555, #333);
             color: #888;
-            margin-top: 10px;
+            box-shadow: 0 6px 0 #111;
+            cursor: not-allowed;
         }
 
-        footer {
-            background: rgba(0, 0, 0, 0.7);
-            width: 100%;
-            text-align: center;
-            padding: 15px 0;
+        .btn-spin:disabled:active {
+            transform: none;
+        }
+
+        .btn-autospin {
+            flex: 1;
+            background: linear-gradient(145deg, #ff9900, #cc7a00);
+            border: none;
+            color: #331a00;
+            font-weight: 800;
             font-size: 0.9rem;
-            color: #aaa;
-            border-top: 1px solid #333;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #995c00, 0 8px 15px rgba(255, 153, 0, 0.3);
+            transition: all 0.1s ease;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.2;
         }
 
-        footer a {
-            color: #00e676;
-            text-decoration: none;
+        .btn-autospin:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #995c00, 0 2px 5px rgba(255, 153, 0, 0.3);
         }
 
-        #win-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 9998;
+        .btn-autospin.on {
+            background: linear-gradient(145deg, #ff0055, #cc0044);
+            color: white;
+            box-shadow: 0 6px 0 #88002d, 0 10px 20px rgba(255, 0, 85, 0.4);
+        }
+        
+        .btn-autospin.on:active {
+            box-shadow: 0 0 0 #88002d, 0 2px 5px rgba(255, 0, 85, 0.4);
         }
 
-        .coin {
-            position: absolute;
-            font-size: 40px;
-            animation: fall 2s linear forwards;
-        }
-
-        @keyframes fall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-        }
-
-        #win-title {
-            position: fixed;
-            top: 35%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 60px;
-            font-weight: bold;
-            color: gold;
-            z-index: 99999;
-            display: none;
-            text-shadow: 0 0 30px gold;
-            text-align: center;
-            width: 100%;
-        }
-
-        #jackpot-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: #ffdf00;
-            color: #000;
-            padding: 30px;
-            font-size: 40px;
-            font-weight: bold;
-            border-radius: 20px;
-            z-index: 100000;
-            transition: 0.4s;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            box-shadow: 0 0 30px rgba(255, 223, 0, 0.8);
-            text-align: center;
-        }
-
-        #jackpot-popup.show {
-            transform: translate(-50%, -50%) scale(1);
+        /* Responsiveness for smaller screens */
+        @media (max-width: 400px) {
+            .wheel, .wheel-border {
+                width: 280px;
+                height: 280px;
+            }
+            #saldo-display { font-size: 2rem; }
+            .bet-buttons { flex-wrap: wrap; }
+            .bet-btn { min-width: 30%; }
         }
     </style>
 </head>
 <body>
 
-    <div id="win-animation"></div>
-    <div id="win-title"></div>
-    <div id="jackpot-popup">🎉 JACKPOT 🎉</div>
+    <nav class="top-nav">
+        <div class="nav-title">Fruit Roulette</div>
+        <a href="index.html" class="exit-btn">KELUAR</a>
+    </nav>
 
-    <header>
-        <h1>Slot Buah Luna-Inc</h1>
-    </header>
-
-    <div id="user-profile" style="background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: center; display: none; border: 1px solid #ffdf00; max-width: 500px; width: 90%;">
-        <h3 style="color: #ffdf00; margin-bottom: 10px; font-size: 1.5rem;" id="profile-username">Guest</h3>
-        <div>
-            <span id="profile-level" style="background: #ff5722; padding: 5px 12px; border-radius: 5px; font-weight: bold; margin-right: 10px; color: white;">Level: 1</span>
-            <span id="profile-xp" style="background: #2196f3; padding: 5px 12px; border-radius: 5px; font-weight: bold; color: white;">XP: 0</span>
-        </div>
-    </div>
-
-    <div class="game-container" id="game-container">
-        <div class="status-bar">
-            <div>Level: <span id="level-val">1</span>/150</div>
-            <div>Kemenangan: <span id="win-val">0</span>/300000</div>
-            <div class="level-bar">
-                <div id="level-fill"></div>
-            </div>
-            <div style="grid-column: span 2; color: #00e676; font-weight: bold; margin-top: 10px;">
-                Saldo: Rp <span id="balance-val">10000</span>
-            </div>
-            <div style="grid-column: span 2; font-size: 0.8rem; color: #aaa;">
-                Total Spin: <span id="spin-count">0</span>
-            </div>
-        </div>
-
-        <div class="slot-grid" id="slot-grid"></div>
-
-        <div class="controls">
-            <div class="bet-selection">
-                <button class="bet-btn active" id="bet-400" onclick="changeBet(400)">400</button>
-                <button class="bet-btn" id="bet-600" onclick="changeBet(600)">600</button>
-                <button class="bet-btn" id="bet-800" onclick="changeBet(800)">800</button>
-                <button class="bet-btn" id="bet-1000" onclick="changeBet(1000)">1000</button>
-            </div>
-            
-            <div class="action-btns">
-                <button class="spin-btn" id="spin-btn" onclick="spin()">SPIN</button>
-                <button class="auto-btn" id="auto-btn" onclick="toggleAuto()">AUTO</button>
-            </div>
-
-            <div class="secondary-btns">
-                <button class="sound-btn" id="sound-btn" onclick="toggleSound()">🔊 SOUND</button>
-                <button class="exit-btn" id="exit-btn" onclick="exitGame()">EXIT GAME</button>
-            </div>
-        </div>
-
-        <div class="msg-box" id="msg-box">Pilih taruhan dan tekan Spin!</div>
-        <div class="hint-audio">Klik di mana saja untuk mengaktifkan musik latar.</div>
-    </div>
-
-    <div class="leaderboard-container">
-        <h2>🏆 Leaderboard Slot</h2>
+    <div class="game-container">
         
-        <div id="my-rank-card" style="margin-bottom:15px; padding:15px; border-radius:10px; background:rgba(0,0,0,0.6); display:none; text-align: left;">
-            <h3 style="color: gold; margin-bottom: 8px; font-size: 1.2rem;">⭐ Peringkat Anda</h3>
-            <p id="my-rank" style="font-weight: bold; margin-bottom: 5px; font-size: 1.1rem;">Rank: -</p>
-            <p id="my-score" style="color: #00e676; font-weight: bold; font-size: 1.1rem;">Score: -</p>
+        <div class="glass-panel info-panel">
+            <div class="saldo-label">TOTAL SALDO</div>
+            <div id="saldo-display">Rp 1.000.000</div>
+            <div id="message">Pilih taruhan & Putar Roda!</div>
         </div>
 
-        <ol id="leaderboard">
-            <li>Memuat data...</li>
-        </ol>
+        <div class="roulette-wrapper">
+            <div class="pointer"></div>
+            <div class="wheel-border">
+                <div class="wheel" id="wheel">
+                    <div class="wheel-center"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel controls">
+            <div class="bet-section">
+                <label>Pilih Nilai Taruhan</label>
+                <div class="bet-buttons" id="bet-buttons">
+                    <button class="bet-btn active" data-bet="20">20</button>
+                    <button class="bet-btn" data-bet="40">40</button>
+                    <button class="bet-btn" data-bet="60">60</button>
+                    <button class="bet-btn" data-bet="80">80</button>
+                    <button class="bet-btn" data-bet="100">100</button>
+                </div>
+            </div>
+
+            <div class="spin-actions">
+                <button class="btn-spin" id="spin-btn">SPIN</button>
+                <button class="btn-autospin" id="auto-spin-btn">
+                    <span>AUTO</span>
+                    <span id="auto-status" style="font-size: 0.75rem; opacity: 0.8;">OFF</span>
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <footer>
-        Created by, <a href="https://www.luna-inc.my.id" target="_blank">https://www.luna-inc.my.id</a> | Esc.2025 IDN/Bdg
-    </footer>
-
-    <audio id="snd-bgm" src="bgm.mp3" loop preload="auto"></audio>
-    <audio id="snd-spin" src="Play.mp3" preload="auto"></audio>
-    <audio id="snd-win" src="win.mp3" preload="auto"></audio>
-    <audio id="snd-freespin" src="bonus.mp3" preload="auto"></audio>
-    <audio id="snd-levelup" src="mesin.mp3" preload="auto"></audio>
-    <audio id="snd-click" src="Play.mp3" preload="auto"></audio>
-    <audio id="snd-jackpot" src="jackpot.mp3" preload="auto"></audio>
-    <audio id="snd-bigwin" src="bigwin.mp3" preload="auto"></audio>
+    <audio id="audio-spin" src="Play.mp3" preload="auto"></audio>
+    <audio id="audio-freespin" src="b.mp3" preload="auto"></audio>
+    <audio id="audio-bomb" src="bomb.mp3" preload="auto"></audio>
 
     <script>
-        const xmlConfigString = `
-        <gameConfig>
-            <symbols>
-                <symbol id="1">🍉</symbol>
-                <symbol id="2">🍇</symbol>
-                <symbol id="3">🍊</symbol>
-                <symbol id="4">🍋</symbol>
-                <symbol id="5">🍌</symbol>
-                <symbol id="6">🍓</symbol>
-                <symbol id="7">🍒</symbol>
-            </symbols>
-        </gameConfig>`;
+        // --- DATA GAME ---
+        const fruits = [
+            { name: 'Semangka',  img: 'R2.png', multiplier: 2, isBomb: false },
+            { name: 'Jeruk',     img: 'R1.png', multiplier: 3, isBomb: false },
+            { name: 'Salak',     img: 'R5.png', multiplier: 5, isBomb: false },
+            { name: 'Free Spin', img: 'F0.png', multiplier: 0, isFreeSpin: true, isBomb: false },
+            { name: 'Pisang',    img: 'R3.png', multiplier: 10, isBomb: false },
+            { name: 'Ceri',      img: 'R4.png', multiplier: 1.5, isBomb: false },
+            { name: 'Nanas',     img: 'R6.png', multiplier: 4, isBomb: false },
+            { name: 'Bom Minus', img: 'D0.png', multiplier: 0, isBomb: true, penalty: 10000 }
+        ];
 
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlConfigString, "text/xml");
-        const symbolNodes = xmlDoc.getElementsByTagName("symbol");
-        const fruits = Array.from(symbolNodes).map(node => node.textContent);
-
-        let balance = parseInt(localStorage.getItem("lunaBalance")) || 10000;
-        let currentBet = 400;
-        let targetWinNextLevel = 300000;
-        let totalWinAccumulated = 0;
-        let currentLevel = 1;
-        let freeSpinsLeft = 0;
-        let isAutoSpin = false;
+        // --- STATE GAME ---
+        let saldo = 1000000;
+        let currentBet = 20;
         let isSpinning = false;
-        let totalSpins = 0; 
-        let isBgmPlaying = false; 
-        let soundEnabled = true;
-        let finalScoreSent = false; 
-        let currentUser = null; 
+        let isAutoSpin = false;
+        let currentRotation = 0;
+        let freeSpinsCount = 0;
 
-        const gridElement = document.getElementById('slot-grid');
-        const balanceEl = document.getElementById('balance-val');
-        const winEl = document.getElementById('win-val');
-        const levelEl = document.getElementById('level-val');
-        const spinCountEl = document.getElementById('spin-count');
-        const msgEl = document.getElementById('msg-box');
+        // --- ELEMEN DOM ---
+        const saldoDisplay = document.getElementById('saldo-display');
+        const messageDisplay = document.getElementById('message');
+        const wheel = document.getElementById('wheel');
         const spinBtn = document.getElementById('spin-btn');
-        const autoBtn = document.getElementById('auto-btn');
-        const gameContainer = document.getElementById('game-container');
+        const autoSpinBtn = document.getElementById('auto-spin-btn');
+        const autoStatusText = document.getElementById('auto-status');
+        const betButtons = document.querySelectorAll('.bet-btn');
+        
+        // Elemen Suara
+        const soundSpin = document.getElementById('audio-spin');
+        const soundFreeSpin = document.getElementById('audio-freespin');
+        const soundBomb = document.getElementById('audio-bomb');
 
-        const sndBgm = document.getElementById('snd-bgm');
-        const sndSpin = document.getElementById('snd-spin');
-        const sndWin = document.getElementById('snd-win');
-        const sndFreespin = document.getElementById('snd-freespin');
-        const sndLevelup = document.getElementById('snd-levelup');
-        const sndClick = document.getElementById('snd-click');
-        const sndJackpot = document.getElementById('snd-jackpot');
-        const sndBigwin = document.getElementById('snd-bigwin');
-
-        document.body.addEventListener('click', playBGM, { once: false });
-
-        function initGrid() {
-            gridElement.innerHTML = '';
-            for (let i = 0; i < 25; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'slot-cell';
-                cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-                gridElement.appendChild(cell);
-            }
-            updateUI(); 
+        // Format angka ke Rupiah
+        const formatRp = (angka) => {
+            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            const allAudio = [
-                sndBgm, sndSpin, sndWin, sndFreespin, sndLevelup, sndClick, sndJackpot, sndBigwin
-            ];
-            allAudio.forEach(audio => { audio.muted = !soundEnabled; });
-            document.getElementById("sound-btn").innerHTML = soundEnabled ? "🔊 SOUND" : "🔇 MUTE";
-        }
+        // --- INISIALISASI ROULETTE ---
+        function initWheel() {
+            const totalSegments = fruits.length;
+            const anglePerSegment = 360 / totalSegments;
 
-        function playBGM() {
-            if (!isBgmPlaying && soundEnabled) {
-                sndBgm.volume = 0.4; 
-                sndBgm.play().then(() => {
-                    isBgmPlaying = true;
-                    document.querySelector('.hint-audio').style.display = 'none';
-                }).catch(e => console.log("BGM diblokir browser, menunggu interaksi."));
-            }
-        }
-
-        function playSound(audioEl) {
-            if (!soundEnabled) return;
-            audioEl.currentTime = 0;
-            audioEl.play().catch(e => console.log("Menunggu interaksi pengguna..."));
-        }
-
-        setTimeout(() => {
-            document.querySelectorAll("button").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    playSound(sndClick);
-                });
-            });
-        }, 100);
-
-        function shakeGame() {
-            gameContainer.classList.add("win-shake");
-            setTimeout(() => { gameContainer.classList.remove("win-shake"); }, 400);
-            if(navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
-            }
-        }
-
-        function showWinTitle(text) {
-            let el = document.getElementById("win-title");
-            el.innerHTML = text;
-            el.style.display = "block";
-            setTimeout(() => { el.style.display = "none"; }, 2500);
-        }
-
-        function showWinAnimation() {
-            const container = document.getElementById("win-animation");
-            for (let i = 0; i < 25; i++) {
-                let coin = document.createElement("div");
-                coin.className = "coin";
-                coin.innerHTML = "💰";
-                coin.style.left = Math.random() * 100 + "vw";
-                coin.style.animationDuration = (1 + Math.random() * 2) + "s";
-                container.appendChild(coin);
-                setTimeout(() => { coin.remove(); }, 3000);
-            }
-        }
-
-        function createStars() {
-            for(let i=0; i<50; i++) {
-                let star = document.createElement("div");
-                star.innerHTML = "✨";
-                star.style.position = "fixed";
-                star.style.left = Math.random() * 100 + "vw";
-                star.style.top = Math.random() * 100 + "vh";
-                star.style.fontSize = "20px";
-                star.style.zIndex = "99999";
-                document.body.appendChild(star);
-                setTimeout(() => { star.remove(); }, 2000);
-            }
-        }
-
-        function showJackpot() {
-            let popup = document.getElementById("jackpot-popup");
-            popup.classList.add("show");
-            setTimeout(() => { popup.classList.remove("show"); }, 3000);
-        }
-
-        function animateBalance(start, end) {
-            let current = start;
-            let timer = setInterval(() => {
-                current += Math.ceil((end - current) / 10);
-                balanceEl.textContent = current;
-                if(current >= end) {
-                    current = end;
-                    balanceEl.textContent = end;
-                    clearInterval(timer);
-                }
-            }, 30);
-        }
-
-        function changeBet(amount) {
-            if(freeSpinsLeft > 0 || isAutoSpin || isSpinning) return; 
-            currentBet = amount;
-            document.querySelectorAll('.bet-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(parseInt(btn.textContent) === amount) { btn.classList.add('active'); }
+            fruits.forEach((fruit, index) => {
+                const img = document.createElement('img');
+                img.src = fruit.img;
+                img.className = 'segment-img';
+                
+                const angle = index * anglePerSegment;
+                img.style.transform = `rotate(${angle}deg) translateY(-110px) rotate(${-angle}deg)`;
+                
+                wheel.appendChild(img);
             });
         }
 
-        function toggleAuto() {
-            playBGM();
-            if (isSpinning && !isAutoSpin) return; 
-            isAutoSpin = !isAutoSpin;
-            
-            if (isAutoSpin) {
-                autoBtn.classList.add('active');
-                autoBtn.textContent = "STOP AUTO";
-                if (!isSpinning) spin();
-            } else {
-                autoBtn.classList.remove('active');
-                autoBtn.textContent = "AUTO";
-            }
-        }
+        // --- LOGIKA TARUHAN ---
+        betButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isSpinning) return; 
+                
+                betButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                currentBet = parseInt(btn.getAttribute('data-bet'));
+                messageDisplay.innerText = `Taruhan: ${currentBet} poin.`;
+                messageDisplay.style.color = '#fff';
+            });
+        });
 
-        function spin() {
+        // --- LOGIKA SPIN ---
+        function performSpin() {
             if (isSpinning) return;
-            playBGM(); 
 
-            if (freeSpinsLeft === 0 && balance < currentBet) {
-                msgEl.textContent = "Saldo tidak cukup!";
-                if (isAutoSpin) toggleAuto();
+            // Efek interaksi UI
+            saldoDisplay.style.transform = "scale(0.95)";
+            setTimeout(() => saldoDisplay.style.transform = "scale(1)", 150);
+
+            if (saldo <= 0 || (saldo < currentBet && freeSpinsCount === 0)) {
+                messageDisplay.innerText = "Saldo tidak cukup!";
+                messageDisplay.style.color = "#ff4b4b";
+                isAutoSpin = false;
+                updateAutoSpinUI();
                 return;
+            }
+
+            if (freeSpinsCount > 0) {
+                freeSpinsCount--;
+                messageDisplay.innerText = `FREE SPIN DIGUNAKAN! (Sisa: ${freeSpinsCount})`;
+                messageDisplay.style.color = "#ffd700";
+            } else {
+                saldo -= currentBet;
+                saldoDisplay.innerText = formatRp(saldo);
+                messageDisplay.innerText = "Roda berputar...";
+                messageDisplay.style.color = "#fff";
             }
 
             isSpinning = true;
             spinBtn.disabled = true;
-            disableBetButtons(true);
-            totalSpins++; 
-            spinCountEl.textContent = totalSpins;
 
-            const cells = document.querySelectorAll('.slot-cell');
-            cells.forEach(cell => cell.classList.remove('win-symbol')); 
+            soundSpin.currentTime = 0;
+            soundSpin.play().catch(e => console.log("Audio diblokir browser."));
 
-            let wasFreeSpin = false;
-            if (freeSpinsLeft > 0) {
-                freeSpinsLeft--;
-                wasFreeSpin = true;
-            } else {
-                balance -= currentBet;
-            }
-            updateUI(false); 
+            const totalSegments = fruits.length;
+            const winnerIndex = Math.floor(Math.random() * totalSegments);
+            const segmentAngle = 360 / totalSegments;
+
+            const spins = 5;
+            const targetAngle = 360 - (winnerIndex * segmentAngle);
+            const totalRotationNeeded = (spins * 360) + targetAngle;
             
-            msgEl.textContent = wasFreeSpin ? `Free Spin Berjalan! (Sisa: ${freeSpinsLeft})` : "Memutar...";
-            playSound(sndSpin);
+            currentRotation += totalRotationNeeded - (currentRotation % 360);
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
 
-            let matrix = Array.from({ length: 5 }, () => []);
-            let shuffleCount = 0;
-
-            const interval = setInterval(() => {
-                cells.forEach(cell => {
-                    cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-                    cell.classList.add('spin-anim');
-                });
-                shuffleCount++;
+            setTimeout(() => {
+                isSpinning = false;
+                spinBtn.disabled = false;
                 
-                if (shuffleCount > 10) {
-                    clearInterval(interval);
-                    
-                    let forceWin = (totalSpins === 11 || totalSpins === 33 || totalSpins === 55);
-                    let luckyFruit = fruits[Math.floor(Math.random() * fruits.length)];
+                soundSpin.pause();
+                handleWin(fruits[winnerIndex]);
 
-                    for (let r = 0; r < 5; r++) {
-                        for (let c = 0; c < 5; c++) {
-                            const index = r * 5 + c;
-                            let finalFruit = fruits[Math.floor(Math.random() * fruits.length)];
-                            if (forceWin && r === 2) { finalFruit = luckyFruit; }
-                            cells[index].textContent = finalFruit;
-                            cells[index].classList.remove('spin-anim');
-                            matrix[r][c] = finalFruit;
-                        }
-                    }
-                    
-                    checkLogic(matrix, wasFreeSpin);
+                if (isAutoSpin) {
+                    setTimeout(performSpin, 1200);
                 }
-            }, 80);
+            }, 3000);
         }
 
-        function checkLogic(matrix, wasFreeSpin) {
-            let gotFiveInARow = false;
+        // --- LOGIKA KEMENANGAN & PENALTI ---
+        function handleWin(winner) {
+            saldoDisplay.style.color = "var(--gold)";
 
-            for (let r = 0; r < 5; r++) {
-                if (new Set(matrix[r]).size === 1) gotFiveInARow = true;
-            }
-            for (let c = 0; c < 5; c++) {
-                let colValues = [matrix[0][c], matrix[1][c], matrix[2][c], matrix[3][c], matrix[4][c]];
-                if (new Set(colValues).size === 1) gotFiveInARow = true;
-            }
-
-            let flatMatrix = matrix.flat();
-            let counts = {};
-            flatMatrix.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
-
-            let baseMultiplier = 0;
-            let matchedFruitsInfo = [];
-            let winningFruits = [];
-
-            for (let fruit in counts) {
-                if (counts[fruit] === 5) {
-                    baseMultiplier += 1;
-                    matchedFruitsInfo.push(`5 ${fruit}`);
-                    winningFruits.push(fruit);
-                } else if (counts[fruit] >= 6) {
-                    baseMultiplier += 2;
-                    matchedFruitsInfo.push(`${counts[fruit]} ${fruit}`);
-                    winningFruits.push(fruit);
-                }
-            }
-
-            let winAmount = 0;
-            if (baseMultiplier > 0) {
-                winAmount = baseMultiplier * currentBet;
-                if (wasFreeSpin) { winAmount *= 5; }
+            if (winner.isBomb) {
+                saldo -= winner.penalty;
+                if(saldo < 0) saldo = 0; 
                 
-                const cells = document.querySelectorAll('.slot-cell');
-                cells.forEach(cell => {
-                    if(winningFruits.includes(cell.textContent)) {
-                        cell.classList.add('win-symbol');
-                    }
-                });
+                saldoDisplay.innerText = formatRp(saldo);
+                saldoDisplay.style.color = "#ff4b4b";
+                messageDisplay.innerText = `💥 KABOOM! Poin dikurangi ${winner.penalty}!`;
+                messageDisplay.style.color = "#ff4b4b";
 
-                let oldBalance = balance;
-                balance += winAmount;
-                totalWinAccumulated += winAmount;
+                soundBomb.currentTime = 0;
+                soundBomb.play().catch(e => console.log(e));
 
-                msgEl.textContent = wasFreeSpin 
-                    ? `Hebat! Menang Rp ${winAmount} (x5 BONUS) dari ${matchedFruitsInfo.join(' & ')}!` 
-                    : `Menang Rp ${winAmount} dari ${matchedFruitsInfo.join(' & ')}!`;
-                
-                shakeGame();
-                playSound(sndWin);
-                showWinAnimation();
-                animateBalance(oldBalance, balance); 
-
-                if (winAmount >= currentBet * 30) {
-                    showWinTitle("SUPER WIN");
-                    playSound(sndJackpot);
-                    createStars();
-                } else if (winAmount >= currentBet * 15) {
-                    showWinTitle("MEGA WIN");
-                    playSound(sndBigwin);
-                } else if (winAmount >= currentBet * 5) {
-                    showWinTitle("BIG WIN");
-                    playSound(sndBigwin);
+                if(saldo === 0) {
+                    isAutoSpin = false;
+                    updateAutoSpinUI();
                 }
 
-                if (winAmount >= currentBet * 10) {
-                    showJackpot();
-                }
+            } else if (winner.isFreeSpin) {
+                freeSpinsCount++;
+                messageDisplay.innerText = "✨ SELAMAT! Dapat 1 FREE SPIN! ✨";
+                messageDisplay.style.color = "#ffd700";
+
+                soundFreeSpin.currentTime = 0;
+                soundFreeSpin.play().catch(e => console.log(e));
 
             } else {
-                msgEl.textContent = wasFreeSpin ? "Free spin berlanjut..." : "Coba lagi!";
-            }
-
-            if (gotFiveInARow) {
-                freeSpinsLeft += 5;
-                setTimeout(() => {
-                    msgEl.textContent = `Luar Biasa! +5 FREE SPIN didapatkan!`;
-                    playSound(sndFreespin);
-                    updateUI(false);
-                }, 1500); 
-            }
-
-            if (totalWinAccumulated >= targetWinNextLevel) {
-                if (currentLevel < 150) {
-                    currentLevel++;
-                    totalWinAccumulated -= targetWinNextLevel;
-                    msgEl.textContent = `SELAMAT! Naik ke Level ${currentLevel}!`;
-                    playSound(sndLevelup);
+                const winnings = currentBet * winner.multiplier;
+                saldo += winnings;
+                saldoDisplay.innerText = formatRp(saldo);
+                
+                if (winnings > 0) {
+                    messageDisplay.innerText = `🎉 MENANG! +${winnings} dari ${winner.name}`;
+                    messageDisplay.style.color = "#00ff88";
                 } else {
-                    msgEl.textContent = "Hebat! Anda menamatkan Game ini (Level 150)!";
-                    if (isAutoSpin) toggleAuto();
+                    messageDisplay.innerText = "Coba lagi!";
+                    messageDisplay.style.color = "#aaa";
                 }
             }
+        }
 
-            updateUI(true);
-            isSpinning = false;
-            spinBtn.disabled = false;
-            disableBetButtons(false);
-
+        // --- LOGIKA AUTO SPIN ---
+        function updateAutoSpinUI() {
             if (isAutoSpin) {
-                setTimeout(() => { if (isAutoSpin) spin(); }, 1500); 
-            }
-        }
-
-        function disableBetButtons(status) {
-            document.querySelectorAll('.bet-btn').forEach(btn => { btn.disabled = status; });
-        }
-
-        function updateUI(isWinEvent = false) {
-            if (!isWinEvent) { balanceEl.textContent = balance; }
-            
-            winEl.textContent = totalWinAccumulated;
-            levelEl.textContent = currentLevel;
-            
-            let progress = (totalWinAccumulated / targetWinNextLevel) * 100;
-            document.getElementById("level-fill").style.width = progress + "%";
-
-            localStorage.setItem("lunaBalance", balance);
-            
-            if(freeSpinsLeft > 0) {
-                spinBtn.textContent = `FREE (${freeSpinsLeft})`;
-                spinBtn.style.background = "linear-gradient(135deg, #ec407a, #d81b60)";
+                autoStatusText.innerText = "ON";
+                autoSpinBtn.classList.add('on');
             } else {
-                spinBtn.textContent = "SPIN";
-                spinBtn.style.background = "linear-gradient(135deg, #4caf50, #2e7d32)";
+                autoStatusText.innerText = "OFF";
+                autoSpinBtn.classList.remove('on');
             }
         }
 
-        async function sendScoreToBackend() {
-            if (finalScoreSent) return;
-            finalScoreSent = true;
-            try {
-                const res = await fetch("http://localhost:3000/score", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        game_name: "slot",
-                        score: Math.floor(totalWinAccumulated + balance)
-                    })
-                });
-                const data = await res.json();
-                console.log("Score terkirim:", data);
-            } catch (err) {
-                console.log("Gagal kirim score:", err);
-                finalScoreSent = false; 
-            }
-        }
-
-        async function exitGame() {
-            if (isAutoSpin) toggleAuto();
-            if (isBgmPlaying) { sndBgm.pause(); }
+        autoSpinBtn.addEventListener('click', () => {
+            isAutoSpin = !isAutoSpin;
+            updateAutoSpinUI();
             
-            if (confirm("Apakah anda yakin ingin keluar dari permainan Slot Buah Luna-Inc? (Skor Anda akan disimpan!)")) {
-                msgEl.textContent = "Menyimpan skor..."; 
-                await sendScoreToBackend(); 
-                window.location.href = "index.html"; 
-            } else {
-                if (!isBgmPlaying && balance > 0 && soundEnabled) playBGM();
+            if (isAutoSpin && !isSpinning) {
+                performSpin();
             }
-        }
-
-        // 🔥 FUNGSI UPDATE USER DATA DIPERBARUI
-        async function getCurrentUser() {
-            try {
-                const res = await fetch("http://localhost:3000/me", {
-                    credentials: "include"
-                });
-
-                if (!res.ok) return;
-
-                currentUser = await res.json();
-                console.log("User login:", currentUser);
-
-                // Tampilkan dan isi data ke kotak profil HTML
-                document.getElementById("user-profile").style.display = "block";
-                document.getElementById("profile-username").innerText = currentUser.username;
-                document.getElementById("profile-level").innerText = "Level: " + (currentUser.level || 1);
-                document.getElementById("profile-xp").innerText = "XP: " + (currentUser.xp || 0);
-
-            } catch (err) {
-                console.log("Gagal ambil user", err);
-            }
-        }
-
-        function showMyRank(rank, score) {
-            const card = document.getElementById("my-rank-card");
-
-            if (!rank) {
-                card.style.display = "none";
-                return;
-            }
-
-            document.getElementById("my-rank").innerText = "Rank: #" + rank;
-            document.getElementById("my-score").innerText = "Score: 🏆 " + score.toLocaleString('id-ID');
-
-            card.style.display = "block";
-            card.style.border = "2px solid gold";
-            card.style.boxShadow = "0 0 15px rgba(255, 215, 0, 0.4)";
-        }
-
-        async function loadLeaderboard() {
-            try {
-                const res = await fetch("http://localhost:3000/leaderboard/slot");
-                const data = await res.json();
-
-                const list = document.getElementById("leaderboard");
-                list.innerHTML = ""; 
-
-                let myRank = null;
-                let myScore = null;
-
-                if (data.length === 0) {
-                    list.innerHTML = "<li>Belum ada data peringkat.</li>";
-                    showMyRank(null, null); 
-                    return;
-                }
-
-                data.forEach((player, index) => {
-                    const li = document.createElement("li");
-                    
-                    let isMe = currentUser && player.username === currentUser.username;
-
-                    if (isMe) {
-                        myRank = index + 1;
-                        myScore = player.score;
-                    }
-
-                    let content = `<span>${index + 1}. <strong>${player.username}</strong></span> <span>🏆 ${player.score.toLocaleString('id-ID')}</span>`;
-
-                    if (isMe) {
-                        li.style.background = "gold";
-                        li.style.color = "black";
-                        li.style.padding = "8px 12px"; 
-                        li.style.borderRadius = "5px";
-                        content = `<span>${index + 1}. <strong>${player.username} ⭐ YOU</strong></span> <span>🏆 ${player.score.toLocaleString('id-ID')}</span>`;
-                    }
-
-                    li.innerHTML = content;
-                    list.appendChild(li);
-                });
-
-                showMyRank(myRank, myScore);
-
-            } catch (err) {
-                console.log("Gagal load leaderboard:", err);
-                const list = document.getElementById("leaderboard");
-                if(list.innerHTML.includes("Memuat data")) {
-                    list.innerHTML = "<li>Gagal terhubung ke server.</li>";
-                }
-            }
-        }
-
-        initGrid();
-        
-        getCurrentUser().then(() => {
-            loadLeaderboard();
-            setInterval(loadLeaderboard, 10000); 
         });
 
+        spinBtn.addEventListener('click', () => {
+            if (isAutoSpin) {
+                isAutoSpin = false;
+                updateAutoSpinUI();
+            }
+            performSpin();
+        });
+
+        initWheel();
     </script>
 </body>
 </html>
+
