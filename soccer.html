@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Mini Soccer</title>
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #111;
+  font-family: Arial, sans-serif;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+  background: #1f8f3a;
+}
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Kumpulan Tombol Kontrol Utama */
+#shoot {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  border: 3px solid white;
+  background: #f44336;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+}
+#shoot:active { background: #b71c1c; }
+
+#pass {
+  position: absolute;
+  right: 125px;
+  bottom: 25px;
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #2196f3;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+}
+#pass:active { background: #0d47a1; }
+
+#run {
+  position: absolute;
+  right: 25px;
+  bottom: 125px;
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #ff9800;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+}
+#run:active { background: #e65100; }
+
+/* Virtual Joystick */
+#joyBase {
+  position: absolute;
+  left: 30px;
+  bottom: 30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  z-index: 10;
+}
+
+#joyStick {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Tombol Menu (Pause & Exit) */
+#pauseBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #4caf50;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 20;
+}
+
+#exitBtn {
+  position: absolute;
+  top: 15px;
+  right: 80px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #9e9e9e;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 20;
+}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+  <div id="score">0 - 0</div>
+  <div id="time">90</div>
+</div>
+
+<button id="exitBtn">🚪</button>
+<button id="pauseBtn">⏸</button>
+
+<canvas id="game"></canvas>
+
+<div id="joyBase">
+  <div id="joyStick"></div>
+</div>
+
+<button id="run">RUN</button>
+<button id="pass">PASS</button>
+<button id="shoot">SHOOT ⚽</button>
+
+<script>
+// ===== ASSETS GAMBAR =====
+const imgBlue = new Image(); imgBlue.src = "pb.png";
+const imgRed = new Image(); imgRed.src = "pr.png";
+const imgKeeper = new Image(); imgKeeper.src = "gk.png";
+const imgBall = new Image(); imgBall.src = "bl9.png";
+
+// ===== AUDIO CONTEXT & SYSTEM SOUNDS =====
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+let stadiumSound = null;
+
+function crowdNoise(){
+  const bufferSize = 4096;
+  const noiseNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+  noiseNode.onaudioprocess = function(e){
+    const output = e.outputBuffer.getChannelData(0);
+    for(let i=0; i<bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.015; 
+  };
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass"; filter.frequency.value = 350;
+  const gain = audioCtx.createGain(); gain.gain.value = 0.12;
+  noiseNode.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  return gain;
+}
+
+function playWhistle(longBlasts = 1, shortBlasts = 0) {
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  let time = audioCtx.currentTime;
+  
+  function triggerWhistleSound(start, duration) {
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1200, start);
+    osc.frequency.exponentialRampToValueAtTime(1500, start + duration);
+    
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
+    gain.gain.setValueAtTime(0.3, start + duration - 0.05);
+    gain.gain.linearRampToValueAtTime(0, start + duration);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(start);
+    osc.stop(start + duration);
+  }
+
+  let currentStart = time;
+  for(let i=0; i<longBlasts; i++) {
+    triggerWhistleSound(currentStart, 0.4);
+    currentStart += 0.5;
+  }
+  for(let j=0; j<shortBlasts; j++) {
+    triggerWhistleSound(currentStart, 0.15);
+    currentStart += 0.25;
+  }
+}
+
+function goalCheer(){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "sawtooth"; osc.frequency.value = 220;
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 1.2);
+}
+
+// ===== LOGIKA UTAMA GAME =====
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let teamA = [];
+let teamB = [];
+let ballAngle = 0; 
+let ballOwner = null;
+let ballCooldown = 0; 
+let paused = false;   
+
+// Taktik AI & Formasi
+const AI_STATE = { ATTACK: 1, DEFEND: 2 };
+const formationAttack = { CB : 0.70, MDF: 0.50, CF : 0.25 };
+const formationDefend = { CB : 0.80, MDF: 0.65, CF : 0.45 };
+
+let refereeText = "";
+let refereeTimer = 0;
+let isGameActive = false;
+let aiPossessionTime = 0; 
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+
+window.addEventListener("resize", () => {
+  resize();
+  initPlayers();
+});
+
+let scorePlayer = 0;
+let scoreAI = 0;
+let gameTime = 90;
+
+const ball = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  r: 12,
+  vx: 0,
+  vy: 0,
+  spin: 0
+};
+
+let joyX = 0;
+let joyY = 0;
+
+function initPlayers() {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  teamA = [
+    { role: 'CF', control: 'user', x: w * 0.6, y: h * 0.5, r: 20, speed: 4, normalSpeed: 4, homeX: 0.6, homeY: 0.5, faceLeft: false, runAnim: 0 },
+    { role: 'GK', control: 'ai', x: 65, y: h * 0.5, r: 22, speed: 3, normalSpeed: 3, homeX: 0.05, homeY: 0.5, faceLeft: false, runAnim: 0 },
+    { role: 'CB', control: 'ai', x: w * 0.25, y: h * 0.35, r: 20, speed: 2.2, normalSpeed: 2.2, homeX: 0.25, homeY: 0.35, faceLeft: false, runAnim: 0 },
+    { role: 'CB', control: 'ai', x: w * 0.25, y: h * 0.65, r: 20, speed: 2.2, normalSpeed: 2.2, homeX: 0.25, homeY: 0.65, faceLeft: false, runAnim: 0 },
+    { role: 'MDF', control: 'ai', x: w * 0.45, y: h * 0.5, r: 20, speed: 2.5, normalSpeed: 2.5, homeX: 0.45, homeY: 0.5, faceLeft: false, runAnim: 0 }
+  ];
+
+  teamB = [
+    { role: 'GK', control: 'ai', x: w - 65, y: h * 0.5, r: 22, speed: 3, normalSpeed: 3, homeX: 0.95, homeY: 0.5, faceLeft: true, runAnim: 0 },
+    { role: 'CB', control: 'ai', x: w * 0.75, y: h * 0.35, r: 20, speed: 2.2, normalSpeed: 2.2, homeX: 0.75, homeY: 0.35, faceLeft: true, runAnim: 0 },
+    { role: 'CB', control: 'ai', x: w * 0.75, y: h * 0.65, r: 20, speed: 2.2, normalSpeed: 2.2, homeX: 0.75, homeY: 0.65, faceLeft: true, runAnim: 0 },
+    { role: 'MDF', control: 'ai', x: w * 0.55, y: h * 0.5, r: 20, speed: 2.5, normalSpeed: 2.5, homeX: 0.55, homeY: 0.5, faceLeft: true, runAnim: 0 },
+    { role: 'CF', control: 'ai', x: w * 0.4, y: h * 0.5, r: 20, speed: 2.8, normalSpeed: 2.8, homeX: 0.4, homeY: 0.5, faceLeft: true, runAnim: 0 }
+  ];
+  ballOwner = null;
+  ballCooldown = 0;
+}
+
+function resetBall(positionType = "center") {
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.spin = 0;
+  ballOwner = null;
+  ballCooldown = 15;
+
+  if (positionType === "center") {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+
+    setTimeout(() => {
+      if(!isGameActive && gameTime <= 0) return; 
+      
+      let strikerA = teamA.find(p => p.role === "CF");
+      if(strikerA){
+         ball.x = strikerA.x + 18;
+         ball.y = strikerA.y;
+         ball.vx = 5;
+         ball.vy = 0;
+         ballOwner = null;
+      }
+    }, 500);
+
+  } else if (positionType === "gk_teamA") {
+    let gk = teamA.find(p => p.role === 'GK');
+    ball.x = gk.x + 40;
+    ball.y = gk.y;
+    ball.vx = 12; 
+    ball.vy = (Math.random() - 0.5) * 6; 
+    ballOwner = null; 
+  } else if (positionType === "gk_teamB") {
+    let gk = teamB.find(p => p.role === 'GK');
+    ball.x = gk.x - 40;
+    ball.y = gk.y;
+    ball.vx = -12; 
+    ball.vy = (Math.random() - 0.5) * 6;
+    ballOwner = null;
+  }
+}
+
+function callReferee(message, frames, longWhistle, shortWhistle) {
+  refereeText = message;
+  refereeTimer = frames;
+  playWhistle(longWhistle, shortWhistle);
+}
+
+function findSpace(player){
+  let offsetY = Math.sin(Date.now() * 0.001 + player.x) * 30;
+  player.y += offsetY * 0.02;
+}
+
+function supportRun(player){
+   if(!ballOwner) return;
+
+   let targetX = ballOwner.x;
+   if(player.role === "CB") targetX = ballOwner.x + 120;
+   if(player.role === "MDF") targetX = ballOwner.x - 50;
+   if(player.role === "CF") targetX = ballOwner.x - 140;
+
+   player.x += (targetX - player.x) * 0.02;
+}
+
+function zoneMarking(player){
+   let target = teamA.find(p => p.control === "user");
+   if(!target) return;
+
+   if(player.role === "CB"){
+      if(target.x < canvas.width * 0.6){
+         player.y += (target.y - player.y) * 0.05;
+      }
+   }
+}
+
+function aiCross(){
+   if(!ballOwner || !teamB.includes(ballOwner)) return;
+   if(ballOwner.role !== "CF") return;
+
+   if(ballOwner.y < 120 || ballOwner.y > canvas.height - 120){
+      let targetX = 80;
+      let targetY = canvas.height / 2;
+
+      let dx = targetX - ball.x;
+      let dy = targetY - ball.y;
+      let d = Math.hypot(dx, dy);
+
+      ball.vx = (dx / d) * 13;
+      ball.vy = (dy / d) * 13;
+
+      ballOwner = null;
+      ballCooldown = 30;
+      ball.x += ball.vx * 2;
+      ball.y += ball.vy * 2;
+
+      callReferee("CROSS!", 25, 0, 0);
+   }
+}
+
+function shootNow(){
+  let targetY = canvas.height / 2 + (Math.random() * 80 - 40);
+  let dx = 0 - ball.x;
+  let dy = targetY - ball.y;
+  let d = Math.hypot(dx, dy);
+
+  ball.vx = (dx / d) * 16;
+  ball.vy = (dy / d) * 16;
+
+  ballOwner = null;
+  ballCooldown = 30;
+  callReferee("AI SHOOT!", 40, 0, 1);
+}
+
+document.body.addEventListener("pointerdown", (e) => {
+  if(e.target.id === 'pauseBtn' || e.target.id === 'exitBtn') return;
+  if(isGameActive) return; 
+
+  if(gameTime === 90) {
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    stadiumSound = crowdNoise();
+    isGameActive = true;
+    initPlayers();
+    resetBall("center");
+    callReferee("MATCH START! KICK OFF", 100, 1, 1);
+  }
+});
+
+function drawField(){
+  ctx.fillStyle = "#1f8f3a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, 80, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(canvas.width/2, 0);
+  ctx.lineTo(canvas.width/2, canvas.height);
+  ctx.stroke();
+
+  ctx.strokeRect(0, canvas.height/2-100, 60, 200);
+  ctx.strokeRect(canvas.width-60, canvas.height/2-100, 60, 200);
+}
+
+function drawRadar(){
+  const rw = 140;
+  const rh = 80;
+  const rx = canvas.width - rw - 15;
+  const ry = 90; 
+
+  ctx.fillStyle="rgba(0,0,0,.6)";
+  ctx.fillRect(rx,ry,rw,rh);
+
+  ctx.strokeStyle="white";
+  ctx.strokeRect(rx,ry,rw,rh);
+
+  [...teamA,...teamB].forEach(p=>{
+    let px = rx + (p.x/canvas.width)*rw;
+    let py = ry + (p.y/canvas.height)*rh;
+
+    ctx.fillStyle = teamA.includes(p) ? "#00b0ff" : "#ff4444";
+
+    ctx.beginPath();
+    ctx.arc(px,py,3,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  let bx = rx + (ball.x/canvas.width)*rw;
+  let by = ry + (ball.y/canvas.height)*rh;
+
+  ctx.fillStyle="white";
+  ctx.beginPath();
+  ctx.arc(bx,by,2,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawPlayer(obj, img){
+  let legOffset = Math.sin(obj.runAnim) * 4;
+
+  ctx.strokeStyle = "#222";
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+  ctx.moveTo(obj.x - 5, obj.y + 10);
+  ctx.lineTo(obj.x - 8, obj.y + 18 + legOffset);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(obj.x + 5, obj.y + 10);
+  ctx.lineTo(obj.x + 8, obj.y + 18 - legOffset);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(obj.x, obj.y);
+  if (obj.faceLeft) ctx.scale(-1, 1);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, obj.r, 0, Math.PI*2);
+  ctx.closePath();
+  ctx.clip(); 
+
+  if (img.complete && img.naturalWidth !== 0) {
+    ctx.drawImage(img, -obj.r, -obj.r, obj.r * 2, obj.r * 2);
+  } else {
+    ctx.fillStyle = (obj.role === 'GK') ? "#ffeb3b" : (obj.faceLeft ? "#f44336" : "#2196f3");
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  ctx.font = "bold 10px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(obj.role, obj.x, obj.y - obj.r - 4);
+
+  if(obj.control === 'user'){
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(obj.x, obj.y, obj.r + 4, 0, Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+function update(){
+  if(!isGameActive) return;
+  if(paused) return;
+  
+  if(ballCooldown > 0){
+    ballCooldown--;
+  }
+
+  let teamBAttack = ballOwner && teamB.includes(ballOwner);
+  
+  if(ballOwner && teamB.includes(ballOwner)){
+     aiPossessionTime++;
+  } else {
+     aiPossessionTime = 0;
+  }
+
+  let userPlayer = teamA.find(p => p.control === 'user');
+  if(userPlayer) {
+    userPlayer.x += joyX * userPlayer.speed;
+    userPlayer.y += joyY * userPlayer.speed;
+    
+    if(joyX !== 0 || joyY !== 0) userPlayer.runAnim += 0.25;
+
+    if (joyX < 0) userPlayer.faceLeft = true;
+    else if (joyX > 0) userPlayer.faceLeft = false;
+  }
+
+  let allPlayers = [...teamA, ...teamB];
+  
+  allPlayers.forEach(p => {
+    let isTeamA = teamA.includes(p);
+    
+    if (p.control !== 'user') {
+      if (p.role === 'GK') {
+        p.y += (ball.y - p.y) * 0.15;
+        p.y = Math.max(canvas.height/2 - 90, Math.min(canvas.height/2 + 90, p.y));
+        if(Math.abs(ball.y - p.y) > 1) p.runAnim += 0.25;
+
+      } else {
+        let dxBall = ball.x - p.x;
+        let dyBall = ball.y - p.y;
+        let distBall = Math.hypot(dxBall, dyBall);
+        
+        let shouldChase = false;
+
+        let teamArray = isTeamA ? teamA : teamB;
+        let sortedTeammates = [...teamArray]
+          .filter(x => x.role !== "GK")
+          .sort((a,b) => Math.hypot(ball.x-a.x, ball.y-a.y) - Math.hypot(ball.x-b.x, ball.y-b.y));
+
+        const nearestTeamMate = sortedTeammates[0];
+        const secondNearest = sortedTeammates[1];
+
+        if(nearestTeamMate === p){
+           shouldChase = true;
+        }
+        if(secondNearest === p && distBall < 120){
+           shouldChase = true;
+        }
+
+        if (shouldChase && distBall > 1) {
+          p.x += (dxBall / distBall) * p.speed;
+          p.y += (dyBall / distBall) * p.speed;
+          p.faceLeft = dxBall < 0;
+          p.runAnim += 0.25; 
+        } else {
+          if(!isTeamA) {
+             let form = teamBAttack ? formationAttack : formationDefend;
+             let targetX = canvas.width * form[p.role];
+             p.x += (targetX - p.x) * 0.03;
+
+             if(p.role === "CB") {
+                zoneMarking(p);
+             }
+             
+             if(teamBAttack && p !== ballOwner) {
+                supportRun(p);
+             }
+          } else {
+             findSpace(p);
+             let baseDef = 0.28, baseMid = 0.45, baseAtt = 0.65;
+             let defensiveLine = canvas.width * baseDef;
+             let midfieldLine  = canvas.width * baseMid;
+             let attackLine    = canvas.width * baseAtt;
+
+             if(p.role === "CB")  p.x += (defensiveLine - p.x) * 0.05;
+             if(p.role === "MDF") p.x += (midfieldLine - p.x) * 0.05;
+             if(p.role === "CF")  p.x += (attackLine - p.x) * 0.05;
+          }
+
+          if(isTeamA || (!teamBAttack && p.role !== "CB")) {
+             let targetY = canvas.height * p.homeY;
+             p.y += (targetY - p.y) * 0.05;
+          }
+
+          p.faceLeft = !isTeamA;
+          p.runAnim += 0.1;
+        }
+      }
+    }
+
+    p.x = Math.max(p.r, Math.min(canvas.width - p.r, p.x));
+    p.y = Math.max(p.r, Math.min(canvas.height - p.r, p.y));
+
+    // ======================================
+    // LOGIKA MEREBUT BOLA
+    // ======================================
+    let dx = ball.x - p.x;
+    let dy = ball.y - p.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist < p.r + ball.r) {
+      if (p.role === 'GK' && ballOwner !== p) {
+        
+        // FIX: Tambahkan pemisah overlap untuk GK agar bola tidak lengket
+        if (dist > 0) {
+          let overlap = (p.r + ball.r) - dist;
+          ball.x += (dx / dist) * overlap;
+          ball.y += (dy / dist) * overlap;
+        }
+        
+        ball.vx = isTeamA ? 12 : -12;
+        ball.vy = dy * 0.2;
+        ballOwner = null;
+        ballCooldown = 15; 
+      } else {
+        if (dist > 0 && ballOwner !== p) {
+          let overlap = (p.r + ball.r) - dist;
+          ball.x += (dx / dist) * overlap;
+          ball.y += (dy / dist) * overlap;
+        }
+        
+        if (ballCooldown <= 0) {
+          if (ballOwner === null) {
+            ballOwner = p;
+          } else if (ballOwner !== p) {
+            let stealChance = 0.05; 
+            if (Math.random() < stealChance) {
+              ballOwner = p;
+              ballCooldown = 30; 
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ======================================
+  // LOGIKA SERANGAN AI TEAM B
+  // ======================================
+  if(ballOwner){
+    let offset = ballOwner.faceLeft ? -18 : 18;
+    ball.x += ((ballOwner.x + offset) - ball.x) * 0.4;
+    ball.y += (ballOwner.y - ball.y) * 0.4;
+    ball.vx = 0; ball.vy = 0; ball.spin = 0;
+
+    if(teamBAttack) {
+      
+      ballOwner.x -= 1.5; 
+      
+      let striker = teamB.find(x => x.role === "CF");
+      
+      if(striker && ballOwner.role === "MDF"){
+         let refDefenderX = teamA[2] ? teamA[2].x : canvas.width * 0.4;
+         let openSpace = striker.x < refDefenderX; 
+
+         if(openSpace && Math.random() < 0.004){
+            let leadX = striker.x - 80;
+            let dx = leadX - ball.x;
+            let dy = striker.y - ball.y;
+            let d = Math.hypot(dx, dy);
+
+            ball.vx = (dx / d) * 12;
+            ball.vy = (dy / d) * 12;
+
+            ballOwner = null;
+            ballCooldown = 25;
+            callReferee("THROUGH PASS!", 30, 0, 0);
+         }
+      } 
+      else if(ballOwner.role === "CF") {
+         aiCross();
+      }
+
+      if(ballOwner && ballOwner.role === "CF") {
+         if(ball.y < 100) ballOwner.y += 2;
+         if(ball.y > canvas.height - 100) ballOwner.y -= 2;
+
+         let goalDist = Math.hypot(ball.x, ball.y - canvas.height / 2);
+
+         // FIX: Menggunakan 'else if' dan 'if (ballOwner)' untuk menghindari error null saat menembak
+         if(goalDist < 250 || ball.x < canvas.width * 0.25) {
+            shootNow();
+         } else if(ballOwner && ballOwner.x < canvas.width * 0.20 && (ballOwner.y < 120 || ballOwner.y > canvas.height - 120)) {
+            shootNow();
+         }
+      }
+
+      if(aiPossessionTime > 120){
+         shootNow();
+      }
+    }
+  }
+
+  // Fisika Pergerakan Bola Bebas
+  if (!ballOwner) {
+    ball.vy += ball.spin;
+    ball.spin *= 0.97;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    ball.vx *= 0.985;
+    ball.vy *= 0.985;
+  }
+  
+  let speed = Math.hypot(ball.vx, ball.vy);
+  if (speed > 0.1) ballAngle += speed * 0.05; 
+
+  // Mencegah bola keluar sisi lapangan atas dan bawah
+  if(ball.y < ball.r) { ball.y = ball.r; ball.vy *= -1; }
+  if(ball.y > canvas.height - ball.r) { ball.y = canvas.height - ball.r; ball.vy *= -1; }
+
+  // Cek Goal / Out Lapangan (Goal Kick)
+  if (ball.x < ball.r) {
+    if (ball.y > canvas.height/2 - 100 && ball.y < canvas.height/2 + 100) {
+      scoreAI++;
+      goalCheer();
+      callReferee("GOOOOOL !!!", 90, 1, 0);
+      updateUI();
+      initPlayers();
+      resetBall("center");
+    } else {
+      callReferee("OUT BALL! Goal Kick", 70, 0, 1);
+      resetBall("gk_teamA");
+    }
+  }
+
+  if (ball.x > canvas.width - ball.r) {
+    if (ball.y > canvas.height/2 - 100 && ball.y < canvas.height/2 + 100) {
+      scorePlayer++;
+      goalCheer();
+      callReferee("GOOOOOL !!!", 90, 1, 0);
+      updateUI();
+      initPlayers();
+      resetBall("center");
+    } else {
+      callReferee("OUT BALL! Goal Kick", 70, 0, 1);
+      resetBall("gk_teamB");
+    }
+  }
+}
+
+function render(){
+  drawField();
+  
+  teamA.forEach(p => drawPlayer(p, p.role === "GK" ? imgKeeper : imgBlue));
+  teamB.forEach(p => drawPlayer(p, p.role === "GK" ? imgKeeper : imgRed));
+
+  ctx.save();
+  ctx.translate(ball.x, ball.y);
+  ctx.rotate(ballAngle); 
+  if (imgBall.complete && imgBall.naturalWidth !== 0) {
+    ctx.drawImage(imgBall, -ball.r, -ball.r, ball.r * 2, ball.r * 2);
+  } else {
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(0, 0, ball.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  drawRadar();
+
+  if(!isGameActive && gameTime === 90) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("KETUK LAYAR UNTUK MEMULAI KICK OFF", canvas.width/2, canvas.height/2);
+  }
+  
+  if(paused) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 40px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PAUSED", canvas.width/2, canvas.height/2);
+  }
+
+  if(refereeTimer > 0 && !paused){
+    const boxW = 320;
+    const boxH = 50;
+    const x = (canvas.width - boxW) / 2;
+    const y = canvas.height - 90;
+
+    ctx.fillStyle = "rgba(0,0,0,0.75)";
+    ctx.fillRect(x,y,boxW,boxH);
+
+    ctx.strokeStyle="#ffeb3b";
+    ctx.lineWidth=2;
+    ctx.strokeRect(x,y,boxW,boxH);
+
+    ctx.fillStyle="#fff";
+    ctx.font="bold 20px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(refereeText,canvas.width/2,y+32);
+
+    refereeTimer--;
+  }
+}
+
+function loop(){
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+initPlayers();
+resetBall("center");
+loop();
+
+function updateUI(){
+  document.getElementById("score").innerText = scorePlayer + " - " + scoreAI;
+}
+
+setInterval(() => {
+  if (!isGameActive || paused) return; 
+  gameTime--;
+  document.getElementById("time").innerText = gameTime;
+
+  if(gameTime <= 0){
+    isGameActive = false;
+    callReferee("PERMAINAN BERAKHIR! FULL TIME", 200, 3, 0);
+    setTimeout(() => {
+      alert("Pertandingan Selesai!\nSkor Akhir: " + scorePlayer + " - " + scoreAI);
+      location.reload();
+    }, 3500);
+  }
+}, 1000);
+
+document.getElementById("shoot").addEventListener("pointerdown", () => {
+  if(paused) return;
+  let user = teamA.find(p => p.control === 'user');
+  if(!user || ballOwner !== user) return;
+
+  let targetGoalX = canvas.width;
+  let targetGoalY = canvas.height / 2 + (joyY * 85); 
+
+  let dx = targetGoalX - ball.x;
+  let dy = targetGoalY - ball.y;
+  let dist = Math.hypot(dx, dy);
+
+  let shootPower = 17; 
+  ball.vx = (dx / dist) * shootPower;
+  ball.vy = (dy / dist) * shootPower;
+  ball.spin = joyY * 0.6; 
+
+  ballOwner = null; 
+  ballCooldown = 25; 
+  callReferee("USER SHOOT!", 35, 0, 1);
+});
+
+document.getElementById("pass").addEventListener("pointerdown", () => {
+  if(paused) return;
+  let user = teamA.find(p => p.control === 'user');
+  if(!user || ballOwner !== user) return;
+
+  let targetMate = teamA.find(p => p !== user && p.role !== 'GK');
+  if(!targetMate) targetMate = teamA[4];
+
+  let dx = targetMate.x - ball.x;
+  let dy = targetMate.y - ball.y;
+  let d = Math.hypot(dx, dy);
+
+  ball.vx = (dx / d) * 9;
+  ball.vy = (dy / d) * 9;
+  
+  ballOwner = null;
+  ballCooldown = 20; 
+});
+
+const runBtn = document.getElementById("run");
+runBtn.addEventListener("pointerdown", () => {
+  if(paused) return;
+  let user = teamA.find(p => p.control === 'user');
+  if(user) user.speed = user.normalSpeed * 1.7; 
+});
+const resetSpeed = () => {
+  let user = teamA.find(p => p.control === 'user');
+  if(user) user.speed = user.normalSpeed;
+};
+runBtn.addEventListener("pointerup", resetSpeed);
+runBtn.addEventListener("pointerleave", resetSpeed);
+
+canvas.addEventListener("dblclick", () => {
+  if(paused) return;
+  let currentHandled = teamA.find(p => p.control === 'user');
+  
+  let nearest = teamA
+    .filter(p => p.role !== 'GK')
+    .sort((a,b) => Math.hypot(ball.x-a.x, ball.y-a.y) - Math.hypot(ball.x-b.x, ball.y-b.y))[0];
+  
+  if(nearest && nearest !== currentHandled) {
+    if(currentHandled) currentHandled.control = 'ai';
+    nearest.control = 'user';
+  }
+});
+
+const joyBase = document.getElementById("joyBase");
+const joyStick = document.getElementById("joyStick");
+
+joyBase.addEventListener("touchstart", e => {
+  e.preventDefault();
+}, {passive: false});
+
+joyBase.addEventListener("touchmove", (e) => {
+  if(paused) return;
+  let rect = joyBase.getBoundingClientRect();
+  let x = e.touches[0].clientX - rect.left - 60;
+  let y = e.touches[0].clientY - rect.top - 60;
+  let max = 40;
+  let len = Math.hypot(x, y);
+
+  if(len > max){
+    x = x / len * max;
+    y = y / len * max;
+  }
+
+  joyStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+  joyX = x / max;
+  joyY = y / max;
+  e.preventDefault();
+}, {passive: false});
+
+joyBase.addEventListener("touchend", () => {
+  joyStick.style.transform = "translate(-50%,-50%)";
+  joyX = 0;
+  joyY = 0;
+});
+
+document.getElementById("pauseBtn").onclick = () => {
+  paused = !paused;
+  document.getElementById("pauseBtn").innerText = paused ? "▶️" : "⏸";
+};
+
+document.getElementById("exitBtn").onclick = () => {
+  let wasPaused = paused;
+  paused = true; 
+  
+  if(confirm("Keluar pertandingan?")){
+    window.location.href="index.html";
+  } else {
+    paused = wasPaused;
+  }
+};
+</script>
+</body>
+</html>
