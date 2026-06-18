@@ -26,6 +26,12 @@ img: "dl1.png",
 link: "Slotbuah.html"
 },
 {
+name: "Mini Soccer",
+category: "action",
+img: "MS.png",
+link: "soccer.html"
+},
+{
 name: "Racing Car",
 category: "racing",
 img: "mb2.png",
@@ -258,3 +264,4 @@ render(games);
   });
 
  
+
