@@ -28,7 +28,7 @@ link: "Slotbuah.html"
 {
 name: "Mini Soccer",
 category: "action",
-img: "MS.png",
+img: "ms.png",
 link: "soccer.html"
 },
 {
