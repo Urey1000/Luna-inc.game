@@ -62,12 +62,17 @@
         #hud {
             position: absolute;
             top: 20px;
-            left: 20px;
-            right: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: none;
-            justify-content: space-between;
-            align-items: center;
             z-index: 10;
+        }
+
+        .hud-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 20px;
         }
 
         .hud-glass {
@@ -79,6 +84,12 @@
             font-size: 1.2rem;
             font-weight: 700;
         }
+
+        .btn-small {
+            margin: 0;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        } /* Tanda titik yang salah di sini sudah dihapus */
 
         #score-history {
             margin-top: 30px;
@@ -123,14 +134,19 @@
         <button class="btn btn-danger" onclick="quitGame()">Menu Utama</button>
     </div>
 
-    <div id="hud">
-        <div class="hud-glass">Score: <span id="scoreDisplay">0</span></div>
-        <div>
-            <button class="btn" onclick="togglePause()">Pause</button>
-            <button class="btn btn-danger" onclick="quitGame()">Exit Game</button>
-        </div>
-    </div>
+   <div id="hud">
+    <div class="hud-glass hud-bar">
+        <span>Score: <span id="scoreDisplay">0</span></span>
 
+        <button class="btn btn-small" onclick="togglePause()">
+            Pause
+        </button>
+
+        <button class="btn btn-small btn-danger" onclick="quitGame()">
+            Exit
+        </button>
+    </div>
+   </div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -161,6 +177,7 @@
         let particles = [];
         let stars = [];
 
+        // Audio
         const sfxShoot = document.getElementById('sfx-shoot');
         const sfxExplode = document.getElementById('sfx-explode');
         const bgm = document.getElementById('bgm');
@@ -168,25 +185,32 @@
         sfxShoot.volume = 0.3;
         sfxExplode.volume = 0.5;
 
+        /* === MEMUAT GAMBAR ASET === */
+        // Pastikan file "a10.png" dan "a20.png" benar-benar ada di dalam folder yang sama
+        const playerImg = new Image();
+        playerImg.src = "a10.png";
+
+        const enemyImg = new Image();
+        enemyImg.src = "a20.png";
+
         /* === CLASSES === */
         class Player {
             constructor() {
                 this.x = canvas.width / 2;
                 this.y = canvas.height - 100;
-                this.radius = 20;
-                this.color = '#00ffff';
+                this.width = 60;  
+                this.height = 60; 
+                this.radius = 25; 
             }
+            
             draw() {
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y - this.radius);
-                ctx.lineTo(this.x - this.radius, this.y + this.radius);
-                ctx.lineTo(this.x + this.radius, this.y + this.radius);
-                ctx.closePath();
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = this.color;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.drawImage(
+                    playerImg,
+                    this.x - this.width / 2,
+                    this.y - this.height / 2,
+                    this.width,
+                    this.height
+                );
             }
         }
 
@@ -214,17 +238,23 @@
             constructor(x, y, speed, health) {
                 this.x = x;
                 this.y = y;
-                this.radius = Math.random() * 15 + 15;
+                this.width = 60;  
+                this.height = 60; 
+                this.radius = 25; 
                 this.speed = speed;
                 this.health = health;
-                this.color = `hsl(${Math.random() * 360}, 50%, 50%)`;
             }
+            
             draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
+                ctx.drawImage(
+                    enemyImg,
+                    this.x - this.width / 2,
+                    this.y - this.height / 2,
+                    this.width,
+                    this.height
+                );
             }
+            
             update() {
                 this.y += this.speed;
                 this.draw();
@@ -238,7 +268,7 @@
                 this.radius = Math.random() * 3;
                 this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
                 this.alpha = 1;
-                this.color = color;
+                this.color = color || '#ff5500'; 
             }
             draw() {
                 ctx.save();
@@ -359,19 +389,23 @@
             document.getElementById('final-score').classList.remove('hidden');
             document.getElementById('btn-resume').classList.add('hidden');
             document.getElementById('hud').style.display = 'none';
-        }
+        } 
 
         function quitGame() {
+            if (!confirm("Yakin ingin keluar dari game?")) return;
+
             isPlaying = false;
             isPaused = false;
+
             cancelAnimationFrame(animationId);
             bgm.pause();
 
-            // Simpan skor sebelum pindah halaman
-            if(score > 0) saveScore();
+            if (score > 0) {
+                saveScore();
+            }
 
-            // Keluar dan pindah ke index.html
-            window.location.href = "index.html";
+            // Reload halaman untuk memunculkan menu utama
+            window.location.reload(); 
         }
 
         /* === GAME LOOP === */
@@ -408,6 +442,7 @@
             enemies.forEach((enemy, eIndex) => {
                 enemy.update();
 
+                // Cek Tabrakan Musuh vs Player
                 const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
                 if (distPlayer - enemy.radius - player.radius < 1) {
                     gameOver();
@@ -417,6 +452,7 @@
                     enemies.splice(eIndex, 1);
                 }
 
+                // Cek Tabrakan Peluru vs Musuh
                 bullets.forEach((bullet, bIndex) => {
                     const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
                     if (dist - enemy.radius - bullet.radius < 1) {
@@ -429,7 +465,7 @@
                             sfxExplode.play().catch(()=>{});
 
                             for(let i = 0; i < enemy.radius; i++) {
-                                particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                                particles.push(new Particle(enemy.x, enemy.y));
                             }
                             
                             score += 10;
@@ -447,15 +483,15 @@
         window.addEventListener('mousemove', (e) => {
             if (isPlaying && !isPaused) {
                 player.x = e.clientX;
-                if(player.x < player.radius) player.x = player.radius;
-                if(player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
+                if(player.x < player.width/2) player.x = player.width/2;
+                if(player.x > canvas.width - player.width/2) player.x = canvas.width - player.width/2;
             }
         });
 
         window.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON' || !isPlaying || isPaused) return;
             
-            bullets.push(new Bullet(player.x, player.y - player.radius));
+            bullets.push(new Bullet(player.x, player.y - player.height/2));
             
             sfxShoot.currentTime = 0;
             sfxShoot.play().catch(()=>{});
@@ -480,3 +516,4 @@
     </script>
 </body>
 </html>
+
