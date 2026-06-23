@@ -52,6 +52,13 @@ link: "ludo.html"
 },
 
 {
+name: "Akuarium Game",
+category: "puzzle",
+img: "aquarium.png",
+link: "aquarium.html"
+},
+
+{
 name: "Puzzle Game",
 category: "puzzle",
 img: "pzl1.png",
