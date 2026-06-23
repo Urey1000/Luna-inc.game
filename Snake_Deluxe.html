@@ -11,12 +11,7 @@
             background-color: #111; user-select: none;
         }
 
-        #bg-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('1001160004.jpg');
-            background-size: cover; background-position: center;
-            opacity: 0.2; z-index: -1;
-        }
+        #bg-container { display: none; }
 
         #top-nav {
             position: absolute; top: 0; left: 0; width: 100%;
@@ -34,9 +29,8 @@
         
         #gameCanvas { display: block; }
 
-        /* Desain Popup Level Up Modern */
         #level-popup {
-            display: none; /* Sembunyi secara default */
+            display: none; 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); z-index: 20;
             flex-direction: column; justify-content: center; align-items: center;
@@ -94,7 +88,25 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // --- SISTEM AUDIO SEDERHANA ---
+        // --- SISTEM DUNIA & KAMERA ---
+        const worldWidth = 4000;
+        const worldHeight = 4000;
+        let camera = { x: 0, y: 0 };
+
+        // --- LOADING ASET GAMBAR ---
+        const gameBgImg = new Image();
+        gameBgImg.src = "ts.png";
+
+        const playerImg = new Image();
+        playerImg.src = "Kpla.png"; 
+
+        const bodyImg = new Image();
+        bodyImg.src = "D0.png";
+
+        const birdImg = new Image();
+        birdImg.src = "brd.png";
+
+        // --- SISTEM AUDIO ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
@@ -137,24 +149,25 @@
         const pointsPerLevel = 500; 
         let isPaused = false;
         
-        // --- SISTEM VISUAL (POWW TEXT) ---
         let floatingTexts = [];
 
         function spawnText(x, y, text, color) {
             floatingTexts.push({ x: x, y: y, text: text, color: color, alpha: 1.0 });
         }
 
-        // --- FUNGSI MENCARI POSISI AMAN MUNCUL ---
-        let playerBody = []; // Referensi sementara
+        // --- FUNGSI MENCARI POSISI AMAN ---
+        let playerBody = []; 
         let enemies = [];
+        let birds = [];
         const maxEnemies = 7;
+        const maxBirds = 3;
 
         function getSafeSpawnPos(isPlayer) {
             let x, y, isSafe;
             let attempts = 0;
             do {
-                x = 50 + Math.random() * (canvas.width - 100);
-                y = 50 + Math.random() * (canvas.height - 100);
+                x = 50 + Math.random() * (worldWidth - 100);
+                y = 50 + Math.random() * (worldHeight - 100);
                 isSafe = true;
 
                 if (!isPlayer && playerBody.length > 0) {
@@ -163,8 +176,11 @@
                 enemies.forEach(e => {
                     if (Math.hypot(x - e.x, y - e.y) < 200) isSafe = false;
                 });
+                birds.forEach(b => {
+                    if (Math.hypot(x - b.x, y - b.y) < 250) isSafe = false;
+                });
                 attempts++;
-            } while (!isSafe && attempts < 50); // Coba maks 50x agar tidak hang
+            } while (!isSafe && attempts < 50); 
             return {x, y};
         }
 
@@ -172,7 +188,7 @@
         let startPos = getSafeSpawnPos(true);
         let player = {
             x: startPos.x, y: startPos.y,
-            radius: 14, speed: 3.5, angle: 0,
+            radius: 20, speed: 3.5, angle: 0,
             body: [], length: 20
         };
         playerBody = player.body;
@@ -180,21 +196,20 @@
         // --- SISTEM MAKANAN ---
         const foods = [];
         function spawnFood() {
-            // 10% peluang muncul makanan besar
             let isBig = Math.random() < 0.1; 
             foods.push({
-                x: 20 + Math.random() * (canvas.width - 40),
-                y: 20 + Math.random() * (canvas.height - 40),
-                radius: isBig ? 12 : 5, // Lebih besar
-                color: isBig ? '#f1c40f' : `hsl(${Math.random() * 360}, 100%, 60%)`, // Emas jika besar
+                x: 20 + Math.random() * (worldWidth - 40),
+                y: 20 + Math.random() * (worldHeight - 40),
+                radius: isBig ? 12 : 5, 
+                color: isBig ? '#f1c40f' : `hsl(${Math.random() * 360}, 100%, 60%)`, 
                 points: isBig ? 100 : 20,
                 growth: isBig ? 5 : 2,
                 isBig: isBig
             });
         }
-        for(let i = 0; i < 60; i++) spawnFood();
+        for(let i = 0; i < 200; i++) spawnFood();
 
-        // --- SISTEM MUSUH ---
+        // --- SISTEM MUSUH ULAR ---
         function spawnEnemy() {
             let pos = getSafeSpawnPos(false);
             enemies.push({
@@ -211,17 +226,33 @@
         }
         for(let i = 0; i < maxEnemies; i++) spawnEnemy();
 
+        // --- SISTEM MUSUH BURUNG ---
+        function spawnBird() {
+            let pos = getSafeSpawnPos(false);
+            birds.push({
+                x: pos.x,
+                y: pos.y,
+                radius: 18,
+                speed: 5,
+                angle: Math.random() * Math.PI * 2,
+                wingFrame: 0,
+                hp: 3,
+                isDead: false
+            });
+        }
+
         // --- KONTROL GAME ---
         let targetX = null; let targetY = null;
 
         function updateTarget(e) {
-            if (audioCtx.state === 'suspended') audioCtx.resume(); // Izinkan audio saat sentuh
-            const touch = e.touches[0];
+            if (audioCtx.state === 'suspended') audioCtx.resume(); 
+            const touch = e.touches ? e.touches[0] : e;
             targetX = touch.clientX; targetY = touch.clientY;
         }
 
         window.addEventListener('touchstart', updateTarget);
         window.addEventListener('touchmove', updateTarget);
+        window.addEventListener('mousemove', updateTarget);
 
         // --- LOGIKA LEVEL UP & PAUSE ---
         function updateUI() {
@@ -237,18 +268,16 @@
                 document.getElementById('ui-level').innerText = level;
                 document.getElementById('popup-level-text').innerText = level;
                 
-                // Memicu Pause & Popup
                 isPaused = true;
                 playSound('levelUp');
                 document.getElementById('level-popup').style.display = 'flex';
             }
         }
 
-        // Dipanggil saat tombol "Mulai Lanjut" di klik
         function resumeGame() {
             isPaused = false;
             document.getElementById('level-popup').style.display = 'none';
-            targetX = null; targetY = null; // Mencegah ular loncat arah
+            targetX = null; targetY = null; 
         }
 
         function resetPlayer() {
@@ -259,57 +288,163 @@
                 targetX = null; targetY = null;
             } else {
                 alert("Game Over! Poin akhirmu: " + score);
-                score = 0; level = 1; kills = 0; lives = 3;
+                score = 0; level = 1; kills = 0; lives = 3; birds = [];
                 document.getElementById('ui-level').innerText = level;
                 updateUI(); resetPlayer();
             }
         }
 
-        // --- FUNGSI MENGGAMBAR ULAR (BENTUK DINAMIS) ---
-        function drawSnake(snakeObj, headColor, bodyColor) {
+        function drawSnake(snakeObj, headColor, bodyColor, headImg = null, customBodyImg = null) {
             let totalLen = Math.max(1, snakeObj.body.length);
+            
             for (let i = totalLen - 1; i >= 0; i--) {
                 const segment = snakeObj.body[i];
-                
-                // Logika menyempit ke ekor (Ekor 30% ukuran kepala)
                 let scale = 1 - (i / totalLen) * 0.7; 
                 let currentRadius = Math.max(3, snakeObj.radius * scale);
 
+                if (i === 0) {
+                    if (headImg && headImg.complete && headImg.naturalWidth !== 0) {
+                        ctx.save();
+                        ctx.translate(segment.x, segment.y);
+                        ctx.rotate(snakeObj.angle + Math.PI / 2); 
+                        let size = currentRadius * 2.6; 
+                        ctx.drawImage(headImg, -size / 2, -size / 2, size, size);
+                        ctx.restore();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(segment.x, segment.y, currentRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = headColor;
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                } else {
+                    if (customBodyImg && customBodyImg.complete && customBodyImg.naturalWidth !== 0) {
+                        ctx.drawImage(
+                            customBodyImg,
+                            segment.x - currentRadius,
+                            segment.y - currentRadius,
+                            currentRadius * 2,
+                            currentRadius * 2
+                        );
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(segment.x, segment.y, currentRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = bodyColor;
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // --- SISTEM RADAR / MINIMAP ---
+        function drawRadar() {
+            const radarSize = 150;
+            const margin = 20;
+            
+            // Menempatkan Radar di pojok kanan bawah layar
+            const radarX = canvas.width - radarSize - margin;
+            const radarY = canvas.height - radarSize - margin;
+
+            // 1. Gambar Background Radar
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.lineWidth = 2;
+            ctx.fillRect(radarX, radarY, radarSize, radarSize);
+            ctx.strokeRect(radarX, radarY, radarSize, radarSize);
+
+            // 2. Gambar Posisi Player di Radar
+            const px = radarX + (player.x / worldWidth) * radarSize;
+            const py = radarY + (player.y / worldHeight) * radarSize;
+            
+            ctx.fillStyle = "#1dd1a1"; // Warna hijau untuk Player
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3. Gambar Posisi Musuh Ular di Radar
+            enemies.forEach(enemy => {
+                if (enemy.isDead) return;
+
+                const distance = Math.hypot(
+                    player.x - enemy.x,
+                    player.y - enemy.y
+                );
+
+                const ex = radarX + (enemy.x / worldWidth) * radarSize;
+                const ey = radarY + (enemy.y / worldHeight) * radarSize;
+
+                ctx.fillStyle =
+                    distance < 300 ? "#ff0000" :
+                    distance < 600 ? "#ff8800" :
+                    "#ff4757";
+
                 ctx.beginPath();
-                ctx.arc(segment.x, segment.y, currentRadius, 0, Math.PI * 2);
-                ctx.fillStyle = i === 0 ? headColor : bodyColor; 
+                ctx.arc(ex, ey, 3, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.closePath();
+            });
+
+            // 4. (Opsional) Gambar Posisi Burung di Radar jika level >= 3
+            if (level >= 3) {
+                birds.forEach(bird => {
+                    if (bird.isDead) return;
+                    const bx = radarX + (bird.x / worldWidth) * radarSize;
+                    const by = radarY + (bird.y / worldHeight) * radarSize;
+                    
+                    ctx.fillStyle = "#ffffff"; // Warna putih untuk burung
+                    ctx.beginPath();
+                    ctx.arc(bx, by, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
             }
         }
 
         // --- GAME LOOP UTAMA ---
         function gameLoop() {
-            // Jika pause, jangan jalankan logika game, tapi tetap panggil loop
             if (isPaused) {
                 requestAnimationFrame(gameLoop);
                 return; 
             }
 
+            // --- UPDATE KAMERA ---
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+            camera.x = Math.max(0, Math.min(worldWidth - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(worldHeight - canvas.height, camera.y));
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Garis Tembok
-            ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 4;
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
 
-            // 1. LOGIKA MAKANAN (Menggunakan for loop mundur agar aman saat menghapus)
+            // --- MENGGAMBAR BACKGROUND DUNIA ---
+            if (gameBgImg.complete && gameBgImg.naturalWidth !== 0) {
+                ctx.drawImage(gameBgImg, 0, 0, worldWidth, worldHeight);
+            } else {
+                ctx.fillStyle = '#111';
+                ctx.fillRect(0, 0, worldWidth, worldHeight);
+            }
+
+            ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, worldWidth, worldHeight);
+
+            // 1. LOGIKA MAKANAN
             for (let i = foods.length - 1; i >= 0; i--) {
                 let food = foods[i];
                 
-                ctx.beginPath();
-                ctx.arc(food.x, food.y, food.radius, 0, Math.PI * 2);
-                if (food.isBig) {
-                    ctx.shadowBlur = 10; ctx.shadowColor = "yellow"; // Glow effect untuk makanan besar
+                if(food.x > camera.x - 20 && food.x < camera.x + canvas.width + 20 &&
+                   food.y > camera.y - 20 && food.y < camera.y + canvas.height + 20) {
+                    
+                    ctx.beginPath();
+                    ctx.arc(food.x, food.y, food.radius, 0, Math.PI * 2);
+                    if (food.isBig) {
+                        ctx.shadowBlur = 10; ctx.shadowColor = "#0004ff7f"; 
+                    }
+                    ctx.fillStyle = food.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0; 
+                    ctx.closePath();
                 }
-                ctx.fillStyle = food.color;
-                ctx.fill();
-                ctx.shadowBlur = 0; // Reset efek glow
-                ctx.closePath();
 
                 const dist = Math.hypot(player.x - food.x, player.y - food.y);
                 if (dist < player.radius + food.radius) {
@@ -324,26 +459,29 @@
 
             // 2. LOGIKA PEMAIN
             if (targetX !== null && targetY !== null) {
-                const dx = targetX - player.x; const dy = targetY - player.y;
+                const screenPlayerX = player.x - camera.x;
+                const screenPlayerY = player.y - camera.y;
+                const dx = targetX - screenPlayerX; 
+                const dy = targetY - screenPlayerY;
                 if (Math.hypot(dx, dy) > 5) player.angle = Math.atan2(dy, dx);
             }
 
-            // Auto-steer batas tembok
             const margin = 40;
             if (player.x < margin) player.angle += 0.05; 
-            if (player.x > canvas.width - margin) player.angle += 0.05;
+            if (player.x > worldWidth - margin) player.angle += 0.05;
             if (player.y < margin) player.angle += 0.05;
-            if (player.y > canvas.height - margin) player.angle += 0.05;
+            if (player.y > worldHeight - margin) player.angle += 0.05;
 
             player.x += Math.cos(player.angle) * player.speed;
             player.y += Math.sin(player.angle) * player.speed;
 
-            if (player.x <= 0 || player.x >= canvas.width || player.y <= 0 || player.y >= canvas.height) {
+            if (player.x <= 0 || player.x >= worldWidth || player.y <= 0 || player.y >= worldHeight) {
                 lives--; playSound('pow'); updateUI(); resetPlayer();
             } else {
                 player.body.unshift({x: player.x, y: player.y});
                 if (player.body.length > player.length) player.body.pop();
-                drawSnake(player, '#1dd1a1', '#10ac84');
+                
+                drawSnake(player, '#1dd1a1', '#10ac84', playerImg, bodyImg);
             }
 
             // 3. LOGIKA MUSUH
@@ -366,16 +504,16 @@
                 }
 
                 if (enemy.x < margin) enemy.targetAngle = 0; 
-                else if (enemy.x > canvas.width - margin) enemy.targetAngle = Math.PI; 
+                else if (enemy.x > worldWidth - margin) enemy.targetAngle = Math.PI; 
                 if (enemy.y < margin) enemy.targetAngle = Math.PI / 2; 
-                else if (enemy.y > canvas.height - margin) enemy.targetAngle = -Math.PI / 2;
+                else if (enemy.y > worldHeight - margin) enemy.targetAngle = -Math.PI / 2;
 
                 enemy.angle += (enemy.targetAngle - enemy.angle) * 0.1;
                 enemy.x += Math.cos(enemy.angle) * enemy.speed;
                 enemy.y += Math.sin(enemy.angle) * enemy.speed;
 
-                enemy.x = Math.max(enemy.radius, Math.min(canvas.width - enemy.radius, enemy.x));
-                enemy.y = Math.max(enemy.radius, Math.min(canvas.height - enemy.radius, enemy.y));
+                enemy.x = Math.max(enemy.radius, Math.min(worldWidth - enemy.radius, enemy.x));
+                enemy.y = Math.max(enemy.radius, Math.min(worldHeight - enemy.radius, enemy.y));
 
                 enemy.body.unshift({x: enemy.x, y: enemy.y});
                 if (enemy.body.length > enemy.length) enemy.body.pop();
@@ -383,65 +521,162 @@
                 drawSnake(enemy, `hsl(${enemy.hue}, 100%, 60%)`, `hsl(${enemy.hue}, 100%, 40%)`);
             });
 
-            // 4. DETEKSI TABRAKAN 
-            enemies.forEach((enemy) => {
-                const distToEnemy = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-                if (distToEnemy < player.radius + enemy.radius && !enemy.isDead) {
-                    if (player.length >= enemy.length) {
-                        kills++; score += 150; 
-                        player.length += Math.floor(enemy.length / 2); 
-                        enemy.isDead = true;
-                        
-                        // Efek Visual & Suara
-                        playSound('pow');
-                        spawnText(enemy.x, enemy.y, "POWW!", "#ff4757");
-                        spawnText(enemy.x, enemy.y + 20, "+150", "#2ed573");
-                        
-                        updateUI();
-                    } else {
-                        lives--; playSound('pow'); updateUI(); resetPlayer();
+            // 4. DETEKSI TABRAKAN (KEPALA VS BADAN)
+            
+            // Player vs Seluruh Badan Musuh
+            enemies.forEach(enemy => {
+                if (enemy.isDead) return;
+                for (let seg of enemy.body) {
+                    let d = Math.hypot(player.x - seg.x, player.y - seg.y);
+                    if (d < player.radius) {
+                        if (player.length > enemy.length) {
+                            enemy.isDead = true;
+                            kills++;
+                            score += 150;
+                            player.length += Math.floor(enemy.length / 2);
+                            playSound("pow");
+                            spawnText(enemy.x, enemy.y, "POWW!", "#ff4757");
+                        } else {
+                            lives--;
+                            playSound("pow");
+                            updateUI();
+                            resetPlayer();
+                        }
+                        break; 
                     }
                 }
             });
 
-            for (let i = 0; i < enemies.length; i++) {
-                for (let j = i + 1; j < enemies.length; j++) {
-                    let e1 = enemies[i]; let e2 = enemies[j];
-                    if (!e1.isDead && !e2.isDead) {
-                        let d = Math.hypot(e1.x - e2.x, e1.y - e2.y);
-                        if (d < Math.max(e1.radius, e2.radius)) {
-                            if (e1.length >= e2.length) {
-                                e1.length += Math.floor(e2.length / 2); e2.isDead = true;
+            // Musuh vs Badan Musuh Lain
+            enemies.forEach(enemy => {
+                enemies.forEach(other => {
+                    if (enemy.id === other.id) return;
+                    if (enemy.isDead || other.isDead) return;
+                    
+                    for (let seg of other.body) {
+                        let d = Math.hypot(enemy.x - seg.x, enemy.y - seg.y);
+                        if (d < enemy.radius) {
+                            if (enemy.length > other.length) {
+                                other.isDead = true;
+                                enemy.length += Math.floor(other.length / 2);
                             } else {
-                                e2.length += Math.floor(e1.length / 2); e1.isDead = true;
+                                enemy.isDead = true;
                             }
+                            break;
                         }
                     }
-                }
-            }
+                });
+            });
 
             enemies = enemies.filter(enemy => !enemy.isDead);
             while (enemies.length < maxEnemies) spawnEnemy();
 
-            // 5. GAMBAR EFEK TEKS MELAYANG (POWW)
+            // 5. LOGIKA MUSUH BURUNG
+            if (level >= 3) {
+                while (birds.length < maxBirds) {
+                    spawnBird();
+                }
+            }
+
+            birds.forEach((bird) => {
+                if (bird.isDead) return;
+
+                // mengejar player
+                let dx = player.x - bird.x;
+                let dy = player.y - bird.y;
+
+                bird.angle = Math.atan2(dy, dx);
+                bird.x += Math.cos(bird.angle) * bird.speed;
+                bird.y += Math.sin(bird.angle) * bird.speed;
+                bird.wingFrame += 0.3;
+
+                // gambar burung
+                if (birdImg.complete && birdImg.naturalWidth) {
+                    ctx.save();
+                    ctx.translate(bird.x, bird.y);
+                    ctx.rotate(bird.angle + Math.PI / 2);
+                    let flap = Math.sin(bird.wingFrame) * 9;
+                    ctx.drawImage(birdImg, -25, -25 - flap, 50, 50);
+                    ctx.restore();
+                }
+
+                // ===== PLAYER (Kepala) VS BURUNG =====
+                let dPlayer = Math.hypot(player.x - bird.x, player.y - bird.y);
+
+                if (dPlayer < player.radius + bird.radius) {
+                    // level 3+ player membunuh burung
+                    if (level >= 3) {
+                        bird.isDead = true;
+                        score += 100;
+                        spawnText(bird.x, bird.y, "BIRD DOWN!", "#2ed573");
+                        playSound("pow");
+                        updateUI();
+                    } else {
+                        lives--;
+                        playSound("pow");
+                        spawnText(player.x, player.y, "BIRD HIT!", "orange");
+                        updateUI();
+                        resetPlayer();
+                    }
+                }
+
+                // ===== BURUNG VS ULAR MUSUH (Badan) =====
+                if (!bird.isDead) {
+                    enemies.forEach(enemy => {
+                        if (enemy.isDead) return;
+                        for (let seg of enemy.body) {
+                            let d = Math.hypot(bird.x - seg.x, bird.y - seg.y);
+                            if (d < bird.radius) {
+                                bird.isDead = true;
+                                spawnText(bird.x, bird.y, "CRASH!", "#ff4757");
+                                break;
+                            }
+                        }
+                    });
+                }
+
+                // ===== BURUNG VS BADAN PLAYER =====
+                if (!bird.isDead) {
+                    // Dimulai dari indeks 1 agar mengabaikan kepala pemain
+                    for (let i = 1; i < player.body.length; i++) {
+                        let seg = player.body[i];
+                        let d = Math.hypot(bird.x - seg.x, bird.y - seg.y);
+                        if (d < bird.radius) {
+                            bird.isDead = true;
+                            spawnText(bird.x, bird.y, "CRASH!", "#ff4757");
+                            break;
+                        }
+                    }
+                }
+            });
+
+            // hapus burung mati
+            birds = birds.filter(bird => !bird.isDead);
+
+            // 6. GAMBAR EFEK TEKS MELAYANG
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 let pt = floatingTexts[i];
                 ctx.fillStyle = pt.color;
                 ctx.globalAlpha = pt.alpha;
                 ctx.font = "bold 20px 'Segoe UI', Tahoma";
                 ctx.fillText(pt.text, pt.x, pt.y);
-                ctx.globalAlpha = 1.0; // reset
+                ctx.globalAlpha = 1.0; 
                 
-                pt.y -= 1.5; // Naik perlahan
-                pt.alpha -= 0.02; // Memudar perlahan
+                pt.y -= 1.5; 
+                pt.alpha -= 0.02; 
                 
                 if (pt.alpha <= 0) floatingTexts.splice(i, 1);
             }
 
+            // --- SELESAI MENGGAMBAR DUNIA (Geser Koordinat ke Layar Lagi) ---
+            ctx.restore();
+
+            // --- GAMBAR UI / RADAR ---
+            drawRadar();
+
             requestAnimationFrame(gameLoop);
         }
 
-        // Mulai Game
         gameLoop();
 
         window.addEventListener('resize', () => {
@@ -451,3 +686,4 @@
     </script>
 </body>
 </html>
+
