@@ -18,6 +18,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            user-select: none; 
+            -webkit-user-select: none;
         }
 
         canvas {
@@ -26,7 +28,6 @@
             z-index: 1;
         }
 
-        /* Glassmorphism Panel */
         .glass-panel {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
@@ -62,17 +63,12 @@
         #hud {
             position: absolute;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
+            right: 20px;
             display: none;
-            z-index: 10;
-        }
-
-        .hud-bar {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
-            padding: 10px 20px;
+            z-index: 10;
         }
 
         .hud-glass {
@@ -83,13 +79,9 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 1.2rem;
             font-weight: 700;
+            display: flex;
+            gap: 15px;
         }
-
-        .btn-small {
-            margin: 0;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        } /* Tanda titik yang salah di sini sudah dihapus */
 
         #score-history {
             margin-top: 30px;
@@ -103,6 +95,134 @@
 
         .hidden { display: none !important; }
 
+        /* === MOBILE CONTROLS CSS === */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 30px;
+            z-index: 20;
+        }
+
+        #joystick {
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+        }
+
+        #joystick::after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: rgba(0,255,255,0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            pointer-events: none;
+        }
+
+        #actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #btn-shoot {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            color: black;
+            font-size: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            transition: 0.1s;
+            cursor: pointer;
+        }
+
+        #btn-shoot:active {
+            transform: scale(0.9);
+            background: white;
+        }
+
+        /* === SKILL UI CSS === */
+        #skill-ui {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            z-index: 30;
+        }
+
+        .skill {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            border: 2px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #skill-ultimate {
+            border: 2px solid cyan;
+            box-shadow: 0 0 20px cyan;
+        }
+
+        .cooldown {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            transform-origin: bottom;
+            transform: scaleY(0);
+            pointer-events: none;
+        }
+
+        .skill small {
+            position: absolute;
+            bottom: -5px;
+            font-size: 14px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.8);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* === BOSS WARNING CSS === */
+        #boss-warning {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: red;
+            text-shadow: 0 0 20px red;
+            z-index: 50;
+            animation: blink 0.5s infinite;
+        }
+        @keyframes blink {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
     </style>
 </head>
 <body>
@@ -110,6 +230,10 @@
     <audio id="sfx-shoot" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=laser-gun-81720.mp3"></audio>
     <audio id="sfx-explode" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_82c474fa77.mp3?filename=8-bit-explosion-95000.mp3"></audio>
     <audio id="bgm" src="https://cdn.pixabay.com/download/audio/2021/11/24/audio_34b3dc05e0.mp3?filename=electronic-ambient-ambient-104988.mp3" loop></audio>
+    <audio id="bgm-boss" src="https://cdn.pixabay.com/download/audio/2022/10/30/audio_6c8b1d6e3a.mp3?filename=dark-boss-theme-124008.mp3" loop></audio>
+    <audio id="sfx-warning" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=warning-alarm-loop-99498.mp3"></audio>
+
+    <div id="boss-warning" class="hidden">⚠ WARNING ⚠</div>
 
     <div id="main-menu" class="glass-panel">
         <h1>SPACE SHOOTER</h1>
@@ -122,8 +246,7 @@
         
         <div id="score-history">
             <h3>Histori Skor:</h3>
-            <ul id="history-list" style="list-style: none; margin-top: 10px;">
-            </ul>
+            <ul id="history-list" style="list-style: none; margin-top: 10px;"></ul>
         </div>
     </div>
 
@@ -134,19 +257,39 @@
         <button class="btn btn-danger" onclick="quitGame()">Menu Utama</button>
     </div>
 
-   <div id="hud">
-    <div class="hud-glass hud-bar">
-        <span>Score: <span id="scoreDisplay">0</span></span>
-
-        <button class="btn btn-small" onclick="togglePause()">
-            Pause
-        </button>
-
-        <button class="btn btn-small btn-danger" onclick="quitGame()">
-            Exit
-        </button>
+    <div id="hud">
+        <div class="hud-glass">
+            <span>Score: <span id="scoreDisplay">0</span></span>
+            <span>Bombs: <span id="bombDisplay">3</span></span>
+        </div>
+        <div>
+            <button class="btn" onclick="togglePause()">Pause</button>
+            <button class="btn btn-danger" onclick="quitGame()">Exit Game</button>
+        </div>
     </div>
-   </div>
+
+    <div id="mobile-controls" class="hidden">
+        <div id="joystick"></div>
+        <div id="actions">
+            <button id="btn-shoot">●</button>
+            <div id="skill-ui">
+                <div class="skill" id="skill-ultimate">
+                    <span>⚡</span>
+                    <div class="cooldown" id="cd-ultimate"></div>
+                </div>
+                <div class="skill" id="skill-missile">
+                    <span>🚀</span>
+                    <div class="cooldown" id="cd-missile"></div>
+                </div>
+                <div class="skill" id="skill-bomb">
+                    <span>💣</span>
+                    <div class="cooldown" id="cd-bomb"></div>
+                    <small id="bomb-count">3</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -176,51 +319,168 @@
         let enemies = [];
         let particles = [];
         let stars = [];
+        let missiles = [];
+        
+        // Boss variables
+        let boss = null;
+        let bossActive = false;
 
-        // Audio
+        let joystickActive = false;
+        let joystickStart = { x: 0, y: 0 };
+        let playerVelocity = { x: 0, y: 0 };
+        let shooting = false;
+
+        const skills = {
+            missile: { cooldown: 3000, lastUsed: 0 },
+            bomb: { cooldown: 8000, lastUsed: 0, stock: 3 },
+            ultimate: { cooldown: 15000, lastUsed: 0, active: false, duration: 2000, startTime: 0 }
+        };
+
         const sfxShoot = document.getElementById('sfx-shoot');
         const sfxExplode = document.getElementById('sfx-explode');
         const bgm = document.getElementById('bgm');
+        const bgmBoss = document.getElementById('bgm-boss');
+        const warningSound = document.getElementById('sfx-warning');
+        
         bgm.volume = 0.4;
+        bgmBoss.volume = 0.5;
         sfxShoot.volume = 0.3;
         sfxExplode.volume = 0.5;
 
-        /* === MEMUAT GAMBAR ASET === */
-        // Pastikan file "a10.png" dan "a20.png" benar-benar ada di dalam folder yang sama
-        const playerImg = new Image();
-        playerImg.src = "a10.png";
-
-        const enemyImg = new Image();
-        enemyImg.src = "a20.png";
+        // Image Assets
+        const playerImg = new Image(); playerImg.src = "a10.png"; 
+        const enemyImg = new Image(); enemyImg.src = "a20.png"; 
+        const bossImg = new Image(); bossImg.src = "kpdr.png"; // Gambar Boss ditambahkan
 
         /* === CLASSES === */
         class Player {
             constructor() {
                 this.x = canvas.width / 2;
-                this.y = canvas.height - 100;
+                this.y = canvas.height - 160; 
                 this.width = 60;  
                 this.height = 60; 
                 this.radius = 25; 
             }
-            
             draw() {
-                ctx.drawImage(
-                    playerImg,
-                    this.x - this.width / 2,
-                    this.y - this.height / 2,
-                    this.width,
-                    this.height
+                ctx.drawImage(playerImg, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            }
+        }
+
+        class Boss {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = -150;
+                this.radius = 80;
+                this.health = 300;
+                this.maxHealth = 300;
+                this.phase = 1;
+                this.speed = 2;
+                this.baseX = this.x;
+                this.hitFlash = 0; // Tambahan efek hit flash
+            }
+
+            update() {
+                // masuk layar dulu
+                if (this.y < 150) {
+                    this.y += this.speed;
+                } else {
+                    // movement beda tiap phase
+                    if (this.phase === 1) this.x += Math.sin(frameCount * 0.05) * 2; // Gerakan ringan phase 1
+                    if (this.phase === 2) this.x += Math.sin(frameCount * 0.05) * 5;
+                    if (this.phase === 3) this.x += Math.sin(frameCount * 0.1) * 8;
+                }
+
+                // phase berubah sesuai HP
+                if (this.health < 200) this.phase = 2;
+                if (this.health < 100) this.phase = 3;
+
+                // BGM Speedup
+                if (this.phase === 3) {
+                    bgmBoss.playbackRate = 1.2;
+                }
+
+                // tembakan boss
+                if (frameCount % 60 === 0 && this.y >= 150) {
+                    if (this.phase === 1) {
+                        enemies.push(new Enemy(this.x, this.y + 50, 4, 1));
+                    }
+                    if (this.phase === 2) {
+                        enemies.push(new Enemy(this.x - 50, this.y + 50, 5, 2));
+                        enemies.push(new Enemy(this.x + 50, this.y + 50, 5, 2));
+                    }
+                    if (this.phase === 3) {
+                        for (let i = -2; i <= 2; i++) {
+                            enemies.push(new Enemy(this.x + i * 40, this.y + 50, 6, 2));
+                        }
+                    }
+                }
+
+                this.draw();
+            }
+
+            draw() {
+                ctx.save(); // Menyimpan state canvas (penting agar globalAlpha tidak bocor)
+
+                // Hit Flash Effect
+                if (this.hitFlash > 0) {
+                    ctx.globalAlpha = 0.5;
+                    this.hitFlash--;
+                }
+
+                // Glow Aura Boss
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255,0,255,0.5)";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                const size = this.radius * 2.2;
+
+                try {
+                    // Pengecekan gambar loaded (lebih aman di HTML5 canvas)
+                    if (bossImg.complete && bossImg.naturalHeight !== 0) {
+                        ctx.drawImage(
+                            bossImg,
+                            this.x - size / 2,
+                            this.y - size / 2,
+                            size,
+                            size
+                        );
+                    } else {
+                        throw new Error("Gambar belum load"); // Paksa fallback
+                    }
+                } catch (e) {
+                    // Fallback kalau gambar gagal load
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = "purple";
+                    ctx.fill();
+                }
+
+                // Mengembalikan opacity normal untuk menggambar HP bar agar tidak ikut transparan
+                ctx.globalAlpha = 1.0; 
+
+                // HP BAR
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x - 50, this.y - this.radius - 30, 100, 10);
+
+                ctx.fillStyle = "#00ff00";
+                // Menggunakan Math.max(0, ...) agar bar tidak minus saat mati
+                ctx.fillRect(
+                    this.x - 50,
+                    this.y - this.radius - 30,
+                    (Math.max(0, this.health) / this.maxHealth) * 100,
+                    10
                 );
+
+                ctx.restore(); // Mengembalikan state canvas asli
             }
         }
 
         class Bullet {
             constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.radius = 4;
-                this.speed = 10;
-                this.color = '#ffff00';
+                this.x = x; this.y = y;
+                this.radius = 4; this.speed = 10; this.color = '#ffff00';
             }
             draw() {
                 ctx.beginPath();
@@ -233,28 +493,79 @@
                 this.draw();
             }
         }
+        
+        class Missile {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = 6; this.speed = 7;
+                this.target = null;
+                this.chainLeft = 3; 
+                this.hitTargets = []; 
+            }
+
+            findTarget() {
+                let closest = null;
+                let minDist = Infinity;
+                
+                if (boss) {
+                    this.target = boss;
+                    return;
+                }
+
+                enemies.forEach(enemy => {
+                    if (this.hitTargets.includes(enemy)) return;
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist < minDist) { minDist = dist; closest = enemy; }
+                });
+                this.target = closest;
+            }
+
+            update() {
+                if (!this.target || (this.target !== boss && !enemies.includes(this.target))) {
+                    this.findTarget();
+                }
+
+                if (this.target) {
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    const angle = Math.atan2(dy, dx);
+                    this.x += Math.cos(angle) * this.speed;
+                    this.y += Math.sin(angle) * this.speed;
+                } else {
+                    this.y -= this.speed;
+                }
+                this.draw();
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'orange';
+                ctx.fill();
+                particles.push(new Particle(this.x, this.y, '#ff6600'));
+            }
+        }
 
         class Enemy {
             constructor(x, y, speed, health) {
-                this.x = x;
-                this.y = y;
-                this.width = 60;  
-                this.height = 60; 
-                this.radius = 25; 
-                this.speed = speed;
-                this.health = health;
+                this.x = x; this.y = y;
+                this.width = 60; this.height = 60; this.radius = 25; 
+                this.speed = speed; this.health = health;
             }
-            
             draw() {
-                ctx.drawImage(
-                    enemyImg,
-                    this.x - this.width / 2,
-                    this.y - this.height / 2,
-                    this.width,
-                    this.height
-                );
+                try {
+                    if (enemyImg.complete && enemyImg.naturalHeight !== 0) {
+                        ctx.drawImage(enemyImg, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                    } else {
+                        throw new Error();
+                    }
+                } catch(e) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                }
             }
-            
             update() {
                 this.y += this.speed;
                 this.draw();
@@ -263,8 +574,7 @@
 
         class Particle {
             constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
+                this.x = x; this.y = y;
                 this.radius = Math.random() * 3;
                 this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
                 this.alpha = 1;
@@ -295,10 +605,8 @@
             let history = historyJSON ? JSON.parse(historyJSON) : [];
             
             if (history.length === 0) {
-                historyList.innerHTML = '<li>Belum ada histori permainan.</li>';
-                return;
+                historyList.innerHTML = '<li>Belum ada histori permainan.</li>'; return;
             }
-
             history.sort((a, b) => b.score - a.score);
             history.slice(0, 5).forEach((record, index) => {
                 historyList.innerHTML += `<li>${index + 1}. Score: <b>${record.score}</b> (Level: ${record.level}) - ${record.date}</li>`;
@@ -308,11 +616,7 @@
         function saveScore() {
             let historyJSON = localStorage.getItem('spaceShooterHistory');
             let history = historyJSON ? JSON.parse(historyJSON) : [];
-            history.push({
-                score: score,
-                level: currentLevel,
-                date: new Date().toLocaleDateString('id-ID')
-            });
+            history.push({ score: score, level: currentLevel, date: new Date().toLocaleDateString('id-ID') });
             localStorage.setItem('spaceShooterHistory', JSON.stringify(history));
             loadScoreHistory();
         }
@@ -333,24 +637,100 @@
             });
         }
 
+        function drawLightning(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            for (let i = 0; i < 5; i++) {
+                let x = x1 + (x2 - x1) * (i / 5) + (Math.random() - 0.5) * 10;
+                let y = y1 + (y2 - y1) * (i / 5) + (Math.random() - 0.5) * 10;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = 'cyan';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function crossfadeAudio(from, to) {
+            let fadeOut = setInterval(() => {
+                if (from.volume > 0.05) {
+                    from.volume -= 0.05;
+                } else {
+                    from.pause();
+                    from.volume = 0.4;
+                    clearInterval(fadeOut);
+                }
+            }, 50);
+
+            to.volume = 0;
+            to.play().catch(()=>{});
+
+            let fadeIn = setInterval(() => {
+                if (to.volume < 0.5) {
+                    to.volume += 0.05;
+                } else {
+                    clearInterval(fadeIn);
+                }
+            }, 50);
+        }
+
+        function useSkill(name) {
+            const skill = skills[name];
+            const now = Date.now();
+            if (now - skill.lastUsed < skill.cooldown) return false;
+            skill.lastUsed = now;
+            return true;
+        }
+
+        function updateCooldownUI() {
+            const now = Date.now();
+            let m = skills.missile;
+            let mCd = document.getElementById('cd-missile');
+            let mProgress = (now - m.lastUsed) / m.cooldown;
+            mCd.style.transform = `scaleY(${1 - Math.min(mProgress, 1)})`;
+
+            let b = skills.bomb;
+            let bCd = document.getElementById('cd-bomb');
+            let bProgress = (now - b.lastUsed) / b.cooldown;
+            bCd.style.transform = `scaleY(${1 - Math.min(bProgress, 1)})`;
+
+            let u = skills.ultimate;
+            let uCd = document.getElementById('cd-ultimate');
+            let uProgress = (now - u.lastUsed) / u.cooldown;
+            uCd.style.transform = `scaleY(${1 - Math.min(uProgress, 1)})`;
+        }
+
         function startGame(level) {
             currentLevel = level;
             player = new Player();
-            bullets = [];
-            enemies = [];
-            particles = [];
-            score = 0;
-            frameCount = 0;
-            isPlaying = true;
-            isPaused = false;
+            bullets = []; enemies = []; particles = []; missiles = [];
+            score = 0; frameCount = 0;
+            isPlaying = true; isPaused = false; shooting = false;
+            
+            boss = null;
+            bossActive = false;
+            bgmBoss.playbackRate = 1.0;
+            bgmBoss.pause();
+            bgmBoss.currentTime = 0;
+            
+            skills.bomb.stock = 3;
+            skills.bomb.lastUsed = 0;
+            skills.missile.lastUsed = 0;
+            skills.ultimate.lastUsed = 0;
+            skills.ultimate.active = false;
             
             document.getElementById('scoreDisplay').innerText = score;
+            document.getElementById('bombDisplay').innerText = skills.bomb.stock;
+            document.getElementById('bomb-count').innerText = skills.bomb.stock;
+            
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('hud').style.display = 'flex';
+            document.getElementById('mobile-controls').classList.remove('hidden'); 
             document.getElementById('overlay-screen').classList.add('hidden');
             
             initStars();
             bgm.currentTime = 0;
+            bgm.volume = 0.4;
             bgm.play().catch(e => console.log("BGM butuh interaksi user pertama kali."));
             
             animate();
@@ -367,11 +747,12 @@
                 overlay.classList.remove('hidden');
                 document.getElementById('btn-resume').classList.remove('hidden');
                 document.getElementById('final-score').classList.add('hidden');
-                title.innerText = "PAUSED";
+                title.innerText = "PAUSED"; 
                 bgm.pause();
+                bgmBoss.pause();
             } else {
                 overlay.classList.add('hidden');
-                bgm.play();
+                if (bossActive) bgmBoss.play(); else bgm.play();
                 animate();
             }
         }
@@ -379,7 +760,8 @@
         function gameOver() {
             isPlaying = false;
             cancelAnimationFrame(animationId);
-            bgm.pause();
+            bgm.pause(); 
+            bgmBoss.pause();
             saveScore();
             
             const overlay = document.getElementById('overlay-screen');
@@ -388,23 +770,17 @@
             document.getElementById('final-score').innerText = `Score Akhir: ${score}`;
             document.getElementById('final-score').classList.remove('hidden');
             document.getElementById('btn-resume').classList.add('hidden');
+            
             document.getElementById('hud').style.display = 'none';
-        } 
+            document.getElementById('mobile-controls').classList.add('hidden'); 
+            canvas.style.transform = "translate(0,0)";
+        }
 
         function quitGame() {
-            if (!confirm("Yakin ingin keluar dari game?")) return;
-
-            isPlaying = false;
-            isPaused = false;
-
-            cancelAnimationFrame(animationId);
-            bgm.pause();
-
-            if (score > 0) {
-                saveScore();
-            }
-
-            // Reload halaman untuk memunculkan menu utama
+            isPlaying = false; isPaused = false;
+            cancelAnimationFrame(animationId); 
+            bgm.pause(); bgmBoss.pause();
+            if(score > 0) saveScore();
             window.location.reload(); 
         }
 
@@ -416,99 +792,328 @@
             ctx.fillStyle = 'rgba(5, 5, 16, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawStars();
-
+            updateCooldownUI();
+            
+            const btnShoot = document.getElementById('btn-shoot');
+            if (shooting) {
+                btnShoot.style.boxShadow = "0 0 30px white";
+                if (frameCount % 10 === 0) {
+                    bullets.push(new Bullet(player.x, player.y - 30));
+                    sfxShoot.currentTime = 0;
+                    sfxShoot.play().catch(()=>{});
+                }
+            } else {
+                btnShoot.style.boxShadow = "0 0 10px rgba(255,255,255,0.3)";
+            }
+            
+            player.x += playerVelocity.x;
+            if(player.x < player.width/2) player.x = player.width/2;
+            if(player.x > canvas.width - player.width/2) player.x = canvas.width - player.width/2;
             player.draw();
             
+            // BOSS SPAWN LOGIC
+            if (!bossActive && score >= 200) {
+                bossActive = true;
+                document.getElementById('boss-warning').classList.remove('hidden');
+                warningSound.play().catch(()=>{});
+
+                setTimeout(() => {
+                    document.getElementById('boss-warning').classList.add('hidden');
+                    boss = new Boss();
+                    crossfadeAudio(bgm, bgmBoss);
+                }, 2000);
+            }
+
             const cfg = levelConfig[currentLevel];
-            
-            if (frameCount % cfg.spawnRate === 0) {
-                const x = Math.random() * canvas.width;
-                enemies.push(new Enemy(x, -30, cfg.enemySpeed, cfg.enemyHealth));
+            if (!bossActive && frameCount % cfg.spawnRate === 0) {
+                enemies.push(new Enemy(Math.random() * canvas.width, -30, cfg.enemySpeed, cfg.enemyHealth));
+            }
+
+            // BOSS UPDATE
+            if (boss) {
+                boss.update();
+
+                // Collision bullet ke boss
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    let b = bullets[i];
+                    const dist = Math.hypot(b.x - boss.x, b.y - boss.y);
+
+                    if (dist < boss.radius) {
+                        boss.health -= 1;
+                        boss.hitFlash = 5; // Pemicu Hit Flash
+                        bullets.splice(i, 1);
+                        particles.push(new Particle(b.x, b.y, '#ff00ff'));
+                    }
+                }
+
+                // Player collision with boss
+                const distPlayerBoss = Math.hypot(player.x - boss.x, player.y - boss.y);
+                if (distPlayerBoss - boss.radius - player.radius < 1) gameOver();
+
+                // Boss mati
+                if (boss.health <= 0) {
+                    sfxExplode.currentTime = 0; sfxExplode.play().catch(()=>{});
+                    for(let i=0; i<100; i++){
+                        particles.push(new Particle(boss.x, boss.y, '#ff00ff'));
+                    }
+                    score += 200;
+                    document.getElementById('scoreDisplay').innerText = score;
+                    boss = null;
+                    bossActive = false;
+                    crossfadeAudio(bgmBoss, bgm);
+                }
             }
 
             particles.forEach((particle, index) => {
-                if (particle.alpha <= 0) {
-                    particles.splice(index, 1);
-                } else {
-                    particle.update();
-                }
+                if (particle.alpha <= 0) particles.splice(index, 1);
+                else particle.update();
             });
 
             bullets.forEach((bullet, index) => {
                 bullet.update();
                 if (bullet.y < 0) bullets.splice(index, 1);
             });
+            
+            // MISSILE UPDATE
+            for (let mIndex = missiles.length - 1; mIndex >= 0; mIndex--) {
+                let m = missiles[mIndex];
+                m.update();
+                
+                if (m.y < -50 || m.x < -50 || m.x > canvas.width + 50) {
+                    missiles.splice(mIndex, 1); continue;
+                }
 
-            enemies.forEach((enemy, eIndex) => {
+                // Check collision with Boss
+                if (boss) {
+                    const distToBoss = Math.hypot(m.x - boss.x, m.y - boss.y);
+                    if (distToBoss < boss.radius + m.radius) {
+                        for(let i=0;i<30;i++) particles.push(new Particle(boss.x, boss.y));
+                        sfxExplode.currentTime = 0; sfxExplode.play().catch(()=>{});
+                        drawLightning(m.x, m.y, boss.x, boss.y);
+                        boss.health -= 5;
+                        boss.hitFlash = 5; // Pemicu Hit Flash
+                        missiles.splice(mIndex, 1);
+                        continue;
+                    }
+                }
+
+                // Check collision with regular enemies
+                let hitEnemy = false;
+                for (let eIndex = enemies.length - 1; eIndex >= 0; eIndex--) {
+                    let enemy = enemies[eIndex];
+                    const dist = Math.hypot(m.x - enemy.x, m.y - enemy.y);
+
+                    if (dist < enemy.radius + m.radius) {
+                        for(let i=0;i<30;i++) particles.push(new Particle(enemy.x, enemy.y));
+                        sfxExplode.currentTime = 0; sfxExplode.play().catch(()=>{});
+                        
+                        drawLightning(m.x, m.y, enemy.x, enemy.y);
+                        m.hitTargets.push(enemy);
+                        enemies.splice(eIndex, 1);
+                        
+                        score += 20;
+                        document.getElementById('scoreDisplay').innerText = score;
+
+                        m.chainLeft--;
+                        if (m.chainLeft > 0) {
+                            m.x = enemy.x; m.y = enemy.y;
+                            m.target = null; 
+                        } else {
+                            missiles.splice(mIndex, 1);
+                        }
+                        hitEnemy = true;
+                        break;
+                    }
+                }
+                if(hitEnemy) continue;
+            }
+
+            // ENEMY UPDATE
+            for (let eIndex = enemies.length - 1; eIndex >= 0; eIndex--) {
+                let enemy = enemies[eIndex];
                 enemy.update();
 
-                // Cek Tabrakan Musuh vs Player
-                const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-                if (distPlayer - enemy.radius - player.radius < 1) {
-                    gameOver();
+                if (missiles.some(m => m.target === enemy)) {
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y, enemy.radius + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'red';
+                    ctx.stroke();
                 }
+
+                const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (distPlayer - enemy.radius - player.radius < 1) gameOver();
 
                 if (enemy.y - enemy.radius > canvas.height) {
-                    enemies.splice(eIndex, 1);
+                    enemies.splice(eIndex, 1); continue;
                 }
 
-                // Cek Tabrakan Peluru vs Musuh
-                bullets.forEach((bullet, bIndex) => {
+                for (let bIndex = bullets.length - 1; bIndex >= 0; bIndex--) {
+                    let bullet = bullets[bIndex];
                     const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+                    
                     if (dist - enemy.radius - bullet.radius < 1) {
-                        
                         enemy.health -= 1;
                         bullets.splice(bIndex, 1);
 
                         if (enemy.health <= 0) {
-                            sfxExplode.currentTime = 0;
-                            sfxExplode.play().catch(()=>{});
-
-                            for(let i = 0; i < enemy.radius; i++) {
-                                particles.push(new Particle(enemy.x, enemy.y));
-                            }
+                            sfxExplode.currentTime = 0; sfxExplode.play().catch(()=>{});
+                            for(let i = 0; i < enemy.radius; i++) particles.push(new Particle(enemy.x, enemy.y));
                             
                             score += 10;
                             document.getElementById('scoreDisplay').innerText = score;
                             enemies.splice(eIndex, 1);
+                            break;
                         }
                     }
-                });
-            });
+                }
+            }
+
+            // === ULTIMATE ACTIVE ===
+            if (skills.ultimate.active) {
+                let now = Date.now();
+                let elapsed = now - skills.ultimate.startTime;
+
+                ctx.fillStyle = "rgba(0,0,0,0.6)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (Math.random() < 0.2) {
+                    ctx.fillStyle = "rgba(255,255,255,0.1)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - 30);
+                ctx.lineTo(player.x, 0);
+                ctx.strokeStyle = "cyan";
+                ctx.lineWidth = 8;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = "cyan";
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                if (elapsed < 500) {
+                    score += enemies.length * 15;
+                    enemies.forEach(e => {
+                        for(let j=0;j<10;j++) particles.push(new Particle(e.x, e.y, '#00ffff'));
+                    });
+                    enemies = [];
+                } else {
+                    for (let i = enemies.length - 1; i >= 0; i--) {
+                        let enemy = enemies[i];
+                        if (Math.abs(enemy.x - player.x) < 80) {
+                            for(let j=0;j<10;j++) particles.push(new Particle(enemy.x, enemy.y, '#00ffff'));
+                            enemies.splice(i, 1);
+                            score += 15;
+                        }
+                    }
+                }
+
+                // Damage ultimate ke boss
+                if (boss && Math.abs(boss.x - player.x) < 100) {
+                    ctx.beginPath();
+                    ctx.arc(boss.x, boss.y, boss.radius + 20, 0, Math.PI * 2);
+                    ctx.strokeStyle = "yellow";
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    
+                    boss.health -= 0.5;
+                    boss.hitFlash = 5; // Pemicu Hit Flash
+                }
+
+                document.getElementById('scoreDisplay').innerText = score;
+
+                canvas.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px)`;
+
+                if (elapsed > skills.ultimate.duration) {
+                    skills.ultimate.active = false;
+                    canvas.style.transform = "translate(0,0)";
+                }
+            }
 
             frameCount++;
         }
 
         /* === INPUT CONTROLS === */
         window.addEventListener('mousemove', (e) => {
-            if (isPlaying && !isPaused) {
+            if (isPlaying && !isPaused && !joystickActive) { 
                 player.x = e.clientX;
                 if(player.x < player.width/2) player.x = player.width/2;
                 if(player.x > canvas.width - player.width/2) player.x = canvas.width - player.width/2;
             }
         });
 
-        window.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON' || !isPlaying || isPaused) return;
-            
-            bullets.push(new Bullet(player.x, player.y - player.height/2));
-            
-            sfxShoot.currentTime = 0;
-            sfxShoot.play().catch(()=>{});
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape' && isPlaying) togglePause();
         });
 
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Escape' && isPlaying) {
-                togglePause();
+        const joystick = document.getElementById('joystick');
+        joystick.addEventListener('touchstart', e => {
+            if (!isPlaying || isPaused) return;
+            joystickActive = true;
+            joystickStart.x = e.touches[0].clientX;
+            joystickStart.y = e.touches[0].clientY;
+        }, {passive: false});
+
+        joystick.addEventListener('touchmove', e => {
+            if (!joystickActive || !isPlaying || isPaused) return;
+            let dx = e.touches[0].clientX - joystickStart.x;
+            playerVelocity.x = dx * 0.1;
+        }, {passive: false});
+
+        joystick.addEventListener('touchend', () => { joystickActive = false; playerVelocity.x = 0; });
+
+        const btnShoot = document.getElementById('btn-shoot');
+        btnShoot.addEventListener('touchstart', (e) => { e.preventDefault(); shooting = true; });
+        btnShoot.addEventListener('touchend', (e) => { e.preventDefault(); shooting = false; });
+        btnShoot.addEventListener('mousedown', (e) => { if(isPlaying && !isPaused) shooting = true; });
+        btnShoot.addEventListener('mouseup', () => { shooting = false; });
+        btnShoot.addEventListener('mouseleave', () => { shooting = false; });
+
+        document.getElementById('skill-missile').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (!isPlaying || isPaused) return;
+            if (!useSkill('missile')) return;
+            missiles.push(new Missile(player.x, player.y));
+        });
+
+        document.getElementById('skill-bomb').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (!isPlaying || isPaused || skills.bomb.stock <= 0) return;
+            if (!useSkill('bomb')) return;
+
+            skills.bomb.stock--;
+            document.getElementById('bomb-count').innerText = skills.bomb.stock;
+            document.getElementById('bombDisplay').innerText = skills.bomb.stock;
+
+            sfxExplode.currentTime = 0;
+            sfxExplode.play().catch(()=>{});
+
+            enemies.forEach(enemy => {
+                for(let i=0;i<30;i++) particles.push(new Particle(enemy.x, enemy.y));
+                score += 10; 
+            });
+            document.getElementById('scoreDisplay').innerText = score;
+            enemies = [];
+            
+            if (boss) {
+                boss.health -= 20; 
+                boss.hitFlash = 5; // Pemicu Hit Flash dari Bom
             }
+        });
+
+        document.getElementById('skill-ultimate').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (!isPlaying || isPaused) return;
+            if (!useSkill('ultimate')) return;
+
+            skills.ultimate.active = true;
+            skills.ultimate.startTime = Date.now();
         });
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            if(player) {
-                player.y = canvas.height - 100;
-            }
+            if(player) player.y = canvas.height - 160;
         });
 
         window.onload = loadScoreHistory;
