@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Luna Farm Tycoon V6 PRO</title>
+<style>
+:root{
+  --bg1:#8ee77a; --bg2:#66c45b; --bg3:#3f8e41;
+  --panel:#153a23; --panel2:#214e30; --panel3:#2f6b3f;
+  --line:rgba(255,255,255,.09); --soft:#dff7d8; --text:#f5fff2;
+  --gold:#ffd54a; --danger:#ff6b6b; --blue:#36a9ff; --orange:#ff9342;
+  --shadow:0 10px 24px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent; margin:0; padding:0;}
+html,body{
+  width:100%;height:100%;overflow:hidden; font-family:Segoe UI,Arial,sans-serif;
+  background:var(--panel); color:var(--text);
+}
+body{display:flex;justify-content:center;align-items:center}
+#game{
+  position:relative; width:100%; height:100%; max-width:480px; max-height:100vh;
+  overflow:hidden; background: linear-gradient(180deg,#98ef86 0%,#6dcc63 40%,#4da74e 100%);
+}
+
+/* LAYAR MENU UTAMA */
+#mainMenu {
+  position: absolute; inset: 0; z-index: 300;
+  background: linear-gradient(180deg, #153a23, #0a1f12);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.menu-title { font-size: 36px; font-weight: 900; color: var(--gold); margin-bottom: 40px; text-shadow: 0 4px 10px rgba(0,0,0,0.6); text-align: center; }
+.menu-btn {
+  background: var(--panel3); border: 2px solid var(--gold); color: white;
+  padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: bold;
+  margin-bottom: 16px; width: 220px; cursor: pointer; box-shadow: var(--shadow);
+  transition: transform 0.2s, background 0.2s;
+}
+.menu-btn:hover { background: var(--gold); color: #000; transform: scale(1.05); }
+
+#timeOverlay { position:absolute; inset:0; z-index:10; pointer-events:none; background: rgba(10,10,40,0); transition: background 2s ease; }
+#timeOverlay.night { background: rgba(10,10,40,0.45); }
+#rainOverlay { position:absolute; inset:0; z-index:11; pointer-events:none; background: repeating-linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%); background-size: 100% 20px; animation: rainDrop 0.5s linear infinite; display:none; opacity:0.6;}
+@keyframes rainDrop { 0% { background-position: 0 0; } 100% { background-position: 0 20px; } }
+
+.topbar{
+  position:absolute;top:0;left:0;right:0;z-index:30; padding:10px;
+  background:linear-gradient(180deg,rgba(14,51,24,.96),rgba(19,70,33,.94)); box-shadow:var(--shadow);
+}
+.brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.logo{font-size:24px;}
+.brand-text h1{font-size:16px;}
+.dayWeather{display:flex; gap:6px; font-size:12px; font-weight:bold;}
+.badge{padding:4px 8px; border-radius:8px; background:var(--panel3); border:1px solid var(--line);}
+
+/* KONTROL PAUSE & EXIT */
+.ctrl-group { position:absolute; right:10px; top:10px; display:flex; gap:6px; z-index: 40; }
+.ctrl-btn{ background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); color:white; padding:6px 10px; border-radius:10px; font-size:14px; cursor:pointer; transition: background 0.2s;}
+.ctrl-btn:hover { background: rgba(255,255,255,0.2); }
+
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px; margin-top: 10px;}
+.stat{background:var(--panel2); border-radius:10px; padding:6px; text-align:center; border:1px solid var(--line);}
+.stat .label{font-size:9px; color:#d7f4d3; margin-bottom:2px;}
+.stat .value{font-size:12px; font-weight:900;}
+
+.main{position:absolute; inset:125px 0 160px 0; padding:10px; overflow-y:auto; z-index:20;}
+.buildings-row { display: flex; flex-wrap: wrap; gap:8px; margin-bottom:12px; }
+.building {
+  flex: 1 1 calc(16% - 8px); min-width: 50px;
+  background:linear-gradient(180deg, #5c4326, #3f2b15);
+  border: 2px solid #856138; border-radius: 12px; padding:8px 4px;
+  text-align:center; box-shadow:var(--shadow); cursor:pointer; position:relative;
+}
+.building-icon { font-size: 20px; margin-bottom:4px; }
+.building-name { font-size: 9px; font-weight:bold; }
+.yield-badge { position:absolute; top:-5px; right:-5px; background:var(--danger); color:#fff; font-size:10px; font-weight:bold; padding:2px 6px; border-radius:10px; display:none; }
+
+.farm-wrap{ background:rgba(255,255,255,.1); border-radius:16px; padding:10px; border:2px solid rgba(23,78,39,.3); position:relative;}
+.map-badge { position:absolute; top:-10px; left:10px; background:var(--gold); color:#000; font-size:10px; font-weight:bold; padding:4px 8px; border-radius:8px; border:2px solid #fff; z-index:5;}
+.grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.plot{ position:relative; background:#86c74f; border:2px solid rgba(40,78,31,.5); border-radius:12px; aspect-ratio: 1/1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.plot-inner{font-size:24px;}
+.plot.locked { background: #46554a; color:#ccc; }
+.stage-badge { position:absolute; bottom:2px; font-size:8px; font-weight:bold; background:rgba(0,0,0,0.5); padding:2px 4px; border-radius:4px;}
+
+#farmer { position: absolute; font-size: 32px; z-index: 25; transform: translate(-50%, -50%); transition: top 0.3s ease-out, left 0.3s ease-out; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+.decor-item { position: absolute; font-size: 24px; z-index: 15; transform: translate(-50%, -50%); pointer-events: none; }
+.npc-item { position: absolute; font-size: 28px; z-index: 26; transform: translate(-50%, -50%); cursor: pointer; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4)); background: rgba(255,255,255,0.2); border-radius: 50%; padding: 4px; }
+.npc-bubble { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: white; color: black; font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: bold; }
+.floating-text { position: absolute; z-index: 100; font-weight: 900; font-size: 16px; color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5); pointer-events: none; animation: floatUp 1s ease-out forwards; }
+@keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-40px) scale(1.2); opacity: 0; } }
+
+/* ANIMASI SLEEP/IDLE */
+.sleeping::after {
+  content: "💤"; position: absolute; top: -20px; right: -15px;
+  font-size: 20px; animation: floatZzz 1.5s infinite ease-in-out; pointer-events: none;
+}
+@keyframes floatZzz {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(10px, -20px) scale(1.5); opacity: 0; }
+}
+
+.unlock-anim { animation: unlockPop 0.5s ease; }
+@keyframes unlockPop { 0% { transform: scale(0); opacity:0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity:1; } }
+
+.bottom{ position:absolute;left:0;right:0;bottom:0;z-index:40; padding:10px; background:linear-gradient(180deg,rgba(16,57,28,.95),rgba(12,42,22,.98)); }
+.seed-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
+.seed-btn{ background:var(--panel2); border:1px solid var(--line); border-radius:10px; color:#fff; padding:6px; font-size:10px; text-align:center; cursor:pointer; }
+.seed-btn.active{outline:2px solid var(--gold); background:var(--panel3);}
+.seed-btn .emoji{font-size:16px;}
+.action-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.action-btn{ border:none;border-radius:10px;padding:10px 4px; font-weight:bold;font-size:11px;color:#fff;cursor:pointer; }
+.btn-water{background:#1379d1} .btn-fertilize{background:#7c49d8} .btn-shop{background:#d86518} .btn-harvest{background:#21884a}
+
+/* POPUP MODERN JS (PAUSE & EXIT) */
+.popup-modern{
+  position:absolute; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  display:none; justify-content:center; align-items:center; z-index:200;
+}
+.popup-modern.show{ display:flex; }
+.popup-box{
+  width:85%; max-width:300px; background:linear-gradient(180deg,#1f4d2e,#163d25);
+  border-radius:16px; padding:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  animation: popupIn 0.3s ease; color: white; border:1px solid var(--line);
+}
+@keyframes popupIn{ from{ transform:scale(0.7); opacity:0;} to{ transform:scale(1); opacity:1;} }
+.popup-title{ font-size:18px; font-weight:bold; margin-bottom:10px; color: var(--gold); }
+.popup-actions{ display:flex; gap:10px; margin-top:15px; }
+.popup-actions button{ flex:1; padding:10px; border:none; border-radius:10px; font-weight:bold; cursor:pointer; }
+.btn-continue{ background:#36a9ff; color:white; }
+.btn-exit{ background:#ff6b6b; color:white; }
+
+/* MODAL BAWAAN GAME */
+.toast{ position:absolute;left:50%;top:130px;transform:translateX(-50%); z-index:100; background:rgba(0,0,0,.8);color:#fff;padding:8px 16px;border-radius:20px; font-size:12px; opacity:0; transition:0.3s; pointer-events:none; text-align:center;}
+.toast.show{opacity:1;}
+.modal-backdrop{ position:absolute;inset:0;background:rgba(0,0,0,.6); z-index:120; display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-backdrop.show{display:flex}
+.modal{ width:100%; background:var(--panel); border-radius:16px; padding:16px; border:1px solid var(--line); max-height:80vh; overflow-y:auto; box-shadow:var(--shadow); }
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+.close-btn{background:var(--danger); border:none; color:white; width:30px; height:30px; border-radius:8px; font-weight:bold; cursor:pointer;}
+.modal-item{background:var(--panel2); padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;}
+.btn-sm{background:var(--orange); border:none; color:white; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;}
+.btn-sm:disabled{background:#555; cursor:not-allowed;}
+.btn-danger{background:var(--danger); border:none; color:white; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;}
+.section-title { font-size: 12px; color: var(--gold); margin: 12px 0 6px 0; font-weight: bold; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <div id="mainMenu">
+    <div class="menu-title">🌾 LUNA FARM <br><span style="font-size:24px; color:#fff;">V6 PRO</span></div>
+    <button class="menu-btn" id="btnResume" style="display:none;" onclick="startGame(true)">▶ Lanjutkan Game</button>
+    <button class="menu-btn" onclick="startGame(false)">⭐ Game Baru</button>
+  </div>
+
+  <div id="timeOverlay"></div>
+  <div id="rainOverlay"></div>
+  
+  <div id="decorContainer"></div>
+  <div id="npcContainer"></div>
+
+  <div class="topbar">
+    <div class="brand">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="logo">🌾</span>
+        <div class="brand-text"><h1>LUNA FARM V6</h1></div>
+      </div>
+      <div class="ctrl-group">
+        <button class="ctrl-btn" onclick="togglePause()">⏸</button>
+        <button class="ctrl-btn" onclick="openExitPopup()">⏻</button>
+      </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="dayWeather">
+        <span class="badge" id="dayBadge">Hari 1</span>
+        <span class="badge" id="weatherBadge">☀ Cerah</span>
+      </div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat"><div class="label">💰 Uang</div><div class="value" id="moneyText">0</div></div>
+      <div class="stat"><div class="label">⭐ Level</div><div class="value" id="levelText">1</div></div>
+      <div class="stat"><div class="label">⚡ Energi</div><div class="value" id="energyText">0</div></div>
+      <div class="stat"><div class="label">📦 Panen</div><div class="value" id="harvestText">0</div></div>
+      <div class="stat"><div class="label">🎯 Quest</div><div class="value" id="questText">0/10</div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="main" id="mainArea">
+    <div class="buildings-row">
+      <div class="building" onclick="collectCoop()"><div class="building-icon">🐔</div><div class="building-name">Kandang</div><div class="yield-badge" id="eggBadge">0</div></div>
+      <div class="building" style="background:linear-gradient(180deg, #2b617a, #163c50); border-color:#20526e;" onclick="collectPond()"><div class="building-icon">🐟</div><div class="building-name">Kolam</div><div class="yield-badge" id="fishBadge">0</div></div>
+      <div class="building" style="background:linear-gradient(180deg, #a33232, #7a1d1d); border-color:#bd3b3b;" onclick="openModal('inventory')"><div class="building-icon">🛢️</div><div class="building-name">Silo</div></div>
+      <div class="building" style="background:linear-gradient(180deg, #d4a373, #b88a5c); border-color:#e6b885; color:#3d2610;" onclick="openModal('order')"><div class="building-icon">📋</div><div class="building-name">Order</div></div>
+      <div class="building" style="background:linear-gradient(180deg, #7c49d8, #4e298f); border-color:#9966ff;" onclick="openModal('machine')"><div class="building-icon">⚙️</div><div class="building-name">Mesin</div><div class="yield-badge" id="machineBadge">!</div></div>
+      <div class="building" style="background:linear-gradient(180deg, #4f9644, #2a5a22); border-color:#65c457;" onclick="openModal('map')"><div class="building-icon">🗺️</div><div class="building-name">Peta</div></div>
+    </div>
+
+    <div class="farm-wrap">
+      <div class="map-badge" id="mapBadge">Map: Farm 1</div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <div id="farmer">👨‍🌾</div>
+
+  <div class="bottom">
+    <div class="seed-row" id="seedRow"></div>
+    <div class="action-row">
+      <button class="action-btn btn-water" onclick="waterAll()">💧 Siram</button>
+      <button class="action-btn btn-fertilize" onclick="fertilizeAll()">🧪 Pupuk</button>
+      <button class="action-btn btn-shop" onclick="openModal('shop')">🛒 Menu</button>
+      <button class="action-btn btn-harvest" onclick="harvestAll()">🧺 Panen</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Modal</h2>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="pausePopup" class="popup-modern">
+    <div class="popup-box">
+      <div class="popup-title">⏸ Game Pause</div>
+      <div style="margin-bottom: 10px;">Game sedang dijeda</div>
+      <div class="popup-actions">
+        <button class="btn-continue" onclick="togglePause()">Lanjut Bermain</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="exitPopup" class="popup-modern">
+    <div class="popup-box">
+      <div class="popup-title">⏻ Keluar Game</div>
+      <div style="margin-bottom: 10px;">Yakin ingin keluar? Progres akan otomatis disimpan.</div>
+      <div class="popup-actions">
+        <button class="btn-continue" onclick="closeExitPopup()">Batal</button>
+        <button class="btn-exit" onclick="exitGame()">Keluar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.body.addEventListener("touchstart", ()=>{}, {passive:true});
+function vibrate(){ if(navigator.vibrate) navigator.vibrate(50); }
+
+const CROPS = {
+  carrot: { id:"carrot", name:"Wortel", emoji:"🥕", seedPrice:15, sellPrice:35, growTime:15, unlock:1 },
+  corn: { id:"corn", name:"Jagung", emoji:"🌽", seedPrice:30, sellPrice:72, growTime:25, unlock:1 },
+  tomato: { id:"tomato", name:"Tomat", emoji:"🍅", seedPrice:45, sellPrice:105, growTime:35, unlock:2 },
+  strawberry: { id:"strawberry", name:"Stroberi", emoji:"🍓", seedPrice:70, sellPrice:160, growTime:50, unlock:3 }
+};
+const DECOR = { tree: { emoji:"🌳", price:100, bonus:0.02 }, lamp: { emoji:"🏮", price:150, bonus:0.03 } };
+const RECIPES = { juice: { name: "Jus Wortel", emoji: "🧃", input:{carrot:2}, output:{juice:1}, time:10, price:120 } };
+const ITEM_NAMES = { carrot:"🥕 Wortel", corn:"🌽 Jagung", tomato:"🍅 Tomat", strawberry:"🍓 Stroberi", egg:"🥚 Telur", fish:"🐟 Ikan", juice:"🧃 Jus Wortel" };
+const TOTAL_PLOTS = 25;
+
+let state = {
+  money: 500, level: 1, xp: 0, energy: 20, maxEnergy: 20, day: 1, isNight: false, weather: "sunny",
+  totalHarvest: 0, selectedSeed: "carrot", currentMap: "farm1",
+  inventory: { carrot:0, corn:0, tomato:0, strawberry:0, egg:0, fish:0, juice:0 },
+  maps: {
+    farm1: { name: "Farm 1", unlocked: true, plots: Array.from({length:TOTAL_PLOTS}, (_,i)=>({ cropId:null, plantedAt:0, watered:false, fertilized:false, locked: i>=9, cost: i*50 })) },
+    farm2: { name: "Farm 2", unlocked: false, cost: 2000, plots: Array.from({length:TOTAL_PLOTS}, (_,i)=>({ cropId:null, plantedAt:0, watered:false, fertilized:false, locked: false, cost: 0 })) }
+  },
+  upgrades: { wateringLevel: 1, fertilizerLevel: 1, coopLevel: 1, pondLevel: 1, storageLevel: 1 },
+  market: { carrot: 1, corn: 1, tomato: 1, strawberry: 1 },
+  pet: { active: false, level: 1, cost: 500 }, 
+  tractor: { active: false, purchased: false, energyCost: 5, cost: 800, mode: "selected" },
+  quest: { target: 10, progress: 0, reward: 200 },
+  decorations: [], machines: [ { type:"juice", busy:false, timer:0 } ], npcs: [],
+  coop: { eggs: 0, timer: 0 }, pond: { fishes: 0, timer: 0 }, orders: []
+};
+
+let isPaused = true; // Dimulai dengan kondisi pause untuk Main Menu
+let gameLoopStarted = false;
+
+// Cek Save Data untuk Main Menu
+if(localStorage.getItem("lunaFarmV6")) {
+  document.getElementById("btnResume").style.display = "block";
+}
+
+function startGame(resume) {
+  document.getElementById("mainMenu").style.display = "none";
+  if(resume) {
+    loadGame();
+  } else {
+    // Reset Data jika Mulai Baru (menghindari tumpukan data lama)
+    if(confirm("Yakin ingin memulai game baru? Progres sebelumnya akan tertimpa!")) {
+      localStorage.removeItem("lunaFarmV6");
+      // State sudah dalam format default
+    } else {
+      document.getElementById("mainMenu").style.display = "flex";
+      return;
+    }
+  }
+  
+  isPaused = false;
+  renderWeather(); updateMarket(); renderSeeds(); renderDecorations(); renderTop(); renderGrid();
+
+  if(!gameLoopStarted) {
+    lastTick = Date.now();
+    gameLoopStarted = true;
+    requestAnimationFrame(gameLoop);
+    setInterval(saveGame, 5000); // Mulai auto-save saat game berjalan
+  } else {
+    lastTick = Date.now(); // Perbaiki lompatan delta time
+  }
+}
+
+// FUNGSI PAUSE DAN EXIT
+function togglePause(){
+  isPaused = !isPaused;
+  const popup = document.getElementById("pausePopup");
+  const farmerEl = document.getElementById("farmer");
+
+  if(isPaused){
+    popup.classList.add("show");
+    farmerEl.classList.add("sleeping"); // Efek Zzz
+    showToast("Game dijeda ⏸");
+  } else {
+    popup.classList.remove("show");
+    farmerEl.classList.remove("sleeping");
+    showToast("Lanjut ▶️");
+    lastTick = Date.now(); // Mencegah lompatan waktu (time jump) setelah resume
+  }
+}
+
+function openExitPopup(){ document.getElementById("exitPopup").classList.add("show"); }
+function closeExitPopup(){ document.getElementById("exitPopup").classList.remove("show"); }
+
+function exitGame(){
+  saveGame();
+  showToast("Menyimpan & Keluar...");
+  setTimeout(()=>{
+    window.location.reload(); // Refresh kembali ke Main Menu (berperilaku seperti index.html)
+  }, 1000);
+}
+
+// SAVE / LOAD SYSTEM
+function loadGame(){
+  try {
+    const data = localStorage.getItem("lunaFarmV6");
+    if(data){
+      const saved = JSON.parse(data);
+      state = { ...state, ...saved };
+      if(!state.tractor.mode) state.tractor.mode = "selected";
+      if(!state.quest) state.quest = { target: 10, progress: 0, reward: 200 };
+      showToast("Game Loaded 💾");
+    }
+  } catch(e) { console.error("Gagal load save:", e); }
+}
+function saveGame(){ 
+  if(!isPaused && gameLoopStarted) {
+    localStorage.setItem("lunaFarmV6", JSON.stringify(state)); 
+  }
+}
+function resetGame(){ if(confirm("Yakin ingin mereset semua progress?")){ localStorage.removeItem("lunaFarmV6"); location.reload(); } }
+
+const elements = {
+  grid: document.getElementById("grid"), seedRow: document.getElementById("seedRow"),
+  money: document.getElementById("moneyText"), level: document.getElementById("levelText"),
+  energy: document.getElementById("energyText"), harvest: document.getElementById("harvestText"),
+  quest: document.getElementById("questText"),
+  toast: document.getElementById("toast"), farmer: document.getElementById("farmer"),
+  eggBadge: document.getElementById("eggBadge"), fishBadge: document.getElementById("fishBadge"), machineBadge: document.getElementById("machineBadge"),
+  timeOverlay: document.getElementById("timeOverlay"), rainOverlay: document.getElementById("rainOverlay"),
+  dayBadge: document.getElementById("dayBadge"), weatherBadge: document.getElementById("weatherBadge"), mapBadge: document.getElementById("mapBadge"),
+  modal: document.getElementById("modalBackdrop"), modalTitle: document.getElementById("modalTitle"), modalContent: document.getElementById("modalContent"),
+  decorContainer: document.getElementById("decorContainer"), npcContainer: document.getElementById("npcContainer")
+};
+
+function showToast(msg) { vibrate(); elements.toast.innerHTML = msg; elements.toast.classList.add("show"); setTimeout(() => elements.toast.classList.remove("show"), 2000); }
+function showFloatingCoin(x, y, amount) {
+  const txt = document.createElement("div"); txt.className = "floating-text"; txt.textContent = "+💰" + amount;
+  txt.style.left = x + "px"; txt.style.top = y + "px"; document.getElementById("game").appendChild(txt); setTimeout(() => txt.remove(), 1000);
+}
+
+function getMaxStorage() { return 20 + state.upgrades.storageLevel * 20; }
+function getTotalItems() { return Object.values(state.inventory).reduce((a,b)=>a+b,0); }
+function getDecorBonus() { return state.decorations.length * 0.01; }
+
+function checkQuestProgress() {
+  state.quest.progress++;
+  if(state.quest.progress >= state.quest.target){
+    state.money += state.quest.reward; addXP(50);
+    showToast("🎯 Quest Selesai! +💰" + state.quest.reward);
+    state.quest.target += 5; state.quest.progress = 0; state.quest.reward += 100;
+  }
+}
+
+function addXP(amount) {
+  state.xp += amount;
+  let threshold = Math.floor(100 * Math.pow(state.level, 1.2));
+  while(state.xp >= threshold) {
+    state.xp -= threshold; state.level++; state.maxEnergy += 5;
+    showToast("⭐ NAIK LEVEL " + state.level);
+    renderSeeds();
+    threshold = Math.floor(100 * Math.pow(state.level, 1.2));
+  }
+}
+
+let farmerPos = { x: 50, y: 50 };
+
+window.addEventListener("keydown", (e) => {
+  if(isPaused) return; // Kunci gerakan jika game di-pause
+  const speed = 3;
+  if(e.key === "ArrowUp" || e.key === "w") farmerPos.y = Math.max(10, farmerPos.y - speed);
+  if(e.key === "ArrowDown" || e.key === "s") farmerPos.y = Math.min(90, farmerPos.y + speed);
+  if(e.key === "ArrowLeft" || e.key === "a") { farmerPos.x = Math.max(5, farmerPos.x - speed); elements.farmer.style.transform = "translate(-50%, -50%) scaleX(-1)"; }
+  if(e.key === "ArrowRight" || e.key === "d") { farmerPos.x = Math.min(95, farmerPos.x + speed); elements.farmer.style.transform = "translate(-50%, -50%) scaleX(1)"; }
+  elements.farmer.style.left = farmerPos.x + "%"; elements.farmer.style.top = farmerPos.y + "%";
+});
+
+function randomWeather() { const list = ["sunny","rain","storm"]; state.weather = list[Math.floor(Math.random()*list.length)]; }
+function renderWeather() {
+  const w = state.weather;
+  elements.weatherBadge.textContent = w === "rain" ? "🌧 Hujan" : w === "storm" ? "⛈ Badai" : "☀ Cerah";
+  elements.rainOverlay.style.display = (w === "rain" || w === "storm") ? "block" : "none";
+}
+function updateMarket(){
+  Object.keys(state.market).forEach(k=>{
+    let change = (Math.random()*0.4 - 0.2);
+    state.market[k] = Math.max(0.5, Math.min(1.5, state.market[k] + change));
+  });
+}
+
+function renderDecorations() { elements.decorContainer.innerHTML = state.decorations.map(d => `<div class="decor-item" style="left:${d.x}%; top:${d.y}%;">${DECOR[d.type].emoji}</div>`).join(""); }
+
+function spawnNPC() {
+  if(state.npcs.length >= 2) return;
+  const reqItems = ["carrot", "corn", "tomato"];
+  state.npcs.push({ id: Date.now(), x: 10 + Math.random()*80, y: -10, request: reqItems[Math.floor(Math.random()*reqItems.length)], amount: Math.floor(Math.random()*3) + 1 });
+}
+function interactNPC(id) {
+  if(isPaused) return;
+  const npcIndex = state.npcs.findIndex(n => n.id === id); if(npcIndex === -1) return;
+  const npc = state.npcs[npcIndex];
+  if(state.inventory[npc.request] >= npc.amount) {
+    state.inventory[npc.request] -= npc.amount;
+    const payment = Math.floor(npc.amount * (CROPS[npc.request].sellPrice * state.market[npc.request] + 10));
+    state.money += payment; showToast(`Transaksi Sukses! +💰${payment}`); state.npcs.splice(npcIndex, 1); renderTop(); renderNPCs();
+  } else { showToast(`Kurang ${npc.amount} ${ITEM_NAMES[npc.request]} 😅`); }
+}
+function renderNPCs() { elements.npcContainer.innerHTML = state.npcs.map(n => `<div class="npc-item" style="left:${n.x}%; top:${n.y}%;" onclick="interactNPC(${n.id})"><div class="npc-bubble">${n.amount}x ${ITEM_NAMES[n.request].split(" ")[0]}</div>👨‍💼</div>`).join(""); }
+
+function renderTop() {
+  elements.money.textContent = Math.floor(state.money); elements.level.textContent = state.level;
+  elements.energy.textContent = Math.floor(state.energy) + "/" + state.maxEnergy; elements.harvest.textContent = state.totalHarvest;
+  elements.quest.textContent = state.quest.progress + "/" + state.quest.target; 
+  elements.dayBadge.textContent = (state.isNight ? "🌙 Malam " : "☀️ Siang ") + state.day;
+  if(state.isNight) elements.timeOverlay.classList.add("night"); else elements.timeOverlay.classList.remove("night");
+  elements.eggBadge.style.display = state.coop.eggs > 0 ? "block" : "none"; elements.eggBadge.textContent = state.coop.eggs;
+  elements.fishBadge.style.display = state.pond.fishes > 0 ? "block" : "none"; elements.fishBadge.textContent = state.pond.fishes;
+  elements.machineBadge.style.display = state.machines.some(m => m.timer <= 0 && m.busy === false && state.inventory.juice > 0) ? "block" : "none";
+  elements.mapBadge.textContent = "Map: " + state.maps[state.currentMap].name;
+}
+
+function renderSeeds() {
+  elements.seedRow.innerHTML = Object.values(CROPS).map(crop => {
+    const isLocked = state.level < crop.unlock;
+    const justUnlocked = state.level === crop.unlock;
+    return `<div class="seed-btn ${state.selectedSeed === crop.id ? 'active' : ''} ${justUnlocked ? 'unlock-anim' : ''}"
+      onclick="vibrate(); ${isLocked ? `showToast('Buka di Lv ${crop.unlock}')` : `if(!isPaused){ state.selectedSeed='${crop.id}'; renderSeeds(); }`}">
+      <div class="emoji">${isLocked ? "🔒" : crop.emoji}</div>
+      <div>${crop.name}</div>
+      <div>💰${crop.seedPrice}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderGrid() {
+  const now = Date.now();
+  const plots = state.maps[state.currentMap].plots;
+  elements.grid.innerHTML = plots.map((plot, index) => {
+    if(plot.locked) return `<div class="plot locked" data-index="${index}"><div class="plot-inner">🔒</div><div class="stage-badge">💰${plot.cost}</div></div>`;
+    if(!plot.cropId) return `<div class="plot" data-index="${index}"></div>`;
+    
+    const crop = CROPS[plot.cropId];
+    const elapsed = (now - plot.plantedAt) / 1000;
+    let duration = crop.growTime * Math.max(0.6, (1 - (state.upgrades.wateringLevel - 1) * 0.05));
+    if(plot.watered) duration *= 0.8; if(plot.fertilized) duration *= Math.max(0.6, (1 - (state.upgrades.fertilizerLevel - 1) * 0.05));
+    
+    let emoji = "🌱", stage = "Bibit";
+    if(elapsed >= duration) { emoji = crop.emoji; stage = "Siap!"; } else if(elapsed >= duration/2) { emoji = "🌿"; stage = "Tumbuh"; }
+    return `<div class="plot" data-index="${index}" style="${plot.watered ? 'background:#6fb244;' : ''}"><div class="plot-inner">${emoji}</div><div class="stage-badge">${stage}</div></div>`;
+  }).join("");
+}
+
+elements.grid.addEventListener("click", (e) => {
+  if(isPaused) return; // Mencegah klik lahan saat Pause
+  const plotEl = e.target.closest(".plot"); if(!plotEl) return;
+  vibrate();
+  
+  const rect = plotEl.getBoundingClientRect();
+  const gameRect = document.getElementById("game").getBoundingClientRect();
+  farmerPos.x = ((rect.left - gameRect.left + rect.width/2) / gameRect.width) * 100;
+  farmerPos.y = ((rect.top - gameRect.top + rect.height/2) / gameRect.height) * 100;
+  
+  if (farmerPos.x < parseInt(elements.farmer.style.left || 50)) {
+    elements.farmer.style.transform = "translate(-50%, -50%) scaleX(-1)";
+  } else {
+    elements.farmer.style.transform = "translate(-50%, -50%) scaleX(1)";
+  }
+  elements.farmer.style.left = farmerPos.x + "%"; elements.farmer.style.top = farmerPos.y + "%";
+
+  const index = parseInt(plotEl.getAttribute("data-index"));
+  const plot = state.maps[state.currentMap].plots[index];
+
+  if(plot.locked) {
+    if(state.money >= plot.cost) { state.money -= plot.cost; plot.locked = false; showToast("Lahan Terbuka!"); renderGrid(); }
+    else { showToast("Uang tidak cukup!"); }
+  } else if(!plot.cropId) {
+    if(getTotalItems() >= getMaxStorage()) return showToast(`Gudang Penuh!`);
+    const crop = CROPS[state.selectedSeed];
+    if(state.money >= crop.seedPrice && state.energy >= 1) {
+      state.money -= crop.seedPrice; state.energy -= 1;
+      plot.cropId = crop.id; plot.plantedAt = Date.now(); plot.watered = false; plot.fertilized = false; showToast("Ditanam 🌱");
+      renderGrid();
+    } else showToast("Uang/Energi kurang!");
+  } else {
+    const crop = CROPS[plot.cropId];
+    const elapsed = (Date.now() - plot.plantedAt) / 1000;
+    let duration = crop.growTime * Math.max(0.6, (1 - (state.upgrades.wateringLevel - 1) * 0.05));
+    if(plot.watered) duration *= 0.8; if(plot.fertilized) duration *= 0.8;
+    
+    if(elapsed >= duration) {
+      if(getTotalItems() >= getMaxStorage()) return showToast(`Gudang Penuh!`);
+      const marketPrice = state.market[crop.id] || 1;
+      const finalPrice = Math.floor(crop.sellPrice * marketPrice * (1 + getDecorBonus()));
+      state.money += finalPrice; state.inventory[crop.id]++; state.totalHarvest++; 
+      
+      let xpGained = 10;
+      if (state.xp >= 50 + (state.level * 25)) xpGained += 20; 
+      addXP(xpGained); checkQuestProgress();
+
+      showFloatingCoin(rect.left + 20, rect.top, finalPrice);
+      state.maps[state.currentMap].plots[index] = { cropId:null, plantedAt:0, watered:false, fertilized:false, locked:false, cost:0 };
+      renderGrid();
+    } else { showToast(`Tumbuh dalam ${Math.ceil(duration - Math.max(0, elapsed))}s`); }
+  }
+  renderTop();
+});
+
+function waterAll() {
+  if(isPaused) return; vibrate();
+  if(state.energy < 2) return showToast("Energi kurang (butuh 2)"); let watered = false;
+  state.maps[state.currentMap].plots.forEach(p => { if(p.cropId && !p.watered) { p.watered = true; watered = true; } });
+  if(watered) { state.energy -= 2; showToast("Semua disiram 💧"); renderGrid(); renderTop(); }
+}
+function fertilizeAll() {
+  if(isPaused) return; vibrate();
+  if(state.money < 50) return showToast("Butuh 💰50"); let fert = false;
+  state.maps[state.currentMap].plots.forEach(p => { if(p.cropId && !p.fertilized) { p.fertilized = true; fert = true; } });
+  if(fert) { state.money -= 50; showToast("Pupuk ditebar 🧪"); renderGrid(); renderTop(); }
+}
+function harvestAll() {
+  if(isPaused) return; vibrate();
+  let harvested = false; const now = Date.now();
+  state.maps[state.currentMap].plots.forEach((plot, i) => {
+    if(!plot.cropId) return;
+    const crop = CROPS[plot.cropId];
+    let dur = crop.growTime * Math.max(0.6, (1 - (state.upgrades.wateringLevel - 1) * 0.05));
+    if(plot.watered) dur *= 0.8; if(plot.fertilized) dur *= 0.8;
+    if((now - plot.plantedAt)/1000 >= dur) {
+      if(getTotalItems() >= getMaxStorage()) { showToast("Gudang penuh! Sebagian batal."); return; }
+      const marketPrice = state.market[crop.id] || 1;
+      state.money += Math.floor(crop.sellPrice * marketPrice * (1 + getDecorBonus())); 
+      state.inventory[crop.id]++; state.totalHarvest++;
+      addXP(10); checkQuestProgress();
+      state.maps[state.currentMap].plots[i] = { cropId:null, plantedAt:0, watered:false, fertilized:false, locked:false, cost:0 }; harvested = true;
+    }
+  });
+  if(harvested) { showToast("Panen Masal Berhasil 🧺"); renderGrid(); renderTop(); }
+}
+
+function collectCoop() { if(isPaused) return; vibrate(); if(getTotalItems() + state.coop.eggs > getMaxStorage()) return showToast("Gudang Penuh!"); if(state.coop.eggs > 0) { state.inventory.egg += state.coop.eggs; showToast(`+${state.coop.eggs} Telur 🥚`); state.coop.eggs = 0; renderTop(); } }
+function collectPond() { if(isPaused) return; vibrate(); if(getTotalItems() + state.pond.fishes > getMaxStorage()) return showToast("Gudang Penuh!"); if(state.pond.fishes > 0) { state.inventory.fish += state.pond.fishes; showToast(`+${state.pond.fishes} Ikan 🐟`); state.pond.fishes = 0; renderTop(); } }
+
+function switchMap(name){
+  if(!state.maps[name].unlocked) {
+    if(state.money >= state.maps[name].cost) { state.money -= state.maps[name].cost; state.maps[name].unlocked = true; showToast(`Membeli ${state.maps[name].name}!`); }
+    else { return showToast(`Terkunci! Butuh 💰 ${state.maps[name].cost}`); }
+  }
+  state.currentMap = name; renderGrid(); renderTop(); showToast(`Pindah ke ${state.maps[name].name} 🗺️`); closeModal();
+}
+
+function upgrade(type, cost) { vibrate(); if(state.money < cost) return showToast("Uang kurang 💰"); state.money -= cost; state.upgrades[type]++; showToast("Upgrade Berhasil 🔼"); openModal('shop'); renderTop(); }
+function placeDecoration(type) { vibrate(); const deco = DECOR[type]; if(state.money < deco.price) return showToast("Uang kurang 💰"); state.money -= deco.price; state.decorations.push({ type, x: farmerPos.x, y: farmerPos.y }); showToast("Dekorasi diletakkan ✨"); renderDecorations(); openModal('shop'); renderTop(); }
+function buySystem(type) { vibrate(); if(state.money < state[type].cost) return showToast("Uang kurang 💰"); state.money -= state[type].cost; state[type].active = true; showToast(`${type.toUpperCase()} diaktifkan!`); openModal('shop'); renderTop(); }
+function startMachine(i) { vibrate(); if(getTotalItems() >= getMaxStorage()) return showToast("Gudang Penuh!"); const m = state.machines[i]; const recipe = RECIPES[m.type]; for(let k in recipe.input) { if(state.inventory[k] < recipe.input[k]) return showToast(`Bahan kurang: ${k}`); } for(let k in recipe.input) { state.inventory[k] -= recipe.input[k]; } m.busy = true; m.timer = recipe.time; showToast("Mesin mulai memproses ⚙️"); openModal('machine'); renderTop(); }
+
+function toggleTractor(){
+  if(!state.tractor.purchased) {
+    if(state.money >= state.tractor.cost) { state.money -= state.tractor.cost; state.tractor.purchased = true; showToast("Traktor Berhasil Dibeli! 🚜"); }
+    else { return showToast("Uang tidak cukup untuk beli Traktor!"); }
+  }
+  state.tractor.active = !state.tractor.active;
+  showToast(state.tractor.active ? "Traktor AUTO ON 🚜" : "Traktor STOP ⛔"); openModal('shop'); renderTop();
+}
+function switchTractorMode(){
+  if(!state.tractor.purchased) return showToast("Beli Traktor terlebih dahulu!");
+  const modes = ["selected","random","smart"]; let i = modes.indexOf(state.tractor.mode);
+  state.tractor.mode = modes[(i+1)%modes.length];
+  showToast("Mode Traktor: " + state.tractor.mode.toUpperCase()); openModal('shop');
+}
+
+function openModal(type) {
+  if(isPaused) return; // Mencegah akses modal saat Pause
+  vibrate(); elements.modal.classList.add("show");
+  if(type === 'inventory') {
+    elements.modalTitle.textContent = `Silo (${getTotalItems()} / ${getMaxStorage()})`;
+    const marketInfo = `<div class="section-title">Harga Pasar Saat Ini</div><div style="font-size:11px; margin-bottom:10px; color:#ddd;">` + Object.keys(state.market).map(k=> `${ITEM_NAMES[k]}: ${(state.market[k]*100).toFixed(0)}%`).join(" | ") + `</div>`;
+    const itemsInfo = Object.keys(state.inventory).filter(k => state.inventory[k] > 0).map(k => `<div class="modal-item"><span>${ITEM_NAMES[k]}</span> <b>x${state.inventory[k]}</b></div>`).join("");
+    elements.modalContent.innerHTML = marketInfo + (getTotalItems() === 0 ? "<i>Gudang kosong...</i>" : itemsInfo);
+  }
+  else if(type === 'shop') {
+    elements.modalTitle.textContent = "Toko & Pengaturan";
+    elements.modalContent.innerHTML = `
+      <div class="section-title">Sistem</div>
+      <div class="modal-item"><div>♻️ Reset Game<br><small>Mulai dari awal</small></div><button class="btn-danger" onclick="resetGame()">Reset</button></div>
+      <div class="section-title">Asisten Otomatis</div>
+      <div class="modal-item"><div>🐶 Pet Panen<br><small>Auto-panen (Fee 20%) | 💰 ${state.pet.cost}</small></div><button class="btn-sm" ${state.pet.active?'disabled':''} onclick="buySystem('pet')">${state.pet.active?'Aktif':'Beli'}</button></div>
+      <div class="modal-item"><div>🚜 Traktor Mode<br><small>${state.tractor.purchased ? state.tractor.mode.toUpperCase() : 'Beli (💰 '+state.tractor.cost+')'}</small></div><button class="btn-sm" onclick="toggleTractor()">${!state.tractor.purchased ? 'Beli' : (state.tractor.active ? 'STOP' : 'AUTO')}</button></div>
+      <div class="modal-item"><div>Ganti Mode Tanam</div><button class="btn-sm" onclick="switchTractorMode()">Ganti Mode</button></div>
+      <div class="section-title">Barang Umum</div>
+      <div class="modal-item"><div><span>⚡ Beli Energi (Full)</span><br><small>💰 100 Uang</small></div><button class="btn-sm" onclick="if(state.money>=100){state.money-=100; state.energy=state.maxEnergy; showToast('Energi Penuh'); closeModal(); renderTop();}else{showToast('Uang kurang')}">Beli</button></div>
+      <div class="section-title">Upgrade Sistem</div>
+      <div class="modal-item"><div>💧 Alat Siram Lv.${state.upgrades.wateringLevel}<br><small>💰 ${state.upgrades.wateringLevel * 100}</small></div><button class="btn-sm" onclick="upgrade('wateringLevel', ${state.upgrades.wateringLevel * 100})">Upgrade</button></div>
+      <div class="modal-item"><div>📦 Silo Lv.${state.upgrades.storageLevel}<br><small>💰 ${state.upgrades.storageLevel * 150}</small></div><button class="btn-sm" onclick="upgrade('storageLevel', ${state.upgrades.storageLevel * 150})">Upgrade</button></div>
+      <div class="section-title">Dekorasi</div>
+      <div class="modal-item"><div>🌳 Pohon (+2% harga)<br><small>💰 100 Uang</small></div><button class="btn-sm" onclick="placeDecoration('tree')">Taruh</button></div>
+      <div class="modal-item"><div>🏮 Lampion (+3% harga)<br><small>💰 150 Uang</small></div><button class="btn-sm" onclick="placeDecoration('lamp')">Taruh</button></div>
+    `;
+  }
+  else if(type === 'machine') {
+    elements.modalTitle.textContent = "Mesin Pengolah";
+    elements.modalContent.innerHTML = state.machines.map((m, i) => {
+      const rec = RECIPES[m.type]; const reqText = Object.keys(rec.input).map(k => `${rec.input[k]} ${ITEM_NAMES[k]}`).join(" + ");
+      if(m.busy) return `<div class="modal-item">Sedang membuat ${rec.name}... <br>Sisa Waktu: ${m.timer}s</div>`;
+      return `<div class="modal-item"><div>${rec.emoji} <b>Buat ${rec.name}</b><br><small>Butuh: ${reqText}</small></div><button class="btn-sm" onclick="startMachine(${i})">Proses</button></div>`;
+    }).join("");
+  }
+  else if(type === 'order') {
+    elements.modalTitle.textContent = "Papan Order";
+    if(state.orders.length < 3) {
+      const items = ["carrot", "corn", "tomato", "egg", "fish", "juice"];
+      state.orders.push({ req: { [items[Math.floor(Math.random()*items.length)]]: Math.floor(Math.random()*3) + 1 }, reward: Math.floor(Math.random()*100)+50 });
+    }
+    elements.modalContent.innerHTML = state.orders.map((o, index) => {
+      const reqText = Object.keys(o.req).map(k => `${o.req[k]}x ${ITEM_NAMES[k]}`).join(" + ");
+      let canFulfill = true; Object.keys(o.req).forEach(k => { if(state.inventory[k] < o.req[k]) canFulfill = false; });
+      return `<div class="modal-item"><div><div style="font-size:12px; margin-bottom:4px;">Butuh: <b>${reqText}</b></div><div style="font-size:12px; color:var(--gold);">Reward: 💰${o.reward}</div></div><button class="btn-sm" ${!canFulfill ? 'disabled' : ''} onclick="fulfillOrder(${index})">Kirim</button></div>`;
+    }).join("");
+  }
+  else if(type === 'map') {
+    elements.modalTitle.textContent = "Pilih Lokasi Kebun";
+    elements.modalContent.innerHTML = Object.keys(state.maps).map(key => {
+      const m = state.maps[key];
+      return `<div class="modal-item"><div><b>${m.name}</b><br><small>${m.unlocked ? 'Sudah Dibeli' : '💰 Harga: '+m.cost}</small></div><button class="btn-sm" onclick="switchMap('${key}')">${m.unlocked ? 'Pergi' : 'Beli'}</button></div>`;
+    }).join("");
+  }
+}
+function fulfillOrder(index) {
+  vibrate(); const order = state.orders[index]; Object.keys(order.req).forEach(k => { state.inventory[k] -= order.req[k]; });
+  state.money += order.reward; addXP(20); state.orders.splice(index, 1);
+  showToast("Order Selesai! +💰" + order.reward); closeModal(); renderTop();
+}
+function closeModal() { elements.modal.classList.remove("show"); }
+
+function petAutoHarvest(){
+  if(!state.pet.active) return; let didWork = false;
+  state.maps[state.currentMap].plots.forEach((plot,i)=>{
+    if(!plot.cropId) return;
+    const crop = CROPS[plot.cropId];
+    let dur = crop.growTime * Math.max(0.6, (1 - (state.upgrades.wateringLevel - 1) * 0.05));
+    if(plot.watered) dur *= 0.8; if(plot.fertilized) dur *= 0.8;
+    if((Date.now()-plot.plantedAt)/1000 >= dur){
+      if(getTotalItems() >= getMaxStorage()) return;
+      state.inventory[crop.id]++; const marketPrice = state.market[crop.id] || 1;
+      state.money += Math.floor((crop.sellPrice * marketPrice * (1 + getDecorBonus())) * 0.8);
+      addXP(10); checkQuestProgress();
+      state.maps[state.currentMap].plots[i] = { cropId:null, plantedAt:0, watered:false, fertilized:false, locked:false, cost:0 }; didWork = true;
+    }
+  });
+  if(didWork) { showToast("🐶 Pet membantu panen!"); renderGrid(); renderTop(); }
+}
+
+function tractorWork(){
+  if(!state.tractor.active) return;
+  if(state.energy < state.tractor.energyCost){ showToast("Energi habis, traktor berhenti ⚠️"); state.tractor.active = false; return; }
+  let didWork = false;
+  state.maps[state.currentMap].plots.forEach(plot=>{
+    if(!plot.locked && !plot.cropId && getTotalItems() < getMaxStorage()){
+      let cropToPlant = "carrot"; 
+      if(state.tractor.mode === "selected"){ cropToPlant = state.selectedSeed; }
+      else if(state.tractor.mode === "random"){ const unlocked = Object.values(CROPS).filter(c=>state.level >= c.unlock); cropToPlant = unlocked[Math.floor(Math.random()*unlocked.length)].id; }
+      else if(state.tractor.mode === "smart"){ const unlocked = Object.values(CROPS).filter(c=>state.level >= c.unlock); cropToPlant = unlocked.sort((a,b)=>b.sellPrice - a.sellPrice)[0].id; }
+      plot.cropId = cropToPlant; plot.plantedAt = Date.now(); plot.watered = false; plot.fertilized = false; didWork = true;
+    }
+  });
+  if(didWork){ state.energy -= state.tractor.energyCost; showToast("🚜 Traktor bekerja! ("+state.tractor.mode+")"); renderGrid(); renderTop(); }
+}
+
+let lastTick = Date.now();
+let timer1s = 0;
+
+function gameLoop(){
+  if(isPaused){
+    lastTick = Date.now(); // Mencegah waktu berjalan (delta membesar) saat dipause
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  const now = Date.now();
+  const delta = (now - lastTick) / 1000;
+  lastTick = now;
+
+  if(state.isNight){ state.energy = Math.min(state.maxEnergy, state.energy + delta); }
+
+  timer1s += delta;
+  if(timer1s >= 1) {
+    timer1s -= 1;
+    
+    const timeSec = Math.floor(now/1000)%60;
+    state.isNight = timeSec >= 30;
+    if(timeSec === 0){ state.day++; randomWeather(); updateMarket(); renderWeather(); }
+
+    if(state.weather === "rain"){
+      let rained = false;
+      Object.keys(state.maps).forEach(k => { state.maps[k].plots.forEach(p => { if(p.cropId && !p.watered) { p.watered = true; rained = true; } }); });
+      if(rained) renderGrid();
+    }
+
+    state.coop.timer++; state.pond.timer++;
+    if(state.coop.timer >= (12 - state.upgrades.coopLevel)) { state.coop.eggs++; state.coop.timer = 0; }
+    if(state.pond.timer >= (18 - state.upgrades.pondLevel)) { state.pond.fishes++; state.pond.timer = 0; }
+    state.machines.forEach(m => { if(m.busy) { m.timer--; if(m.timer <= 0) { m.busy = false; state.inventory[m.type] = (state.inventory[m.type] || 0) + 1; showToast("Produksi Mesin Selesai! 🧃"); } } });
+
+    if(Math.random() < 0.05) spawnNPC();
+    state.npcs.forEach((n, i) => { n.y += 2; if(n.y > 110) state.npcs.splice(i, 1); });
+    renderNPCs();
+
+    if(Math.random() < 0.3) petAutoHarvest();
+    if(Math.random() < 0.1) tractorWork();
+
+    renderGrid(); 
+  }
+
+  renderTop();
+  requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
