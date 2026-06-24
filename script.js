@@ -32,6 +32,13 @@ img: "ms.png",
 link: "soccer.html"
 },
 {
+name: "Farmer Game",
+category: "action",
+img: "farm.png",
+link: "farm.html"
+},
+  
+{
 name: "Racing Car",
 category: "racing",
 img: "mb2.png",
