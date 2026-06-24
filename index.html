@@ -2,127 +2,130 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna-Inc Games</title>
 
-  <link rel="stylesheet" href="style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 
 <body>
 
-<!-- TOP NAV -->
-<header class="topbar">
-  <div class="logo">🎮 Luna-Inc</div>
+  <header class="topbar">
+    <div class="logo">🎮 Luna-Inc</div>
 
-  <input id="search" class="search" placeholder="Cari game..." />
+    <input id="search" class="search" placeholder="Cari game..." />
 
-  <div class="userbox">
-    <span id="userText">Guest</span>
-    <button onclick="logout()">Logout</button>
-  </div>
-</header>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-content">
-
-    <h1>🎮 Luna-Inc Game Portal</h1>
-
-    <p>
-      Mainkan game arcade, racing, puzzle dan action favoritmu
-      langsung dari browser.
-    </p>
-
-    <div class="hero-buttons">
-      <a href="#gameGrid" class="btn-primary">
-        🚀 Mainkan Sekarang
-      </a>
-
-      <a href="https://urey1000.github.io/apkgame/" class="btn-secondary">
-        📱 Install App
-      </a>
+    <div class="userbox">
+      <span id="userText">Guest</span>
+      <button onclick="logout()">Logout</button>
     </div>
+  </header>
 
-  </div>
-</section>
+  <section class="hero">
+    <div class="hero-content">
+      <h1>🎮 Luna-Inc Game Portal</h1>
+      <p>
+        Mainkan game arcade, racing, puzzle dan action favoritmu
+        langsung dari browser.
+      </p>
+      <div class="hero-buttons">
+        <a href="#gameGrid" class="btn-primary">🚀 Mainkan Sekarang</a>
+        <a href="https://urey1000.github.io/apkgame/" class="btn-secondary">📱 Install App</a>
+      </div>
+    </div>
+  </section>
+
   <section class="stats">
+    <div class="stat-card">
+      <h2 class="counter" data-target="11" data-suffix="+">0</h2>
+      <p>Games</p>
+    </div>
+    <div class="stat-card">
+      <h2 class="counter" data-target="1.2" data-suffix="K+">0</h2>
+      <p>Players</p>
+    </div>
+    <div class="stat-card">
+      <h2 class="counter" data-target="8" data-suffix="K+">0</h2>
+      <p>Plays</p>
+    </div>
+    <div class="stat-card">
+      <h2>24/7</h2>
+      <p>Online</p>
+    </div>
+  </section>
 
-  <div class="stat-card">
-    <h2>11+</h2>
-    <p>Games</p>
-  </div>
-
-  <div class="stat-card">
-    <h2>1.2K+</h2>
-    <p>Players</p>
-  </div>
-
-  <div class="stat-card">
-    <h2>8K+</h2>
-    <p>Plays</p>
-  </div>
-
-  <div class="stat-card">
-    <h2>24/7</h2>
-    <p>Online</p>
-  </div>
-
-</section>
   <section id="featuredGame" class="featured-game"></section>
-  <!-- FEATURED GAME -->
 
-<!-- CATEGORY -->
-<div class="categories">
-  <button onclick="filterGame('all')">All</button>
-  <button onclick="filterGame('action')">Action</button>
-  <button onclick="filterGame('racing')">Racing</button>
-  <button onclick="filterGame('puzzle')">Puzzle</button>
-</div>
-
-<!-- GAME GRID -->
-<main id="gameGrid" class="grid"></main>
-
-<!-- FOOTER -->
-<footer class="footer-pro">
-  <div class="footer-container">
-
-    <div class="footer-brand">
-      <h2>🎮 Luna-Inc</h2>
-      <p>Portal game gratis. Silahkan logout untuk keluar game.</p>
-    </div>
-
-    <div class="footer-links">
-      <h4>Game</h4>
-      <a href="#">Action</a>
-      <a href="#">Racing</a>
-      <a href="#">Puzzle</a>
-      <a href="#">Adventure</a>
-    </div>
-
-    <div class="footer-links">
-      <h4>Menu</h4>
-      <a href="#">Home</a>
-      <a href="#">Trending</a>
-      <a href="#">New Games</a>
-    </div>
-
-    <div class="footer-links">
-      <h4>Info</h4>
-      <a href="#">About</a>
-      <a href="https://www.luna-inc.my.id">Contact</a>
-      <a href="#">Privacy</a>
-    </div>
-
+  <div class="categories">
+    <button onclick="filterGame('all')">All</button>
+    <button onclick="filterGame('action')">Action</button>
+    <button onclick="filterGame('racing')">Racing</button>
+    <button onclick="filterGame('puzzle')">Puzzle</button>
   </div>
 
-  <div class="footer-bottom">
-    <p>© 2026 [Luna Game] by [Luna-Inc].
-      Privacy Policy | Terms of Service (luna-inc.web.id) 🚀</p>
-  </div>
-</footer>
+  <main id="gameGrid" class="grid"></main>
 
-<script src="script.js"></script>
+  <footer class="footer-pro">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h2>🎮 Luna-Inc</h2>
+        <p>Portal game gratis. Silahkan logout untuk keluar game.</p>
+      </div>
+
+      <div class="footer-links">
+        <h4>Game</h4>
+        <a href="#">Action</a>
+        <a href="#">Racing</a>
+        <a href="#">Puzzle</a>
+        <a href="#">Adventure</a>
+      </div>
+
+      <div class="footer-links">
+        <h4>Menu</h4>
+        <a href="#">Home</a>
+        <a href="#">Trending</a>
+        <a href="#">New Games</a>
+      </div>
+
+      <div class="footer-links">
+        <h4>Info</h4>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+        <a href="#">Privacy</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2026 [Luna Game] by [Luna-Inc]. Privacy Policy | Terms of Service (luna-inc.web.id) 🚀</p>
+    </div>
+  </footer>
+
+  <div id="gameModal" class="game-modal">
+    <div class="game-header">
+      <span id="gameTitle">🎮 Playing...</span>
+      <div class="game-actions">
+        <button onclick="pauseGame()" title="Pause">⏸</button>
+        <button onclick="toggleSound()" title="Sound">🔊</button>
+        <button onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+        <button onclick="closeGame()" title="Close">✖</button>
+      </div>
+    </div>
+
+    <div class="game-loading" id="gameLoading">
+      ⏳ Loading game...
+    </div>
+
+    <iframe id="gameFrame" title="Game Frame"></iframe>
+  </div>
+
+  <div id="pauseScreen" class="pause-screen" style="display: none;">
+    <h2>⏸ Game Paused</h2>
+    <button onclick="resumeGame()">▶ Resume</button>
+  </div>
+
+  <script src="script.js"></script>
 
 </body>
-  </html>
+</html>
+
