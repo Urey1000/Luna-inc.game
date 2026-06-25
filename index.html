@@ -4,128 +4,192 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna-Inc Games</title>
-
+  <meta name="theme-color" content="#0a1020" />
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-
 <body>
 
-  <header class="topbar">
-    <div class="logo">🎮 Luna-Inc</div>
+  <!-- BG FX -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-grid"></div>
 
-    <input id="search" class="search" placeholder="Cari game..." />
+  <!-- APP -->
+  <div class="app-shell">
 
-    <div class="userbox">
-      <span id="userText">Guest</span>
-      <button onclick="logout()">Logout</button>
-    </div>
-  </header>
+    <!-- HEADER / LAUNCHER -->
+    <header class="launcher">
+      <div class="brand-row">
+        <div class="brand-left">
+          <div class="brand-logo">🎮</div>
+          <div class="brand-text">
+            <h1>Luna-Inc</h1>
+            <p>Browser Game Portal</p>
+          </div>
+        </div>
 
-  <section class="hero">
-    <div class="hero-content">
-      <h1>🎮 Luna-Inc Game Portal</h1>
-      <p>
-        Mainkan game arcade, racing, puzzle dan action favoritmu
-        langsung dari browser.
-      </p>
-      <div class="hero-buttons">
-        <a href="#gameGrid" class="btn-primary">🚀 Mainkan Sekarang</a>
-        <a href="https://urey1000.github.io/apkgame/" class="btn-secondary">📱 Install App</a>
+        <div class="brand-actions">
+          <button class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <section class="stats">
-    <div class="stat-card">
-      <h2 class="counter" data-target="11" data-suffix="+">0</h2>
-      <p>Games</p>
-    </div>
-    <div class="stat-card">
-      <h2 class="counter" data-target="1.2" data-suffix="K+">0</h2>
-      <p>Players</p>
-    </div>
-    <div class="stat-card">
-      <h2 class="counter" data-target="8" data-suffix="K+">0</h2>
-      <p>Plays</p>
-    </div>
-    <div class="stat-card">
-      <h2>24/7</h2>
-      <p>Online</p>
-    </div>
-  </section>
+      <div class="top-info-row">
+        <div class="user-card">
+          <div class="user-avatar" id="userAvatar">G</div>
+          <div class="user-meta">
+            <strong id="userText">Guest</strong>
+            <span>Player aktif</span>
+          </div>
+        </div>
 
-  <section id="featuredGame" class="featured-game"></section>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
 
-  <div class="categories">
-    <button onclick="filterGame('all')">All</button>
-    <button onclick="filterGame('action')">Action</button>
-    <button onclick="filterGame('racing')">Racing</button>
-    <button onclick="filterGame('puzzle')">Puzzle</button>
+      <div class="search-wrap">
+        <span class="search-icon">🔎</span>
+        <input id="search" class="search" placeholder="Cari game favoritmu..." />
+      </div>
+    </header>
+
+    <!-- STATS -->
+    <section class="stats-section">
+      <div class="stat-card">
+        <h3 class="counter" data-target="11" data-suffix="+">0</h3>
+        <p>Games</p>
+      </div>
+      <div class="stat-card">
+        <h3 class="counter" data-target="1.2" data-suffix="K+">0</h3>
+        <p>Players</p>
+      </div>
+      <div class="stat-card">
+        <h3 class="counter" data-target="8" data-suffix="K+">0</h3>
+        <p>Plays</p>
+      </div>
+      <div class="stat-card">
+        <h3>24/7</h3>
+        <p>Online</p>
+      </div>
+    </section>
+
+    <!-- CONTINUE PLAYING -->
+    <section id="continueSection" class="continue-section hidden">
+      <div class="section-head">
+        <div>
+          <span class="section-badge">▶ Continue Playing</span>
+          <h2>Lanjutkan permainan terakhir</h2>
+        </div>
+      </div>
+
+      <div id="continueCard" class="continue-card"></div>
+    </section>
+
+    <!-- FEATURED -->
+    <section class="featured-section">
+      <div class="section-head">
+        <div>
+          <span class="section-badge">🔥 Featured Game</span>
+          <h2>Pilihan terbaik Luna-Inc</h2>
+        </div>
+
+        <div class="slider-controls">
+          <button onclick="prevFeatured()">←</button>
+          <button onclick="nextFeatured()">→</button>
+        </div>
+      </div>
+
+      <div id="featuredGame" class="featured-game"></div>
+
+      <div id="featuredDots" class="featured-dots"></div>
+    </section>
+
+    <!-- GAME COLLECTION -->
+    <section class="collection-section">
+      <div class="section-head collection-head">
+        <div>
+          <span class="section-badge">🎯 Explore Games</span>
+          <h2>Kategori & koleksi game</h2>
+        </div>
+        <p id="resultInfo" class="result-info">Menampilkan semua game</p>
+      </div>
+
+      <div class="categories" id="categories">
+        <button class="active" onclick="filterGame('all', this)">All</button>
+        <button onclick="filterGame('action', this)">Action</button>
+        <button onclick="filterGame('racing', this)">Racing</button>
+        <button onclick="filterGame('puzzle', this)">Puzzle</button>
+      </div>
+
+      <main id="gameGrid" class="grid"></main>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer-pro">
+      <div class="footer-card">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <div class="footer-logo">🎮</div>
+            <div class="footer-brand-text">
+              <h3>Luna-Inc Browser Game Portal</h3>
+              <p>
+                Mainkan koleksi game langsung dari browser dengan tampilan modern,
+                ringan, responsif, dan nyaman dimainkan di HP maupun desktop.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <a href="#gameGrid">🎯 Koleksi Game</a>
+          <a href="#featuredGame">🔥 Featured</a>
+          <a href="#" onclick="logout()">🚪 Logout</a>
+          <a href="https://urey1000.github.io/apkgame/" target="_blank">📱 Install App</a>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© 2026 Luna-Inc — Browser Game Portal</span>
+          <span class="footer-sep">•</span>
+          <span>Built with + Luna-Inc Team</span>
+        </div>
+      </div>
+    </footer>
   </div>
 
-  <main id="gameGrid" class="grid"></main>
-
-  <footer class="footer-pro">
-    <div class="footer-container">
-      <div class="footer-brand">
-        <h2>🎮 Luna-Inc</h2>
-        <p>Portal game gratis. Silahkan logout untuk keluar game.</p>
-      </div>
-
-      <div class="footer-links">
-        <h4>Game</h4>
-        <a href="#">Action</a>
-        <a href="#">Racing</a>
-        <a href="#">Puzzle</a>
-        <a href="#">Adventure</a>
-      </div>
-
-      <div class="footer-links">
-        <h4>Menu</h4>
-        <a href="#">Home</a>
-        <a href="#">Trending</a>
-        <a href="#">New Games</a>
-      </div>
-
-      <div class="footer-links">
-        <h4>Info</h4>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-        <a href="#">Privacy</a>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <p>© 2026 [Luna Game] by [Luna-Inc]. Privacy Policy | Terms of Service (luna-inc.web.id) 🚀</p>
-    </div>
-  </footer>
-
+  <!-- MODAL GAME -->
   <div id="gameModal" class="game-modal">
     <div class="game-header">
-      <span id="gameTitle">🎮 Playing...</span>
+      <div class="game-header-left">
+        <strong id="gameTitle">🎮 Playing...</strong>
+        <span id="gameSubtitle">Luna-Inc Portal</span>
+      </div>
+
       <div class="game-actions">
         <button onclick="pauseGame()" title="Pause">⏸</button>
         <button onclick="toggleSound()" title="Sound">🔊</button>
         <button onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
-        <button onclick="closeGame()" title="Close">✖</button>
+        <button onclick="closeGame()" title="Close">✕</button>
       </div>
     </div>
 
-    <div class="game-loading" id="gameLoading">
-      ⏳ Loading game...
+    <div class="game-stage">
+      <div class="game-loading" id="gameLoading">
+        <div class="loader-ring"></div>
+        <p>Loading game...</p>
+      </div>
+
+      <iframe id="gameFrame" title="Game Frame"></iframe>
+
+      <div id="pauseScreen" class="pause-screen">
+        <div class="pause-card">
+          <h2>⏸ Game Paused</h2>
+          <p>Tekan resume untuk lanjut bermain.</p>
+          <button onclick="resumeGame()">▶ Resume</button>
+        </div>
+      </div>
     </div>
-
-    <iframe id="gameFrame" title="Game Frame"></iframe>
-  </div>
-
-  <div id="pauseScreen" class="pause-screen" style="display: none;">
-    <h2>⏸ Game Paused</h2>
-    <button onclick="resumeGame()">▶ Resume</button>
   </div>
 
   <script src="script.js"></script>
-
 </body>
 </html>
 
