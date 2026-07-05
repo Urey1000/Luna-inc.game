@@ -35,7 +35,8 @@
         </div>
 
         <div class="brand-actions">
-          <!-- Tombol Install dipindahkan ke sini agar lebih rapi di UI -->
+          <!-- Tombol Download Offline ditambahkan ke Header -->
+          <button type="button" class="icon-btn" onclick="downloadAllGames(this)" title="Download Game Offline">📦</button>
           <button type="button" class="icon-btn" onclick="installApp()" title="Install App">📱</button>
           <button type="button" class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
         </div>
@@ -148,9 +149,9 @@
 
         <div class="footer-links">
           <a href="#gameGrid">🎯 Koleksi Game</a>
-          <a href="#featuredGame">🔥 Featured</a>
-          <a href="#" onclick="logout()">🚪 Logout</a>
+          <a href="javascript:void(0)" onclick="downloadAllGames(this)">📦 Download Offline</a>
           <a href="javascript:void(0)" onclick="installApp()">📱 Install App</a>
+          <a href="#" onclick="logout()">🚪 Logout</a>
         </div>
 
         <div class="footer-bottom">
@@ -196,16 +197,16 @@
     </div>
   </div>
 
-  <!-- Script PWA Terpusat (Dipindah ke dalam Body) -->
+  <!-- KUMPULAN SCRIPT (PWA & Logika Download) -->
   <script>
-    // Register Service Worker
+    // 1. Register Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js")
         .then(() => console.log("Service Worker Registered"))
         .catch((error) => console.log("Service Worker Registration Failed:", error));
     }
 
-    // PWA Install Prompt Logic
+    // 2. PWA Install Prompt Logic
     let deferredPrompt;
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
@@ -222,10 +223,65 @@
         alert("Aplikasi sudah terinstal atau browser tidak mendukung fitur ini.");
       }
     }
+
+    // 3. Logika Download Semua Game untuk Offline
+    async function downloadAllGames(btnElement) {
+      // Simpan teks asli tombol agar bisa dikembalikan
+      const originalText = btnElement.innerHTML;
+      
+      // Ubah tampilan tombol jadi loading sementara
+      btnElement.innerHTML = "⏳"; 
+      if (btnElement.tagName === "A") btnElement.innerHTML = "⏳ Mendownload...";
+      
+      // Matikan klik sementara agar user tidak spam klik
+      btnElement.style.pointerEvents = "none";
+
+      const files = [
+        "/game.html",
+        "/ludo.html",
+        "/puzzle.html",
+        "/soccer.html",
+        "/motor.html",
+        // asset game
+        "/player.png",
+        "/bg.jpg",
+        "/mesin.mp3"
+      ];
+
+      try {
+        const cache = await caches.open("luna-dynamic-v3");
+        let downloadedCount = 0;
+
+        for (let file of files) {
+          try {
+            let res = await fetch(file);
+            // Pastikan file berhasil diambil sebelum dimasukkan ke cache
+            if (res.ok) {
+              await cache.put(file, res.clone());
+              console.log("Downloaded:", file);
+              downloadedCount++;
+            }
+          } catch (e) {
+            console.log("Failed:", file);
+          }
+        }
+
+        if (downloadedCount > 0) {
+          alert(`🔥 ${downloadedCount} file game siap dimainkan OFFLINE!`);
+        } else {
+          alert("⚠️ Gagal mendownload, pastikan Anda terhubung ke internet.");
+        }
+      } catch (error) {
+        console.error("Cache open error:", error);
+      } finally {
+        // Kembalikan tombol seperti semula setelah selesai
+        btnElement.innerHTML = originalText;
+        btnElement.style.pointerEvents = "auto";
+      }
+    }
   </script>
 
   <!-- External Script -->
   <script src="script.js"></script>
 </body>
 </html>
-
