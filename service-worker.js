@@ -30,7 +30,10 @@ self.addEventListener("install", event => {
       return cache.addAll(STATIC_FILES);
     })
   );
-  self.skipWaiting(); // Memaksa service worker baru untuk langsung aktif
+  
+  // OPSI 1: Aktifkan baris di bawah ini jika ingin aplikasi SELALU OTOMATIS UPDATE
+  // Jika ini diaktifkan, event "message" di paling bawah tidak akan terpakai.
+  self.skipWaiting(); 
 });
 
 // ACTIVATE (Hapus cache lama dari versi sebelumnya)
@@ -90,4 +93,11 @@ self.addEventListener("fetch", event => {
         });
     })
   );
+});
+
+// OPSI 2: Pembaruan manual melalui pesan dari file utama (misal dari tombol "Update Now")
+self.addEventListener("message", event => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
