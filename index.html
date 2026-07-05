@@ -35,6 +35,8 @@
         </div>
 
         <div class="brand-actions">
+          <!-- Tombol Install dipindahkan ke sini agar lebih rapi di UI -->
+          <button type="button" class="icon-btn" onclick="installApp()" title="Install App">📱</button>
           <button type="button" class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
         </div>
       </div>
@@ -148,7 +150,7 @@
           <a href="#gameGrid">🎯 Koleksi Game</a>
           <a href="#featuredGame">🔥 Featured</a>
           <a href="#" onclick="logout()">🚪 Logout</a>
-          <a href="https://urey1000.github.io/apkgame/" target="_blank">📱 Install App</a>
+          <a href="javascript:void(0)" onclick="installApp()">📱 Install App</a>
         </div>
 
         <div class="footer-bottom">
@@ -194,6 +196,35 @@
     </div>
   </div>
 
+  <!-- Script PWA Terpusat (Dipindah ke dalam Body) -->
+  <script>
+    // Register Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker Registered"))
+        .catch((error) => console.log("Service Worker Registration Failed:", error));
+    }
+
+    // PWA Install Prompt Logic
+    let deferredPrompt;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+        });
+      } else {
+        alert("Aplikasi sudah terinstal atau browser tidak mendukung fitur ini.");
+      }
+    }
+  </script>
+
+  <!-- External Script -->
   <script src="script.js"></script>
 </body>
 </html>
