@@ -1,63 +1,93 @@
-const CACHE_NAME = "luna-offline-v2";
+const STATIC_CACHE = "luna-static-v3";
+const DYNAMIC_CACHE = "luna-dynamic-v3";
 
-const urlsToCache = [
+// File penting (precache) yang wajib ada walau offline
+const STATIC_FILES = [
   "/",
   "/index.html",
   "/login.html",
-  "/game.html",
-  "/ludo.html",
-  "/puzzle.html",
-  "/soccer.html",
-  "/script.js",
-  "/style.css",
   "/manifest.json",
-  "/offline.html" // Tambahkan offline.html ke dalam cache
+  "/offline.html"
 ];
 
-// INSTALL (cache semua file)
+// Fungsi untuk membatasi ukuran cache dinamis
+function limitCache(cacheName, size) {
+  caches.open(cacheName).then(cache => {
+    cache.keys().then(keys => {
+      if (keys.length > size) {
+        // Hapus cache paling lama (index 0) lalu panggil fungsi ini lagi secara rekursif
+        cache.delete(keys[0]).then(() => limitCache(cacheName, size));
+      }
+    });
+  });
+}
+
+// INSTALL (Simpan file statis ke Cache)
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log("Caching files...");
-      return cache.addAll(urlsToCache);
+    caches.open(STATIC_CACHE).then(cache => {
+      console.log("[Service Worker] Caching Static Files");
+      return cache.addAll(STATIC_FILES);
     })
   );
+  self.skipWaiting(); // Memaksa service worker baru untuk langsung aktif
 });
 
-// ACTIVATE (hapus cache lama)
+// ACTIVATE (Hapus cache lama dari versi sebelumnya)
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log("Menghapus cache lama:", key);
+          if (key !== STATIC_CACHE && key !== DYNAMIC_CACHE) {
+            console.log("[Service Worker] Menghapus cache lama:", key);
             return caches.delete(key);
           }
         })
       );
     })
   );
+  self.clients.claim(); // Langsung mengambil alih semua halaman yang terbuka
 });
 
-// FETCH (Strategi: Network first, lalu Fallback ke Cache)
+// FETCH (Strategi: Cache First, fallback ke Network lalu masukkan ke Dynamic Cache)
 self.addEventListener("fetch", event => {
-  // Hanya handle request GET (menghindari error pada request POST/API)
-  if (event.request.method !== 'GET') return;
+  // Hanya proses request GET dan valid (http/https), abaikan POST / chrome-extension://
+  if (event.request.method !== "GET" || !event.request.url.startsWith("http")) return;
 
   event.respondWith(
-    fetch(event.request)
-      .then(res => {
-        // Jika jaringan aktif, kembalikan respons jaringan
-        return res;
-      })
-      .catch(() => {
-        // Jika jaringan mati, cari di cache
-        return caches.match(event.request)
-          .then(res => {
-            // Jika ada di cache, tampilkan. Jika tidak, tampilkan offline.html
-            return res || caches.match("/offline.html");
+    caches.match(event.request).then(cached => {
+      // 1. Jika ada di cache, langsung tampilkan
+      if (cached) return cached;
+
+      // 2. Jika tidak ada, ambil dari internet (network)
+      return fetch(event.request)
+        .then(res => {
+          // Pastikan respon valid sebelum disimpan (bukan error 404/500)
+          if (!res || res.status !== 200 || res.type !== "basic") {
+            return res;
+          }
+
+          // Salin respons (clone) karena stream hanya bisa dibaca sekali
+          const responseToCache = res.clone();
+
+          // Simpan ke Dynamic Cache
+          caches.open(DYNAMIC_CACHE).then(cache => {
+            cache.put(event.request, responseToCache);
+            // Panggil pembatas cache setelah item baru dimasukkan
+            limitCache(DYNAMIC_CACHE, 50);
           });
-      })
+
+          return res;
+        })
+        .catch(() => {
+          // 3. Jika gagal ambil dari network (offline)
+          // Cek apakah request-nya berupa halaman web (HTML)
+          if (event.request.headers.get("accept").includes("text/html")) {
+            return caches.match("/offline.html");
+          }
+          // Jika request gambar/script, biarkan saja gagal agar tidak error memuat HTML
+        });
+    })
   );
 });
