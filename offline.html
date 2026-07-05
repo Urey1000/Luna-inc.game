@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - Luna-Inc Games</title>
+  <style>
+    /* Styling agar senada dengan tema gelap PWA Luna-Inc */
+    body {
+      background-color: #0f0f0f;
+      color: #ffffff;
+      font-family: 'Poppins', sans-serif; /* Sesuaikan dengan font utamamu */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    h1 {
+      color: #00f0ff;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #a0a0a0;
+      margin-bottom: 25px;
+    }
+    .btn-reload {
+      background-color: #00f0ff;
+      color: #0f0f0f;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .btn-reload:hover {
+      background-color: #00c0cc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📡 Kamu sedang offline</h1>
+  <p>Koneksi internet terputus. Cek jaringan lalu coba lagi.</p>
+  
+  <!-- Tombol manual untuk mencoba ulang -->
+  <button class="btn-reload" onclick="window.location.reload()">Coba Lagi</button>
+
+  <!-- Script dipindah ke dalam body -->
+  <script>
+    // Langsung muat ulang halaman secara otomatis jika koneksi kembali (lebih baik dari sekadar alert)
+    window.addEventListener("online", () => {
+      window.location.reload(); 
+    });
+
+    window.addEventListener("offline", () => {
+      console.log("❌ Kamu offline"); 
+    });
+  </script>
+</body>
+</html>
+
