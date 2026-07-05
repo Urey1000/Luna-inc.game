@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna-Inc Games</title>
-  <meta name="theme-color" content="#0a1020" />
+  
+  <!-- PWA & Theme Color -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00f0ff" />
+  
+  <!-- Styles & Fonts -->
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
@@ -30,7 +35,7 @@
         </div>
 
         <div class="brand-actions">
-          <button class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
+          <button type="button" class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
         </div>
       </div>
 
@@ -43,12 +48,12 @@
           </div>
         </div>
 
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button type="button" class="logout-btn" onclick="logout()">Logout</button>
       </div>
 
       <div class="search-wrap">
         <span class="search-icon">🔎</span>
-        <input id="search" class="search" placeholder="Cari game favoritmu..." />
+        <input type="text" id="search" class="search" placeholder="Cari game favoritmu..." />
       </div>
     </header>
 
@@ -93,8 +98,8 @@
         </div>
 
         <div class="slider-controls">
-          <button onclick="prevFeatured()">←</button>
-          <button onclick="nextFeatured()">→</button>
+          <button type="button" onclick="prevFeatured()">←</button>
+          <button type="button" onclick="nextFeatured()">→</button>
         </div>
       </div>
 
@@ -114,10 +119,10 @@
       </div>
 
       <div class="categories" id="categories">
-        <button class="active" onclick="filterGame('all', this)">All</button>
-        <button onclick="filterGame('action', this)">Action</button>
-        <button onclick="filterGame('racing', this)">Racing</button>
-        <button onclick="filterGame('puzzle', this)">Puzzle</button>
+        <button type="button" class="active" onclick="filterGame('all', this)">All</button>
+        <button type="button" onclick="filterGame('action', this)">Action</button>
+        <button type="button" onclick="filterGame('racing', this)">Racing</button>
+        <button type="button" onclick="filterGame('puzzle', this)">Puzzle</button>
       </div>
 
       <main id="gameGrid" class="grid"></main>
@@ -164,10 +169,10 @@
       </div>
 
       <div class="game-actions">
-        <button onclick="pauseGame()" title="Pause">⏸</button>
-        <button onclick="toggleSound()" title="Sound">🔊</button>
-        <button onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
-        <button onclick="closeGame()" title="Close">✕</button>
+        <button type="button" onclick="pauseGame()" title="Pause">⏸</button>
+        <button type="button" onclick="toggleSound()" title="Sound">🔊</button>
+        <button type="button" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+        <button type="button" onclick="closeGame()" title="Close">✕</button>
       </div>
     </div>
 
@@ -183,7 +188,7 @@
         <div class="pause-card">
           <h2>⏸ Game Paused</h2>
           <p>Tekan resume untuk lanjut bermain.</p>
-          <button onclick="resumeGame()">▶ Resume</button>
+          <button type="button" onclick="resumeGame()">▶ Resume</button>
         </div>
       </div>
     </div>
