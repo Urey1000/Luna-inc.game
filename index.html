@@ -35,8 +35,8 @@
         </div>
 
         <div class="brand-actions">
-          <!-- Tombol Download Offline ditambahkan ke Header -->
-          <button type="button" class="icon-btn" onclick="downloadAllGames(this)" title="Download Game Offline">📦</button>
+          <!-- Tombol Download Offline dinamis dengan ID -->
+          <button type="button" class="icon-btn" id="headerOfflineBtn" onclick="downloadAllGames()" title="Download Mode Offline">📦</button>
           <button type="button" class="icon-btn" onclick="installApp()" title="Install App">📱</button>
           <button type="button" class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
         </div>
@@ -59,6 +59,14 @@
         <input type="text" id="search" class="search" placeholder="Cari game favoritmu..." />
       </div>
     </header>
+
+    <!-- PROGRESS BAR DOWNLOAD OFFLINE (Disembunyikan secara default) -->
+    <div id="progressBox" style="display:none; margin: 0 15px 15px 15px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid #333;">
+      <div style="width:100%; background:#333; border-radius:10px; overflow: hidden; margin-bottom: 8px;">
+        <div id="progressBar" style="width:0%; height:10px; background:#00f0ff; border-radius:10px; transition: width 0.3s;"></div>
+      </div>
+      <p id="progressText" style="font-size:12px; margin: 0; color: #00f0ff; text-align: center;">Preparing...</p>
+    </div>
 
     <!-- STATS -->
     <section class="stats-section">
@@ -149,7 +157,8 @@
 
         <div class="footer-links">
           <a href="#gameGrid">🎯 Koleksi Game</a>
-          <a href="javascript:void(0)" onclick="downloadAllGames(this)">📦 Download Offline</a>
+          <!-- Tombol Download Footer -->
+          <a href="javascript:void(0)" id="footerOfflineBtn" onclick="downloadAllGames()">🔒 Belum Download</a>
           <a href="javascript:void(0)" onclick="installApp()">📱 Install App</a>
           <a href="#" onclick="logout()">🚪 Logout</a>
         </div>
@@ -197,7 +206,7 @@
     </div>
   </div>
 
-  <!-- KUMPULAN SCRIPT (PWA & Logika Download) -->
+  <!-- KUMPULAN SCRIPT TERPADU -->
   <script>
     // 1. Register Service Worker
     if ("serviceWorker" in navigator) {
@@ -224,17 +233,13 @@
       }
     }
 
-    // 3. Logika Download Semua Game untuk Offline
-    async function downloadAllGames(btnElement) {
-      // Simpan teks asli tombol agar bisa dikembalikan
-      const originalText = btnElement.innerHTML;
-      
-      // Ubah tampilan tombol jadi loading sementara
-      btnElement.innerHTML = "⏳"; 
-      if (btnElement.tagName === "A") btnElement.innerHTML = "⏳ Mendownload...";
-      
-      // Matikan klik sementara agar user tidak spam klik
-      btnElement.style.pointerEvents = "none";
+    // 3. Logika Download dengan Progress Bar
+    async function downloadAllGames() {
+      // Mencegah download ulang jika sudah siap
+      if (localStorage.getItem("offlineReady") === "true") {
+        alert("Semua game sudah tersedia offline!");
+        return;
+      }
 
       const files = [
         "/game.html",
@@ -242,46 +247,78 @@
         "/puzzle.html",
         "/soccer.html",
         "/motor.html",
-        // asset game
         "/player.png",
         "/bg.jpg",
         "/mesin.mp3"
       ];
 
-      try {
-        const cache = await caches.open("luna-dynamic-v3");
-        let downloadedCount = 0;
+      const cache = await caches.open("luna-dynamic-v3");
+      let progress = 0;
+      let total = files.length;
 
-        for (let file of files) {
-          try {
-            let res = await fetch(file);
-            // Pastikan file berhasil diambil sebelum dimasukkan ke cache
-            if (res.ok) {
-              await cache.put(file, res.clone());
-              console.log("Downloaded:", file);
-              downloadedCount++;
-            }
-          } catch (e) {
-            console.log("Failed:", file);
+      // Munculkan progress bar
+      document.getElementById("progressBox").style.display = "block";
+      document.getElementById("headerOfflineBtn").style.pointerEvents = "none";
+
+      for (let file of files) {
+        try {
+          let res = await fetch(file);
+          if (res.ok) {
+            await cache.put(file, res.clone());
           }
+          
+          // Update progress
+          progress++;
+          let percent = Math.round((progress / total) * 100);
+          document.getElementById("progressText").innerText = "Downloading... " + percent + "%";
+          document.getElementById("progressBar").style.width = percent + "%";
+
+        } catch (e) {
+          console.log("Failed:", file);
+        }
+      }
+
+      // Simpan status dan update UI setelah selesai
+      localStorage.setItem("offlineReady", "true");
+      document.getElementById("progressText").innerText = "✅ Semua game siap offline!";
+      updateOfflineUI();
+
+      // Sembunyikan progress box setelah 3 detik
+      setTimeout(() => {
+        document.getElementById("progressBox").style.display = "none";
+      }, 3000);
+    }
+
+    // 4. Fungsi update status UI jika sudah offline ready
+    function updateOfflineUI() {
+      if (localStorage.getItem("offlineReady") === "true") {
+        console.log("🔥 Offline Mode Aktif");
+        document.body.classList.add("offline-ready");
+        
+        // Ubah tampilan tombol di Header
+        const headerBtn = document.getElementById("headerOfflineBtn");
+        if (headerBtn) {
+          headerBtn.innerHTML = "✅";
+          headerBtn.title = "Offline Ready";
+          headerBtn.style.pointerEvents = "auto";
         }
 
-        if (downloadedCount > 0) {
-          alert(`🔥 ${downloadedCount} file game siap dimainkan OFFLINE!`);
-        } else {
-          alert("⚠️ Gagal mendownload, pastikan Anda terhubung ke internet.");
+        // Ubah tampilan tombol di Footer
+        const footerBtn = document.getElementById("footerOfflineBtn");
+        if (footerBtn) {
+          footerBtn.innerHTML = "✅ Offline Ready";
+          footerBtn.style.color = "#00f0ff";
         }
-      } catch (error) {
-        console.error("Cache open error:", error);
-      } finally {
-        // Kembalikan tombol seperti semula setelah selesai
-        btnElement.innerHTML = originalText;
-        btnElement.style.pointerEvents = "auto";
       }
     }
+
+    // Jalankan pengecekan saat halaman dimuat
+    window.addEventListener("load", updateOfflineUI);
+
   </script>
 
   <!-- External Script -->
   <script src="script.js"></script>
 </body>
 </html>
+
