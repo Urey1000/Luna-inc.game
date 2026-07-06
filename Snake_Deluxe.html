@@ -97,11 +97,13 @@
         const gameBgImg = new Image();
         gameBgImg.src = "M2.png";
 
+        // Menggunakan snake1.png untuk kepala
         const playerImg = new Image();
-        playerImg.src = "Kpla.png"; 
+        playerImg.src = "snake1.png"; 
 
+        // Menggunakan snake1.png untuk badan
         const bodyImg = new Image();
-        bodyImg.src = "D0.png";
+        bodyImg.src = "snake1.png";
 
         const birdImg = new Image();
         birdImg.src = "brd.png";
@@ -299,16 +301,19 @@
             
             for (let i = totalLen - 1; i >= 0; i--) {
                 const segment = snakeObj.body[i];
-                let scale = 1 - (i / totalLen) * 0.7; 
-                let currentRadius = Math.max(3, snakeObj.radius * scale);
+                let scale = 1 - (i / totalLen) * 0.5;
+                let currentRadius = Math.max(5, snakeObj.radius * scale); 
 
                 if (i === 0) {
                     if (headImg && headImg.complete && headImg.naturalWidth !== 0) {
                         ctx.save();
                         ctx.translate(segment.x, segment.y);
                         ctx.rotate(snakeObj.angle + Math.PI / 2); 
-                        let size = currentRadius * 2.6; 
-                        ctx.drawImage(headImg, -size / 2, -size / 2, size, size);
+                        
+                        // PERBAIKAN: Angka pengali diubah dari 3.0 menjadi 4.5 agar kepala tampak lebih besar
+                        let headSize = currentRadius * 4.5; 
+                        
+                        ctx.drawImage(headImg, -headSize / 2, -headSize / 2, headSize, headSize);
                         ctx.restore();
                     } else {
                         ctx.beginPath();
@@ -319,12 +324,13 @@
                     }
                 } else {
                     if (customBodyImg && customBodyImg.complete && customBodyImg.naturalWidth !== 0) {
+                        let bodySize = currentRadius * 2.5; 
                         ctx.drawImage(
                             customBodyImg,
-                            segment.x - currentRadius,
-                            segment.y - currentRadius,
-                            currentRadius * 2,
-                            currentRadius * 2
+                            segment.x - bodySize / 2,
+                            segment.y - bodySize / 2,
+                            bodySize, 
+                            bodySize
                         );
                     } else {
                         ctx.beginPath();
