@@ -173,9 +173,22 @@ let weatherTypes = ["sunny", "cloudy", "rain"];
 let weather = weatherTypes[Math.floor(Math.random() * 3)];
 let wetMode = (weather === "rain");
 
-const assets = { player: new Image(), bot: new Image() };
-assets.player.src = "player.png";
-assets.bot.src = "bot5.png";
+/* =========================
+   NEW: LOAD MULTIPLE BIKES
+========================= */
+const assets = { 
+    player: new Image(), 
+    bots: [new Image(), new Image(), new Image(), new Image()] 
+};
+
+// Player using bot1
+assets.player.src = "bot1.png"; 
+
+// Enemies using bot2, bot3, bot4, and bot5
+assets.bots[0].src = "bot2.png";
+assets.bots[1].src = "bot3.png";
+assets.bots[2].src = "bot4.png";
+assets.bots[3].src = "bot5.png";
 
 const LANES = [-120, 0, 120];
 
@@ -204,6 +217,9 @@ let bots = Array.from({length: TOTAL_RIDERS - 1}).map((_, i) => {
   let bName = botNames[i] || "BOT " + (i+1);
   let bSkill = (bName === "PECCO" || bName === "MARC" || bName === "MARTIN") ? 0.98 : 0.8 + Math.random() * 0.15;
   
+  // Assign a bot image, cycling through the available ones
+  let botImage = assets.bots[i % assets.bots.length];
+
   return {
     id: i,
     name: bName,
@@ -211,6 +227,7 @@ let bots = Array.from({length: TOTAL_RIDERS - 1}).map((_, i) => {
     lane: Math.floor(Math.random() * 3),
     targetLane: Math.floor(Math.random() * 3),
     x: 0, y: 0,
+    image: botImage, // Store image reference
     speed: 6 + Math.random() * 1,
     maxSpeed: 11 + (bSkill * 2.5), // DIUBAH
     accel: 0.01 + (bSkill * 0.015),
@@ -650,7 +667,7 @@ function loop(){
 }
 
 /* =========================
-   RENDER ENGINE
+   RENDER ENGINE (MODIFIED FOR BIKES)
 ========================= */
 function drawRender() {
   let playerY = c.height - 120;
@@ -668,6 +685,7 @@ function drawRender() {
   ctx.beginPath(); ctx.moveTo(-100,0); ctx.lineTo(-100,c.height); ctx.moveTo(100,0); ctx.lineTo(100,c.height); ctx.stroke();
   ctx.setLineDash([]);
 
+  // Render Bot bikes
   bots.forEach(b => {
     if(b.y < -300 || b.y > c.height + 200) return;
     let scale = Math.max(0.5, 0.6 + (b.y / c.height) * 0.3);
@@ -676,8 +694,9 @@ function drawRender() {
     ctx.fillStyle="rgba(0,0,0,0.4)";
     ctx.beginPath(); ctx.ellipse(b.x, b.y + h/2, w*0.5, w*0.15, 0, 0, Math.PI*2); ctx.fill();
 
-    if (assets.bot.complete && assets.bot.naturalWidth !== 0) {
-      ctx.drawImage(assets.bot, b.x - w/2, b.y - h/2, w, h);
+    // Use specific bot's image if loaded
+    if (b.image.complete && b.image.naturalWidth !== 0) {
+      ctx.drawImage(b.image, b.x - w/2, b.y - h/2, w, h);
       ctx.fillStyle = "#fff"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
       ctx.fillText(b.name, b.x, b.y - h/2 - 5);
     } else {
@@ -685,6 +704,7 @@ function drawRender() {
     }
   });
 
+  // Render Player bike
   let px = player.x, py = playerY, lean = player.vx * 0.03;
   let pW = 90, pH = 120;
 
@@ -697,6 +717,7 @@ function drawRender() {
     ctx.beginPath(); ctx.moveTo(-10, pH/2); ctx.lineTo(10, pH/2); ctx.lineTo(0, pH/2 + 30 + Math.random() * 20); ctx.fill();
   }
 
+  // Use player specific image (bot1)
   if (assets.player.complete && assets.player.naturalWidth !== 0) {
     ctx.drawImage(assets.player, -pW/2, -pH/2, pW, pH);
   } else {
@@ -718,3 +739,4 @@ function start(){
 </script>
 </body>
 </html>
+
