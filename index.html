@@ -5,25 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna-Inc Games</title>
   
-  <!-- PWA & Theme Color -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00f0ff" />
   
-  <!-- Styles & Fonts -->
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-  <!-- BG FX -->
   <div class="bg-orb orb-1"></div>
   <div class="bg-orb orb-2"></div>
   <div class="bg-grid"></div>
 
-  <!-- APP -->
   <div class="app-shell">
 
-    <!-- HEADER / LAUNCHER -->
     <header class="launcher">
       <div class="brand-row">
         <div class="brand-left">
@@ -35,7 +30,6 @@
         </div>
 
         <div class="brand-actions">
-          <!-- Tombol Download Offline dinamis dengan ID -->
           <button type="button" class="icon-btn" id="headerOfflineBtn" onclick="downloadAllGames()" title="Download Mode Offline">📦</button>
           <button type="button" class="icon-btn" onclick="installApp()" title="Install App">📱</button>
           <button type="button" class="icon-btn" id="refreshBtn" title="Refresh">⟳</button>
@@ -60,7 +54,6 @@
       </div>
     </header>
 
-    <!-- PROGRESS BAR DOWNLOAD OFFLINE (Disembunyikan secara default) -->
     <div id="progressBox" style="display:none; margin: 0 15px 15px 15px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid #333;">
       <div style="width:100%; background:#333; border-radius:10px; overflow: hidden; margin-bottom: 8px;">
         <div id="progressBar" style="width:0%; height:10px; background:#00f0ff; border-radius:10px; transition: width 0.3s;"></div>
@@ -68,7 +61,6 @@
       <p id="progressText" style="font-size:12px; margin: 0; color: #00f0ff; text-align: center;">Preparing...</p>
     </div>
 
-    <!-- STATS -->
     <section class="stats-section">
       <div class="stat-card">
         <h3 class="counter" data-target="11" data-suffix="+">0</h3>
@@ -88,7 +80,6 @@
       </div>
     </section>
 
-    <!-- CONTINUE PLAYING -->
     <section id="continueSection" class="continue-section hidden">
       <div class="section-head">
         <div>
@@ -100,7 +91,6 @@
       <div id="continueCard" class="continue-card"></div>
     </section>
 
-    <!-- FEATURED -->
     <section class="featured-section">
       <div class="section-head">
         <div>
@@ -119,7 +109,6 @@
       <div id="featuredDots" class="featured-dots"></div>
     </section>
 
-    <!-- GAME COLLECTION -->
     <section class="collection-section">
       <div class="section-head collection-head">
         <div>
@@ -139,7 +128,6 @@
       <main id="gameGrid" class="grid"></main>
     </section>
 
-    <!-- FOOTER -->
     <footer class="footer-pro">
       <div class="footer-card">
         <div class="footer-top">
@@ -157,7 +145,6 @@
 
         <div class="footer-links">
           <a href="#gameGrid">🎯 Koleksi Game</a>
-          <!-- Tombol Download Footer -->
           <a href="javascript:void(0)" id="footerOfflineBtn" onclick="downloadAllGames()">🔒 Belum Download</a>
           <a href="javascript:void(0)" onclick="installApp()">📱 Install App</a>
           <a href="#" onclick="logout()">🚪 Logout</a>
@@ -172,7 +159,6 @@
     </footer>
   </div>
 
-  <!-- MODAL GAME -->
   <div id="gameModal" class="game-modal">
     <div class="game-header">
       <div class="game-header-left">
@@ -206,7 +192,6 @@
     </div>
   </div>
 
-  <!-- KUMPULAN SCRIPT TERPADU -->
   <script>
     // 1. Register Service Worker
     if ("serviceWorker" in navigator) {
@@ -317,8 +302,7 @@
 
   </script>
 
-  <!-- External Script -->
   <script src="script.js"></script>
+  <script src="update.js"></script>
 </body>
 </html>
-
