@@ -1,66 +1,144 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline - Luna-Inc Games</title>
-  <style>
-    /* Styling agar senada dengan tema gelap PWA Luna-Inc */
-    body {
-      background-color: #0f0f0f;
-      color: #ffffff;
-      font-family: 'Poppins', sans-serif; /* Sesuaikan dengan font utamamu */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    h1 {
-      color: #00f0ff;
-      margin-bottom: 10px;
-    }
-    p {
-      color: #a0a0a0;
-      margin-bottom: 25px;
-    }
-    .btn-reload {
-      background-color: #00f0ff;
-      color: #0f0f0f;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .btn-reload:hover {
-      background-color: #00c0cc;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna-Inc Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Poppins, Arial, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Diubah menjadi min-height agar tidak terpotong di layar kecil */
+            overflow-y: auto;  /* Mengizinkan scroll jika konten terlalu panjang */
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+        }
+
+        .logo {
+            font-size: 65px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: #00f0ff;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #cfd8dc;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .status {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #00f0ff;
+            color: #111;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        button:hover {
+            background: #00d0dd;
+        }
+
+        /* Styling baru untuk menata letak tombol game */
+        .games {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Memberikan jarak antar tombol */
+        }
+
+        /* Desain transparan untuk tombol game agar berbeda dengan tombol "Coba Lagi" */
+        .games button {
+            background: rgba(255, 255, 255, 0.1);
+            color: #00f0ff;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+
+        .games button:hover {
+            background: rgba(0, 240, 255, 0.2);
+            color: #fff;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>📡 Kamu sedang offline</h1>
-  <p>Koneksi internet terputus. Cek jaringan lalu coba lagi.</p>
-  
-  <!-- Tombol manual untuk mencoba ulang -->
-  <button class="btn-reload" onclick="window.location.reload()">Coba Lagi</button>
+    <div class="card">
+        <div class="logo">🎮</div>
+        <h1>Luna-Inc Games</h1>
+        
+        <div class="status">
+            🔴 Offline Mode
+        </div>
+        
+        <p>
+            Koneksi internet sedang tidak tersedia.<br>
+            Jika game pernah dibuka sebelumnya,<br>
+            kamu masih bisa memainkannya.
+        </p>
 
-  <!-- Script dipindah ke dalam body -->
-  <script>
-    // Langsung muat ulang halaman secara otomatis jika koneksi kembali (lebih baik dari sekadar alert)
-    window.addEventListener("online", () => {
-      window.location.reload(); 
-    });
+        <button onclick="location.reload()">
+            🔄 Coba Lagi
+        </button>
 
-    window.addEventListener("offline", () => {
-      console.log("❌ Kamu offline"); 
-    });
-  </script>
+        <div class="games">
+            <button onclick="location.href='motor.html'">🎮 Motor Race</button>
+            <button onclick="location.href='soccer.html'">⚽ Soccer</button>
+            <button onclick="location.href='puzzle.html'">🧩 Puzzle</button>
+            <button onclick="location.href='war.html'">⚔️ War Game</button>
+        </div>
+
+        <div class="footer">
+            Luna-Inc PWA v4
+        </div>
+    </div>
+
+    <script>
+        // Otomatis refresh jika internet kembali tersambung
+        window.addEventListener("online", () => {
+            location.reload();
+        });
+    </script>
+
 </body>
 </html>
-
