@@ -1,0 +1,38 @@
+{
+  "name": "Luna Inc Game",
+  "short_name": "LunaGame",
+  "id": "/",
+  "lang": "id",
+  "description": "Portal Game HTML5 Luna-Inc",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#00f0ff",
+  "orientation": "portrait",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Motor Race",
+      "url": "/motor.html"
+    },
+    {
+      "name": "Puzzle",
+      "url": "/puzzle.html"
+    }
+  ]
+}
