@@ -45,7 +45,7 @@
           </div>
         </div>
 
-        <button type="button" class="logout-btn" onclick="logout()">Logout</button>
+        <button type="button" class="logout-btn" id="loginBtn">Login</button>
       </div>
 
       <div class="search-wrap">
@@ -147,7 +147,7 @@
           <a href="#gameGrid">🎯 Koleksi Game</a>
           <a href="javascript:void(0)" id="footerOfflineBtn" onclick="downloadAllGames()">🔒 Belum Download</a>
           <a href="javascript:void(0)" onclick="installApp()">📱 Install App</a>
-          <a href="#" onclick="logout()">🚪 Logout</a>
+          <a href="javascript:void(0)" id="footerLoginBtn">🚪 Login</a>
         </div>
 
         <div class="footer-bottom">
@@ -220,7 +220,6 @@
 
     // 3. Logika Download dengan Progress Bar
     async function downloadAllGames() {
-      // Mencegah download ulang jika sudah siap
       if (localStorage.getItem("offlineReady") === "true") {
         alert("Semua game sudah tersedia offline!");
         return;
@@ -241,7 +240,6 @@
       let progress = 0;
       let total = files.length;
 
-      // Munculkan progress bar
       document.getElementById("progressBox").style.display = "block";
       document.getElementById("headerOfflineBtn").style.pointerEvents = "none";
 
@@ -252,7 +250,6 @@
             await cache.put(file, res.clone());
           }
           
-          // Update progress
           progress++;
           let percent = Math.round((progress / total) * 100);
           document.getElementById("progressText").innerText = "Downloading... " + percent + "%";
@@ -263,12 +260,10 @@
         }
       }
 
-      // Simpan status dan update UI setelah selesai
       localStorage.setItem("offlineReady", "true");
       document.getElementById("progressText").innerText = "✅ Semua game siap offline!";
       updateOfflineUI();
 
-      // Sembunyikan progress box setelah 3 detik
       setTimeout(() => {
         document.getElementById("progressBox").style.display = "none";
       }, 3000);
@@ -280,7 +275,6 @@
         console.log("🔥 Offline Mode Aktif");
         document.body.classList.add("offline-ready");
         
-        // Ubah tampilan tombol di Header
         const headerBtn = document.getElementById("headerOfflineBtn");
         if (headerBtn) {
           headerBtn.innerHTML = "✅";
@@ -288,7 +282,6 @@
           headerBtn.style.pointerEvents = "auto";
         }
 
-        // Ubah tampilan tombol di Footer
         const footerBtn = document.getElementById("footerOfflineBtn");
         if (footerBtn) {
           footerBtn.innerHTML = "✅ Offline Ready";
@@ -297,12 +290,58 @@
       }
     }
 
-    // Jalankan pengecekan saat halaman dimuat
     window.addEventListener("load", updateOfflineUI);
+  </script>
 
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const nama = localStorage.getItem("namaPemain");
+      
+      const userText = document.getElementById("userText");
+      const userAvatar = document.getElementById("userAvatar");
+      const loginBtn = document.getElementById("loginBtn");
+      const footerLoginBtn = document.getElementById("footerLoginBtn");
+
+      if (nama) {
+          if (userText) userText.innerHTML = nama;
+          if (userAvatar) userAvatar.innerHTML = nama.charAt(0).toUpperCase();
+
+          if (loginBtn) {
+              loginBtn.innerHTML = "Logout";
+              loginBtn.onclick = function() {
+                  localStorage.removeItem("namaPemain");
+                  location.reload();
+              };
+          }
+          if (footerLoginBtn) {
+              footerLoginBtn.innerHTML = "🚪 Logout";
+              footerLoginBtn.onclick = function() {
+                  localStorage.removeItem("namaPemain");
+                  location.reload();
+              };
+          }
+      } else {
+          if (userText) userText.innerHTML = "Guest";
+          if (userAvatar) userAvatar.innerHTML = "G";
+
+          if (loginBtn) {
+              loginBtn.innerHTML = "Login";
+              loginBtn.onclick = function() {
+                  location.href = "login.html";
+              };
+          }
+          if (footerLoginBtn) {
+              footerLoginBtn.innerHTML = "🚪 Login";
+              footerLoginBtn.onclick = function() {
+                  location.href = "login.html";
+              };
+          }
+      }
+    });
   </script>
 
   <script src="script.js"></script>
   <script src="update.js"></script>
 </body>
 </html>
+
