@@ -146,8 +146,8 @@ resize();
 /* =========================
    CAREER & CHAMPIONSHIP STATE
 ========================= */
-const TRACK_LENGTH = 7000; // DIUBAH
-const TOTAL_LAPS = 5;      // DIUBAH
+const TRACK_LENGTH = 7000; 
+const TOTAL_LAPS = 5;      
 const TOTAL_RIDERS = 12;
 
 const tracks = ["QATAR", "MANDALIKA", "SEPANG", "MUGELLO", "ASSEN", "JEREZ", "SILVERSTONE", "LEMANS", "MOTEGI", "VALENCIA"];
@@ -181,16 +181,14 @@ const assets = {
     bots: [new Image(), new Image(), new Image(), new Image()] 
 };
 
-// Player using bot1
 assets.player.src = "bot1.png"; 
-
-// Enemies using bot2, bot3, bot4, and bot5
 assets.bots[0].src = "bot2.png";
 assets.bots[1].src = "bot3.png";
 assets.bots[2].src = "bot4.png";
 assets.bots[3].src = "bot5.png";
 
-const LANES = [-120, 0, 120];
+// DIUBAH: Lebar antar lane dipersempit agar pas di layar HP
+const LANES = [-90, 0, 90]; 
 
 let player = {
   name: "PLAYER",
@@ -198,7 +196,7 @@ let player = {
   speed: 0, 
   accel: 0.22, 
   brake: 0.09, 
-  maxSpeed: 15, // DIUBAH
+  maxSpeed: 15, 
   raceDistance: 0
 };
 
@@ -216,8 +214,6 @@ const botNames = ["PECCO", "MARTIN", "MARC", "QUARTARARO", "BINDER", "ESPARGARO"
 let bots = Array.from({length: TOTAL_RIDERS - 1}).map((_, i) => {
   let bName = botNames[i] || "BOT " + (i+1);
   let bSkill = (bName === "PECCO" || bName === "MARC" || bName === "MARTIN") ? 0.98 : 0.8 + Math.random() * 0.15;
-  
-  // Assign a bot image, cycling through the available ones
   let botImage = assets.bots[i % assets.bots.length];
 
   return {
@@ -227,11 +223,11 @@ let bots = Array.from({length: TOTAL_RIDERS - 1}).map((_, i) => {
     lane: Math.floor(Math.random() * 3),
     targetLane: Math.floor(Math.random() * 3),
     x: 0, y: 0,
-    image: botImage, // Store image reference
+    image: botImage, 
     speed: 6 + Math.random() * 1,
-    maxSpeed: 11 + (bSkill * 2.5), // DIUBAH
+    maxSpeed: 11 + (bSkill * 2.5), 
     accel: 0.01 + (bSkill * 0.015),
-    raceDistance: i * 20, // DIUBAH (Grid Start berdekatan)
+    raceDistance: i * 20, 
     aggression: Math.random(),
     skill: bSkill,
     profile: { pitch: 0.8 + Math.random() * 0.5, tone: "sawtooth" }
@@ -272,7 +268,7 @@ function resetCareer() {
 }
 
 function applyGarageStats() {
-  player.maxSpeed = (wetMode ? 12 : 15) + garage.engine; // DIUBAH (Disesuaikan dengan maxSpeed baru)
+  player.maxSpeed = (wetMode ? 12 : 15) + garage.engine; 
   player.accel = 0.22 + (garage.engine * 0.02);
 }
 
@@ -291,7 +287,7 @@ function updatePreRaceUI() {
 loadSave();
 
 /* =========================
-   AUDIO SYSTEM (FIXED)
+   AUDIO SYSTEM 
 ========================= */
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
@@ -300,67 +296,38 @@ let engineGain;
 
 function initAudio() {
   if(audioCtx) return;
-
   audioCtx = new AudioCtx();
-
   engineOsc = audioCtx.createOscillator();
   engineGain = audioCtx.createGain();
-
   engineOsc.type = "sawtooth";
   engineOsc.frequency.value = 80;
-
   engineGain.gain.value = 0;
-
   engineOsc.connect(engineGain);
   engineGain.connect(audioCtx.destination);
-
   engineOsc.start();
 }
 
 function updateEngineSound() {
   if(!audioCtx || !engineOsc) return;
-
   let rpm = 80 + (player.speed * 18);
-
-  engineOsc.frequency.setTargetAtTime(
-    rpm,
-    audioCtx.currentTime,
-    0.05
-  );
-
+  engineOsc.frequency.setTargetAtTime(rpm, audioCtx.currentTime, 0.05);
   let volume = 0.02 + (player.speed / 200);
-
   if(gas) volume += 0.05;
   if(nitro) volume += 0.04;
-
-  engineGain.gain.setTargetAtTime(
-    volume,
-    audioCtx.currentTime,
-    0.05
-  );
+  engineGain.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.05);
 }
 
 function collisionSound() {
   if(!audioCtx) return;
-
   let osc = audioCtx.createOscillator();
   let gain = audioCtx.createGain();
-
   osc.type = "square";
   osc.frequency.value = 120;
-
   gain.gain.value = 0.15;
-
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-
   osc.start();
-
-  gain.gain.exponentialRampToValueAtTime(
-    0.0001,
-    audioCtx.currentTime + 0.15
-  );
-
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
   osc.stop(audioCtx.currentTime + 0.15);
 }
 
@@ -385,7 +352,7 @@ function drawConfetti() {
 }
 
 /* =========================
-   UI & NAVIGATION FUNCTIONS
+   UI & NAVIGATION 
 ========================= */
 function togglePause() {
   if (!running && !isPaused && !raceFinished) return;
@@ -474,7 +441,7 @@ function nextRace(){
   fuel = 100; damage = 0; isDestroyed = false;
   
   bots.forEach((b,i)=>{
-      b.raceDistance = i * 20; // DIUBAH (Grid Start berdekatan saat next race)
+      b.raceDistance = i * 20;
       b.speed = 6 + Math.random()*2;
       b.lane = Math.floor(Math.random()*3);
       b.targetLane = b.lane;
@@ -533,13 +500,14 @@ function drawMinimap() {
   bots.forEach(b => {
     let p = (b.raceDistance % TRACK_LENGTH) / TRACK_LENGTH;
     miniCtx.fillStyle = "#ff4444";
-    miniCtx.beginPath(); miniCtx.arc(40 + (b.x/120)*6, 145 - (p * 130), 2.5, 0, Math.PI*2); miniCtx.fill();
+    // Skala X disesuaikan karena lebar lane berubah
+    miniCtx.beginPath(); miniCtx.arc(40 + (b.x/90)*12, 145 - (p * 130), 2.5, 0, Math.PI*2); miniCtx.fill();
   });
 
   let pp = (player.raceDistance % TRACK_LENGTH) / TRACK_LENGTH;
   miniCtx.fillStyle = "#00ffff";
   miniCtx.shadowBlur = 5; miniCtx.shadowColor = "#00ffff";
-  miniCtx.beginPath(); miniCtx.arc(40 + (player.x/120)*6, 145 - (pp * 130), 3.5, 0, Math.PI*2); miniCtx.fill();
+  miniCtx.beginPath(); miniCtx.arc(40 + (player.x/90)*12, 145 - (pp * 130), 3.5, 0, Math.PI*2); miniCtx.fill();
   miniCtx.shadowBlur = 0;
 }
 
@@ -552,12 +520,9 @@ function loop(){
   if (damage >= 100) {
     isDestroyed = true;
     player.maxSpeed *= 0.6; 
-    
-    // Mute Suara Mesin Saat Hancur
     if(engineGain && audioCtx) {
       engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
     }
-    
     document.getElementById("destroyedOverlay").style.display = "flex";
     return;
   }
@@ -573,12 +538,9 @@ function loop(){
 
   if (!raceFinished && player.raceDistance >= TRACK_LENGTH * TOTAL_LAPS) {
     raceFinished = true; running = false; gas = false; nitro = false;
-    
-    // Mute Suara Mesin Saat Finis
     if(engineGain && audioCtx) {
       engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
     }
-    
     showFinishScreen(racers, playerPos);
     drawRender();
     return;
@@ -591,7 +553,6 @@ function loop(){
   document.getElementById("nitroFill").style.height = nitroHeat + "%";
 
   let throttle = (gas && fuel > 0) ? 1 : 0;
-  // DIUBAH: Max Speed dengan Nitro sekarang mencapai 18 (dikurangi sedikit jika hujan)
   let targetMaxSpeed = nitro ? (wetMode ? 15 : 18) + garage.engine : player.maxSpeed;
   
   if (nitro && nitroHeat < 100) { player.speed += 0.35; } 
@@ -638,10 +599,10 @@ function loop(){
     if (Math.abs(LANES[bot.targetLane] - bot.x) < 10) bot.lane = bot.targetLane;
     bot.y = playerY - (distDiff * 7);
 
-    // Collision Player vs Bot
+    // Collision Player vs Bot (Hitbox sedikit disesuaikan karena lane lebih kecil)
     let dxCol = player.x - bot.x;
     let dyCol = playerY - bot.y;
-    if(Math.abs(dxCol) < 40 && Math.abs(dyCol) < 70){
+    if(Math.abs(dxCol) < 35 && Math.abs(dyCol) < 60){
       player.speed *= 0.5;
       bot.speed *= 0.8; 
       shake = 25; 
@@ -657,7 +618,6 @@ function loop(){
   document.getElementById("fuelHud").innerText = Math.floor(fuel) + "%";
   document.getElementById("dmgHud").innerText = Math.floor(damage) + "%";
 
-  // Mencegah audio kembali dimainkan jika status sudah finis/hancur dalam frame yang sama
   if (!raceFinished && !isDestroyed) {
     updateEngineSound(); 
   }
@@ -667,64 +627,121 @@ function loop(){
 }
 
 /* =========================
-   RENDER ENGINE (MODIFIED FOR BIKES)
+   RENDER ENGINE (AAA VISUALS & RESPONSIVE MOBILES)
 ========================= */
 function drawRender() {
   let playerY = c.height - 120;
   ctx.save();
   ctx.translate(c.width/2 + camX + shake, 0);
 
-  ctx.fillStyle = wetMode ? "#0f172a" : "#1e293b"; 
+  // 1. LATAR LUAR TRACK (RUMPUT/GRAVEL)
+  ctx.fillStyle = wetMode ? "#142414" : "#223d1d"; 
   ctx.fillRect(-c.width, 0, c.width*2, c.height);
-  ctx.fillStyle = wetMode ? "#1f242d" : "#2b2f36";
-  ctx.fillRect(-300, 0, 600, c.height);
 
-  ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.setLineDash([30,30]);
-  let roadOffset = (player.raceDistance * 2) % 60;
+  // 2. ASPAL LINTASAN
+  // DIUBAH: Lebar aspal sekarang dihitung otomatis agar rumput selalu terlihat di layar HP
+  let tHalf = Math.max(130, Math.min(300, (c.width / 2) - 25)); 
+  
+  ctx.fillStyle = wetMode ? "#1f242d" : "#2b2f36";
+  ctx.fillRect(-tHalf, 0, tHalf * 2, c.height);
+
+  // 3. PEMBATAS JALAN / KERBS MOTOGP (MERAH-PUTIH)
+  let curbH = 60; // Disesuaikan proporsinya
+  let curbW = Math.max(12, tHalf * 0.1);  
+  let curbOffset = (player.raceDistance * 2) % (curbH * 2);
+
+  for (let i = -2; i < c.height / curbH + 2; i++) {
+    let drawY = i * curbH + curbOffset;
+    let isRed = Math.abs(i) % 2 === 0;
+    
+    if (wetMode) {
+        ctx.fillStyle = isRed ? "#b91c1c" : "#94a3b8";
+    } else {
+        ctx.fillStyle = isRed ? "#ef4444" : "#ffffff";
+    }
+    
+    // Kerb Kiri & Kanan
+    ctx.fillRect(-tHalf - curbW, drawY, curbW, curbH);
+    ctx.fillRect(tHalf, drawY, curbW, curbH);
+  }
+
+  // 4. GARIS PUTIH SOLID (TRACK LIMITS)
+  ctx.fillStyle = wetMode ? "#cbd5e1" : "#ffffff";
+  ctx.fillRect(-tHalf, 0, 4, c.height); 
+  ctx.fillRect(tHalf - 4, 0, 4, c.height);  
+
+  // 5. GARIS PUTUS-PUTUS JALUR (LANE)
+  ctx.strokeStyle = wetMode ? "#94a3b8" : "#fff"; 
+  ctx.lineWidth = 4; 
+  ctx.setLineDash([30, 40]); 
+  let roadOffset = (player.raceDistance * 2) % 70;
   ctx.lineDashOffset = -roadOffset;
-  ctx.beginPath(); ctx.moveTo(-100,0); ctx.lineTo(-100,c.height); ctx.moveTo(100,0); ctx.lineTo(100,c.height); ctx.stroke();
+  ctx.beginPath(); 
+  
+  // DIUBAH: Penempatan garis putus-putus disesuaikan dengan titik tengah lane baru
+  let laneSplit = 45; // Titik tengah antara lane 0 dan 90
+  ctx.moveTo(-laneSplit, 0); ctx.lineTo(-laneSplit, c.height); 
+  ctx.moveTo(laneSplit, 0); ctx.lineTo(laneSplit, c.height); 
+  ctx.stroke();
   ctx.setLineDash([]);
+
+  // --- RENDERING KENDARAAN DENGAN SHADOWS ---
+  ctx.shadowColor = wetMode ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 15;
+  ctx.shadowOffsetX = 5;
 
   // Render Bot bikes
   bots.forEach(b => {
     if(b.y < -300 || b.y > c.height + 200) return;
     let scale = Math.max(0.5, 0.6 + (b.y / c.height) * 0.3);
-    let w = 100 * scale, h = 130 * scale;
+    
+    // DIUBAH: Proporsi ukuran bot agar pas di layar kecil
+    let w = 75 * scale, h = 105 * scale;
 
-    ctx.fillStyle="rgba(0,0,0,0.4)";
-    ctx.beginPath(); ctx.ellipse(b.x, b.y + h/2, w*0.5, w*0.15, 0, 0, Math.PI*2); ctx.fill();
-
-    // Use specific bot's image if loaded
+    ctx.save();
     if (b.image.complete && b.image.naturalWidth !== 0) {
       ctx.drawImage(b.image, b.x - w/2, b.y - h/2, w, h);
+      ctx.shadowColor = "transparent"; 
       ctx.fillStyle = "#fff"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
       ctx.fillText(b.name, b.x, b.y - h/2 - 5);
     } else {
       ctx.fillStyle="#ff4444"; ctx.fillRect(b.x - w/2, b.y - h/2, w, h);
     }
+    ctx.restore();
   });
 
   // Render Player bike
   let px = player.x, py = playerY, lean = player.vx * 0.03;
-  let pW = 90, pH = 120;
+  // DIUBAH: Ukuran motor diperkecil sedikit agar pas dengan lebar layar tanpa menyentuh bot kiri-kanan
+  let pW = 70, pH = 100;
 
   ctx.save();
   ctx.translate(px, py); ctx.rotate(lean);
-  ctx.fillStyle="rgba(0,0,0,0.4)"; ctx.beginPath(); ctx.ellipse(0, pH/2, pW*0.5, pW*0.15, 0, 0, Math.PI*2); ctx.fill();
   
+  // Efek api Nitro
   if (nitro && nitroHeat < 100) {
-    ctx.fillStyle = "rgba(255, 100, 0, 0.8)";
-    ctx.beginPath(); ctx.moveTo(-10, pH/2); ctx.lineTo(10, pH/2); ctx.lineTo(0, pH/2 + 30 + Math.random() * 20); ctx.fill();
+    ctx.shadowColor = "rgba(255, 100, 0, 0.8)";
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = "rgba(255, 100, 0, 0.9)";
+    ctx.beginPath(); 
+    ctx.moveTo(-15, pH/2 - 10); 
+    ctx.lineTo(15, pH/2 - 10); 
+    ctx.lineTo(0, pH/2 + 40 + Math.random() * 25); 
+    ctx.fill();
+    ctx.shadowColor = wetMode ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 10;
   }
 
-  // Use player specific image (bot1)
   if (assets.player.complete && assets.player.naturalWidth !== 0) {
     ctx.drawImage(assets.player, -pW/2, -pH/2, pW, pH);
   } else {
+    // Akan tetap muncul warna Cyan ini jika gambar motor Anda sedang diproses atau gagal di-load
     ctx.fillStyle = "#00ffff"; ctx.fillRect(-pW/2, -pH/2, pW, pH);
   }
 
-  ctx.restore(); ctx.restore(); 
+  ctx.restore(); 
+  ctx.restore(); 
 
   drawMinimap();
   if(raceFinished && particles.length > 0) drawConfetti();
@@ -738,4 +755,4 @@ function start(){
 }
 </script>
 </body>
-  </html>
+</html>
